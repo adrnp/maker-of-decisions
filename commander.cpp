@@ -25,6 +25,7 @@
 #include "common.h"
 #include "system_ids.h"
 #include "commander.h"
+#include "tracker.h"
 
 // include what is needed ofr  the POMDP commands
 #include "planner/pomdp.h"
@@ -44,8 +45,8 @@ int num_cmds = 0;
 int cmd_index = 0;
 
 bool load_move_commands() {
-
-	ifstream cmd_file ("commands.csv");
+	string file_name(command_file);
+	ifstream cmd_file ("commands/" + file_name + ".csv");
 
 	if (!cmd_file.is_open()) {
 		// means there is an error in loading the file
@@ -92,7 +93,7 @@ void send_next_command(uint8_t &prev_state, uint8_t &new_state, double &bearing,
 
 			// if running emily config, will need to rotate twice
 			if (emily && second_rotation_required) {
-				//send_df_mode(1);
+				send_df_mode(1);
 				sendRotateCommand(-1.0);
 				second_rotation_required = false;
 				break;
@@ -101,19 +102,24 @@ void send_next_command(uint8_t &prev_state, uint8_t &new_state, double &bearing,
 			/* send next command depending on flight mode */
 			if (execute_tracking) {
 				 printf("sending a tracking command\n");
-
 				 // get the next command, which depends on the tracking method desired
 				 float d_north = 0.0;
 				 float d_east = 0.0;
 				 switch (tracking_method) {
 					 case TRACK_NAIVE:
-						if (verbose) printf("naive tracking command being made...\n");
+						if (verbose) printf("[COMMANDER] naive tracking command being made...\n");
 					 	commands = calc_next_command(bearing, rssi);
 						d_north = commands[0];
 						d_east = commands[1];
 						break;
+					 case TRACK_VARIABLE:
+						if (verbose) printf("[COMMANDER] variable tracking command being made...\n");
+						commands = calc_next_command_variable(bearing, rssi);
+						d_north = commands[0];
+						d_east = commands[1];
+						break;
 					 case TRACK_POMDP:
-						if (verbose) printf("pomdp tracking command being made...\n");
+						if (verbose) printf("[COMMANDER] pomdp tracking command being made...\n");
 						commands_pair = get_next_pomdp_action(bearing, rssi);
 						d_north = commands_pair.first;
 						d_east = commands_pair.second;
@@ -127,9 +133,8 @@ void send_next_command(uint8_t &prev_state, uint8_t &new_state, double &bearing,
 						break;
 				 }
 			 	 
-				if (verbose) printf("following tracking command (%f, %f)\n", d_north, d_east);
-				sendTrackingCommand(d_north, d_east);
-				
+				if (verbose) printf("[COMMANDER] following tracking command (%f, %f)\n", d_north, d_east);
+				sendTrackingCommand(d_north, d_east);	
 			} else {
 				if (verbose) printf("sending the next preset move command\n");	
 				// send the next move command
@@ -141,7 +146,7 @@ void send_next_command(uint8_t &prev_state, uint8_t &new_state, double &bearing,
 
 			if (emily) {
 				// make sure in "normal" mode of operation
-				//send_df_mode(0);
+				send_df_mode(0);
 			}
 		
 			// send a rotate command
@@ -169,7 +174,7 @@ void sendTrackingCommand(float &north, float &east) {
 	// extract the next north and east commands
 	float nextNorth = north;
 	float nextEast = east;
-	float nextAlt = 30.0; //flight_alt;
+	float nextAlt = 360.0; //flight_alt;
 
 	printf("sending command %i: N %f\tE %f\tA %f\n", cmd_index, nextNorth, nextEast, nextAlt);
 
@@ -361,41 +366,6 @@ void send_rssi_message(int &rssi, int &rssi2, int16_t &heading, int32_t &lat, in
 	}
 	// printf("Sent buffer of length %i\n", len);
 	return;
-}
-
-
-
-vector<float> calc_next_command(double &bearing, int &rssi) {
-	// bearing is degrees from 0 to 359
-
-	if (verbose) {
-		printf("calculating the next command with input (%f, %i)\n", bearing, rssi);
-	}
-	
-	// for debug purposes, force a specific bearing and rssi
-	double bear = bearing + 60.0;
-
-	if (bear >= 360.0) {
-		bear = bear - 360.0;
-	}
-
-	int rs = 20;
-
-	// commands are a vector of [north, south]
-	vector<float> commands;
-
-	float k = 0.5; // units: m / dB
-
-	//float north = k * (double) rssi * cos(bearing * M_PI/180.0);
-	//float east = k * ( double) rssi * sin(bearing * M_PI/180.0);
-
-	float north = k * (double) rs * cos(bear * M_PI/180.0);
-	float east = k * ( double) rs * sin(bear * M_PI/180.0);
-
-	commands.push_back(north);
-	commands.push_back(east);
-
-	return commands;
 }
 
 

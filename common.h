@@ -18,6 +18,7 @@
 // some constants to determine tracking method
 #define TRACK_NAIVE 1
 #define TRACK_POMDP 2
+#define TRACK_VARIABLE 3
 
 /** boolean to determine whether or not to show all outputs */
 extern bool verbose;
@@ -27,6 +28,7 @@ extern bool debug;
 
 /** use command file */
 extern bool get_commands;
+extern char* command_file;
 
 /** MAVInfo object containing the current state information of the uav */
 extern MAVInfo uav;
@@ -60,5 +62,12 @@ extern float flight_alt;
 
 /* stuff needed for emily antenna */
 extern bool emily;
+
+/* variables for dual wifly */
+extern unsigned long omni_update_timestamp;
+extern int omni_rssi;
+extern int16_t heading_omni_pre;
+extern int16_t heading_omni_post;
+
 
 #endif /* COMMON_H_ */

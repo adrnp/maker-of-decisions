@@ -8,6 +8,7 @@
 
 #include "read_thread.h"
 #include "wifly_thread.h"
+#include "wifly2_thread.h"
 #include "mod.h"
 #include "dirk_thread.h"
 
@@ -28,7 +29,7 @@ bool emily = false;			// default to not running the emily antenna configuration
 bool execute_tracking = false;	// default to not executing a tracking mission
 int tracking_method = TRACK_NAIVE;	// default to using the naive tracker
 
-float flight_alt = 380;			// default flight is AMSL
+float flight_alt = 360;			// default flight is AMSL
 
 MAVInfo uav;			// object to hold all the state information on the UAV
 
@@ -40,6 +41,8 @@ int RUNNING_FLAG = 1;	// default the read and write threads to be running
 char* wifly_port1;
 char* wifly_port2;
 char* pa_port;
+
+char* command_file = (char*) "commands";
 
 /**
  * read in the passed arguments to the function on start
@@ -104,6 +107,11 @@ void read_arguments(int argc, char **argv, char **uart_name, int *baudrate, char
 		/* command file state */
 		if (strcmp(argv[i], "-c") == 0 || strcmp(argv[i], "--commands") == 0) {
 			get_commands = true;
+			
+			// get the name of the desired command file
+			if (argc > i + 1) {
+				command_file = argv[i + 1];
+			}
 		}
 
 		/* wifly 1 port */
@@ -131,6 +139,8 @@ void read_arguments(int argc, char **argv, char **uart_name, int *baudrate, char
 			if (argc > i + 1) {
 			   if (strcmp(argv[i+1], "pomdp") == 0) {
 					tracking_method = TRACK_POMDP;
+			   } else if (strcmp(argv[i+1], "variable") == 0) {
+				   tracking_method = TRACK_VARIABLE;
 			   }
 			}
 		}
@@ -159,13 +169,14 @@ void quit_handler(int sig) {
 
 int main(int argc, char **argv) {
 
-	cout << "starting...\n";
-	printf("printf starting...\n");
+	cout << "[MOD] starting...\n";
+	printf("[MOD] printf starting...\n");
 
 	// ids of the threads
 	pthread_t readId;
 	pthread_t wiflyId;
 	pthread_t phasedId;
+	pthread_t wifly2Id;
 
 	/* default values for arguments */
 	char *uart_name = (char*)"/dev/ttyUSB1";
@@ -178,21 +189,21 @@ int main(int argc, char **argv) {
 
 	int baudrate = 115200;
 
-	cout << "reading arguments\n";
+	cout << "[MOD] reading arguments\n";
 	// read the input arguments
 	read_arguments(argc, argv, &uart_name, &baudrate, &wifly_port1, &wifly_port2);
 
 	// open and configure the com port being used for communication
 	// begin_serial(uart_name, baudrate);
-	cout << "creating new mavlink serial object\n";
+	cout << "[MOD] creating new mavlink serial object\n";
 	pixhawk = new MavlinkSerial(verbose, uart_name, baudrate);
 
-	cout << "pixhawk fd " << pixhawk->fd << "\n";
-	cout << "pixhawk get fd " << pixhawk->get_fd() << "\n";
+	cout << "[MOD] pixhawk fd " << pixhawk->fd << "\n";
+	cout << "[MOD] pixhawk get fd " << pixhawk->get_fd() << "\n";
 
 	// also create connection to df arduino if needed here
 	if (emily) {
-	//	df_arduino = new SerialPort(verbose, df_uart_name, baudrate);
+		df_arduino = new SerialPort(verbose, df_uart_name, baudrate);
 	}
 
 	// setup termination using CRT-C
@@ -200,17 +211,22 @@ int main(int argc, char **argv) {
 
 
 	// need to create read and write threads
-	cout<< "handling threads\n";
+	cout<< "[MOD] handling threads\n";
 	pthread_create(&readId, NULL, read_thread, (void *)&uav);
 	
 	// create a thread for the wifly stuff (only if want wifly running)
 	if (!nowifly && !phased_array) {
-		printf("starting wifly thread...\n");
+		printf("[MOD] starting wifly thread...\n");
 		pthread_create(&wiflyId, NULL, wifly_thread, (void *)&uav);
 	}
 
+	if (dual_wifly) {
+		printf("[MOD] starting wifly2 thread...\n");
+		pthread_create(&wifly2Id, NULL, wifly2_thread, (void *) &uav);
+	}
+
 	if (phased_array) {
-		printf("starting dirk antenna thread...\n");
+		printf("[MOD] starting dirk antenna thread...\n");
 		pthread_create(&phasedId, NULL, dirk_thread, (void *)&uav);
 	}
 
@@ -220,13 +236,15 @@ int main(int argc, char **argv) {
 		pthread_join(wiflyId, NULL);
 	}
 
+	if (dual_wifly) {
+		pthread_join(wifly2Id, NULL);
+	}
+
 	if (phased_array) {
 		pthread_join(phasedId, NULL);
 	}
 	
-	// pthread_join(wiflyId, NULL);
-	// pthread_join(phasedId, NULL);
-
+	// close the pixhawk connection
 	pixhawk->end_serial();
 
 	return 0;

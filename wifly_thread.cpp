@@ -50,6 +50,7 @@ bool moving = false;
 /* microsecond timestamp of the previous loop iteration */
 unsigned long prev_loop_timestamp = 0;
 
+unsigned long prev_omni_update_timestamp = 0;
 
 void update_state(uint8_t &new_state) {
 
@@ -114,35 +115,18 @@ void *wifly_thread(void *param) {
 	// some constants that all need to become parameters
 	char *ssid = (char *) "JAMMER01"; // "ADL"; // "JAMMER01";
 	char *file_name = (char *) "wifly.csv";
-	char *file_name2 = (char *) "wifly2.csv";
 	char *bearing_file_name = (char *) "bearing_calc_eor.csv";
 	char *bearing_mle_file_name = (char *) "bearing_calc_mle.csv";
-	// char *port = (char *) "/dev/ttyUSB0";
 
 	// connect to the first wifly
 	WiflySerial* wifly1 = new WiflySerial(verbose, wifly_port1);
 	if (wifly1->fd < 0) {
-		printf("Error opening wifly connection\n");
+		printf("[WIFLY] Error opening wifly connection\n");
 		return NULL;
 	}
 
-	// connect to the second wifly
-	WiflySerial* wifly2 = nullptr;
-	if (dual_wifly) {
-		wifly2 = new WiflySerial(verbose, wifly_port2);
-		if (wifly2->fd < 0) {
-			printf("Error opening wifly connection\n");
-			return NULL;
-		}
-	}
-
-	
 	/* Go into command mode */
 	wifly1->enter_commandmode();
-	if (dual_wifly) {
-		wifly2->enter_commandmode();
-	}
-
 
 	/* Open a file to write values to */
 	/* Appending values */
@@ -150,28 +134,16 @@ void *wifly_thread(void *param) {
 	if (wifly_file == NULL)
 	{
 		// TODO: figure out what we do want to return when there is an error
-		printf("Error opening wifly output file\n");
+		printf("[WIFLY] Error opening wifly file\n");
 		return NULL;
 	}
-
-
-	FILE *wifly_file2 = NULL;
-	if (dual_wifly) {
-		wifly_file2 = fopen(file_name2, "a");
-		if (wifly_file2 == NULL) {
-			// TODO: figure out what we do want to return when there is an error
-			printf("Error opening wifly2 output file\n");
-			return NULL;
-		}
-	}
-	
 
 	/* Open a file to write bearing calcs to */
 	FILE *bearing_file = fopen(bearing_file_name, "a");
 	if (bearing_file == NULL)
 	{
 		// TODO: figure out what we do want to return when there is an error
-		printf("Error opening bearing output file\n");
+		printf("[WIFLY] Error opening bearing output file\n");
 		return NULL;
 	}
 
@@ -179,7 +151,7 @@ void *wifly_thread(void *param) {
 	if (dual_wifly) {
 		bearing_file_mle = fopen(bearing_mle_file_name, "a");
 		if (bearing_file_mle == NULL) {
-			printf("Error opening bearing mle output file\n");
+			printf("[WIFLY] Error opening bearing mle output file\n");
 			return NULL;
 		}
 	}
@@ -188,7 +160,7 @@ void *wifly_thread(void *param) {
 	if (get_commands) {
 		bool loaded = load_move_commands();
 		if (!loaded) {
-			printf("Error loading move commands\n");
+			printf("[WIFLY] Error loading move commands\n");
 			return NULL;
 		}
 	}
@@ -221,15 +193,18 @@ void *wifly_thread(void *param) {
 		}
 		prev_loop_timestamp = current_loop_time;
 
+		printf("\n--------------------------------\n");
+		printf("[WIFLY] Top of wifly loop\n");
+
 		// handle hunt state changes required (sending of commands)
 		if (uavData->tracking_status.hunt_mode_state != current_hunt_state) {
 			
-			printf("State changed from %u to %u\n", current_hunt_state, uavData->tracking_status.hunt_mode_state);
+			printf("[WIFLY][STATE] State changed from %u to %u\n", current_hunt_state, uavData->tracking_status.hunt_mode_state);
 
 			// update the prev hunt state to be the "current" state and update the current state to be the new current state
 			prev_hunt_state = current_hunt_state;
 			current_hunt_state = uavData->tracking_status.hunt_mode_state;
-			printf("Prev State changed to: %u\n", prev_hunt_state);
+			printf("[WIFLY][STATE] Prev State changed to: %u\n", prev_hunt_state);
 
 			// update state information
 			update_state(current_hunt_state);
@@ -237,14 +212,9 @@ void *wifly_thread(void *param) {
 			// check to see if need to flag the next command to be sent
 			// NOTE: want to send to the command at the end of this iteration to use the calculated data
 			if (current_hunt_state == TRACKING_HUNT_STATE_WAIT) {
-				printf("flagging next command to be sent\n");
+				printf("[WIFLY][CMD] flagging next command to be sent\n");
 				send_next = true;
-
-				// TODO: maybe want to update the state immediately here...
-				// send_next_command(prev_hunt_state, uavData->tracking_status.hunt_mode_state, bearing_cc, max_rssi);
-			}
-
-			
+			}	
 		}
 
 		//-----------------------------------------------//
@@ -256,23 +226,14 @@ void *wifly_thread(void *param) {
 		// not sure what the variability is from here to later on
 
 		int dir_rssi = INT_MAX;
-		int omni_rssi = INT_MAX;
 
-		if (verbose) printf("scanning wifly 1...\n");
+		if (verbose) printf("[WIFLY] scanning wifly 1...\n");
 		int16_t heading_dir_pre = uavData->vfr_hud.heading;
 		dir_rssi = wifly1->scanrssi(ssid);
 		
-		if (verbose) printf("dir rssi recevied: %i\n", dir_rssi);
+		if (verbose) printf("[WIFLY] dir rssi recevied: %i\n", dir_rssi);
 		
 		int16_t heading_dir_post = uavData->vfr_hud.heading;
-
-		int16_t heading_omni_pre = uavData->vfr_hud.heading;
-		if (dual_wifly) {
-			if (verbose) printf("scanning wifly 2...\n");
-			omni_rssi = wifly2->scanrssi(ssid);
-		}
-		int16_t heading_omni_post = uavData->vfr_hud.heading;
-
 
 		//-----------------------------------------------//
 		// Rotation specific calculations
@@ -281,7 +242,7 @@ void *wifly_thread(void *param) {
 		/* check if we are in an official rotation */
 		if (rotating) {
 			if (!in_rotation) {
-				if (verbose) printf("rotation started\n");
+				printf("[WIFLY][STATE][ROT] rotation started\n");
 				// set our logic to mark we are now running the rotation logic
 				in_rotation = true;
 
@@ -292,13 +253,15 @@ void *wifly_thread(void *param) {
 				norm_gains.clear();
 			}
 
-			if (verbose) printf("rotating\n");
+			printf("[WIFLY][STATE][ROT] rotating\n");
 
 			// add heading and rssi to the correct arrays
 			angles.push_back((double) heading_dir_pre);
 			gains.push_back(dir_rssi);
 
-			if (dual_wifly) {
+			// if using both wiflies, need to see if there was an omni update
+			// may have a problem with omni value not matching the same location as the dir measurement
+			if (dual_wifly && omni_update_timestamp != prev_omni_update_timestamp) {
 				
 				// add omni rssi to the correct array
 				omni_gains.push_back(omni_rssi);
@@ -307,7 +270,7 @@ void *wifly_thread(void *param) {
 				norm_gains.push_back(gains2normgain(dir_rssi, omni_rssi));
 
 				// do constant calculation of bearing
-				if (verbose) printf("calculating bearing mle\n");
+				if (verbose) printf("[WIFLY] calculating bearing mle\n");
 				double curr_bearing_est = get_bearing_mle(angles, norm_gains);
 
 				// save the calculated mle bearing
@@ -322,22 +285,22 @@ void *wifly_thread(void *param) {
 
 		/* catch the end of a rotation in order to do the cc gain measurement */
 		if (!rotating && in_rotation) {
-			if (verbose) printf("ended rotation\n");
+			printf("[WIFLY][STATE][ROT] ended rotation\n");
 			in_rotation = false;
 
-			if (verbose) printf("calculating end of rotation bearing...\n");
+			if (verbose) printf("[WIFLY] calculating end of rotation bearing...\n");
 
 			// do bearing calculation at this point
 			bearing_cc = get_bearing_cc(angles, gains);
-			if (verbose) printf("calculated cc bearing: %f\n", bearing_cc);
+			if (verbose) printf("[WIFLY] calculated cc bearing: %f\n", bearing_cc);
 
 			// also do max bearing calculation
 			bearing_max = get_bearing_max(angles, gains);
-			if (verbose) printf("calculated max bearing: %f\n", bearing_max);
+			if (verbose) printf("[WIFLY] calculated max bearing: %f\n", bearing_max);
 
 			// get what the max value was for the rssi
 			max_rssi = get_max_rssi(gains);
-			if (verbose) printf("max rssi value: %i\n", max_rssi);
+			if (verbose) printf("[WIFLY] max rssi value: %i\n", max_rssi);
 
 			// save bearing cc to file (with important information)
 			fprintf(bearing_file, "%llu,%i,%i,%f,%f,%f,%i\n", uavData->sys_time_us.time_unix_usec,
@@ -347,7 +310,7 @@ void *wifly_thread(void *param) {
 			send_bearing_cc_message(bearing_cc, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
 
 			// send a mavlink message of the max bearing over the mle message for now
-			send_bearing_mle_message(bearing_max, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
+			// send_bearing_mle_message(bearing_max, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
 
 			// tell pixhawk we are finished with the rotation
 			// send_finish_command();
@@ -359,17 +322,10 @@ void *wifly_thread(void *param) {
 
 
 		/* write the directional atenna information */
-		printf("writing dir rssi to file: %i\n", dir_rssi);
+		printf("[WIFLY] writing dir rssi to file: %i\n", dir_rssi);
 		fprintf(wifly_file, "%llu,%u,%i,%i,%i,%i,%i,%f,%i\n",
 				uavData->sys_time_us.time_unix_usec, uavData->custom_mode, rotating, heading_dir_pre, heading_dir_post,
 				uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, dir_rssi);
-
-		/* write the omni measurement as needed */
-		if (dual_wifly) {
-			fprintf(wifly_file2, "%llu,%u,%i,%i,%i,%i,%i,%f,%i\n",
-				uavData->sys_time_us.time_unix_usec, uavData->custom_mode, rotating, heading_omni_pre, heading_omni_post,
-				uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, omni_rssi);
-		}
 
 		// send a mavlink message with the current rssi
 		send_rssi_message(dir_rssi, omni_rssi, heading_dir_pre, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
@@ -382,7 +338,7 @@ void *wifly_thread(void *param) {
 
 		// if sending the next command has been flagged, send the next command, using the calculated data
 		if (send_next) {
-			printf("calling to send the next command...\n");
+			printf("[WIFLY][CMD] calling to send the next command...\n");
 			send_next_command(prev_hunt_state, uavData->tracking_status.hunt_mode_state, bearing_max, max_rssi);
 			send_next = false;
 		}
@@ -398,9 +354,7 @@ void *wifly_thread(void *param) {
 	wifly1->end_serial();
 
 	if (dual_wifly) {
-		fclose(wifly_file2);
 		fclose(bearing_file_mle);
-		wifly2->end_serial();
 	}
 
 	return NULL;
