@@ -49,6 +49,9 @@ WiflySerial::~WiflySerial() {
 
 
 void WiflySerial::enter_commandmode() {
+
+	if (_verbose) printf("entering command mode...\n");
+
 	// First, we must make sure we are in command mode
 	// For now, let's assume we just booted up
 	write(fd, "exit\r", 5);
@@ -69,7 +72,7 @@ void WiflySerial::enter_commandmode() {
 int WiflySerial::scanrssi(char *ssid) {
 	if (_verbose) printf("scanning...\n");
 	char buf[1000];
-	write(fd, "scan 10\r", 8);
+	write(fd, "scan 50\r", 8);
 	usleep(1000000);
 	read(fd, buf, sizeof(buf));
 

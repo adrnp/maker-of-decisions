@@ -86,7 +86,9 @@ uint8_t MavlinkSerial::read_serial(mavlink_status_t *lastStatus, mavlink_message
 
 
 int MavlinkSerial::write_serial(mavlink_message_t &message) {
-	
+
+	if (_verbose) printf("writing to pixhawk...\n");
+
 	// buffer needed for mavlink msg and function
 	char buf[300];
 
@@ -98,6 +100,8 @@ int MavlinkSerial::write_serial(mavlink_message_t &message) {
 
 	// Wait until all data has been written
 	tcdrain(fd);
+
+	if (_verbose) printf("wrote message of length %u\n", len);
 
 	return len;
 
