@@ -60,10 +60,14 @@ float calculate_step_size() {
 	float prevStepSize = stepSizes[stepSizes.size() - 1];
 	float nextStepSize = prevStepSize;
 
-	if (abs(observedBearing[numObs-1] - observedBearing[numObs-2]) < BEARING_TOL) {
+	float difference = abs(observedBearing[numObs-1] - observedBearing[numObs-2]); 
+	printf("[NAIVE] difference is %f\n", difference);
+	if (difference < BEARING_TOL) {
+		printf("[NAIVE] step sizes within tolerance\n");
 		// double the step size
 		nextStepSize *= STEP_INCREASE_FACTOR;
 	} else {
+		printf("[NAIVE] step size not within tol\n");
 		// reset back to the smallest step size
 		nextStepSize = STEP_SMALL;
 	}
@@ -117,7 +121,7 @@ vector<float> calc_next_command_variable(double &bearing, int &rssi) {
 
 	float step = STEP_SMALL;
 	if (firstStep) {
-		step = false;
+		//step = false;
 	} else {
 		step = calculate_step_size();
 	}
