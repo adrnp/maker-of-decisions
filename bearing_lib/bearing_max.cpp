@@ -50,8 +50,8 @@ double calc_max_angle(double &angle1, double &angle2) {
 	}
 
 	// need to check if wrapping around 360
-	if (angle1 > 270.0 && angle2 < 90.0) {
-		angle1 -= 360.0;
+	if (angle2 > 270.0 && angle1 < 90.0) {
+		angle2 -= 360.0;
 		angle_max = (angle1 + angle2) / 2.0;
 
 		// bring it back to within [0, 360)
