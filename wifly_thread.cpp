@@ -50,6 +50,7 @@ bool moving = false;
 /* microsecond timestamp of the previous loop iteration */
 unsigned long prev_loop_timestamp = 0;
 
+unsigned long prev_omni_update_timestamp = 0;
 
 void update_state(uint8_t &new_state) {
 
@@ -114,10 +115,8 @@ void *wifly_thread(void *param) {
 	// some constants that all need to become parameters
 	char *ssid = (char *) "JAMMER01"; // "ADL"; // "JAMMER01";
 	char *file_name = (char *) "wifly.csv";
-	char *file_name2 = (char *) "wifly2.csv";
 	char *bearing_file_name = (char *) "bearing_calc_eor.csv";
 	char *bearing_mle_file_name = (char *) "bearing_calc_mle.csv";
-	// char *port = (char *) "/dev/ttyUSB0";
 
 	// connect to the first wifly
 	WiflySerial* wifly1 = new WiflySerial(verbose, wifly_port1);
@@ -126,23 +125,8 @@ void *wifly_thread(void *param) {
 		return NULL;
 	}
 
-	// connect to the second wifly
-	WiflySerial* wifly2 = nullptr;
-	if (dual_wifly) {
-		wifly2 = new WiflySerial(verbose, wifly_port2);
-		if (wifly2->fd < 0) {
-			printf("Error opening wifly connection\n");
-			return NULL;
-		}
-	}
-
-	
 	/* Go into command mode */
 	wifly1->enter_commandmode();
-	if (dual_wifly) {
-		wifly2->enter_commandmode();
-	}
-
 
 	/* Open a file to write values to */
 	/* Appending values */
@@ -153,18 +137,6 @@ void *wifly_thread(void *param) {
 		printf("Error opening wifly output file\n");
 		return NULL;
 	}
-
-
-	FILE *wifly_file2 = NULL;
-	if (dual_wifly) {
-		wifly_file2 = fopen(file_name2, "a");
-		if (wifly_file2 == NULL) {
-			// TODO: figure out what we do want to return when there is an error
-			printf("Error opening wifly2 output file\n");
-			return NULL;
-		}
-	}
-	
 
 	/* Open a file to write bearing calcs to */
 	FILE *bearing_file = fopen(bearing_file_name, "a");
@@ -256,7 +228,6 @@ void *wifly_thread(void *param) {
 		// not sure what the variability is from here to later on
 
 		int dir_rssi = INT_MAX;
-		int omni_rssi = INT_MAX;
 
 		if (verbose) printf("scanning wifly 1...\n");
 		int16_t heading_dir_pre = uavData->vfr_hud.heading;
@@ -265,14 +236,6 @@ void *wifly_thread(void *param) {
 		if (verbose) printf("dir rssi recevied: %i\n", dir_rssi);
 		
 		int16_t heading_dir_post = uavData->vfr_hud.heading;
-
-		int16_t heading_omni_pre = uavData->vfr_hud.heading;
-		if (dual_wifly) {
-			if (verbose) printf("scanning wifly 2...\n");
-			omni_rssi = wifly2->scanrssi(ssid);
-		}
-		int16_t heading_omni_post = uavData->vfr_hud.heading;
-
 
 		//-----------------------------------------------//
 		// Rotation specific calculations
@@ -298,7 +261,9 @@ void *wifly_thread(void *param) {
 			angles.push_back((double) heading_dir_pre);
 			gains.push_back(dir_rssi);
 
-			if (dual_wifly) {
+			// if using both wiflies, need to see if there was an omni update
+			// may have a problem with omni value not matching the same location as the dir measurement
+			if (dual_wifly && omni_update_timestamp != prev_omni_update_timestamp) {
 				
 				// add omni rssi to the correct array
 				omni_gains.push_back(omni_rssi);
@@ -347,7 +312,7 @@ void *wifly_thread(void *param) {
 			send_bearing_cc_message(bearing_cc, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
 
 			// send a mavlink message of the max bearing over the mle message for now
-			send_bearing_mle_message(bearing_max, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
+			// send_bearing_mle_message(bearing_max, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
 
 			// tell pixhawk we are finished with the rotation
 			// send_finish_command();
@@ -363,13 +328,6 @@ void *wifly_thread(void *param) {
 		fprintf(wifly_file, "%llu,%u,%i,%i,%i,%i,%i,%f,%i\n",
 				uavData->sys_time_us.time_unix_usec, uavData->custom_mode, rotating, heading_dir_pre, heading_dir_post,
 				uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, dir_rssi);
-
-		/* write the omni measurement as needed */
-		if (dual_wifly) {
-			fprintf(wifly_file2, "%llu,%u,%i,%i,%i,%i,%i,%f,%i\n",
-				uavData->sys_time_us.time_unix_usec, uavData->custom_mode, rotating, heading_omni_pre, heading_omni_post,
-				uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, omni_rssi);
-		}
 
 		// send a mavlink message with the current rssi
 		send_rssi_message(dir_rssi, omni_rssi, heading_dir_pre, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
@@ -398,9 +356,7 @@ void *wifly_thread(void *param) {
 	wifly1->end_serial();
 
 	if (dual_wifly) {
-		fclose(wifly_file2);
 		fclose(bearing_file_mle);
-		wifly2->end_serial();
 	}
 
 	return NULL;
