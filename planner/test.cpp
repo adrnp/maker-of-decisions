@@ -181,6 +181,35 @@ int test_pomdp()
 	b2mat = getb2mat();
 	printmat(b2mat);
 }
+int test_pomdp2()
+{
+	int rssi = 32.0; // test that shit
+	double bearing;
+	vector<vector<double> > b2mat;
+	pair<float, float> naxy;
+
+	bearing = 0.0;
+	naxy = get_next_pomdp_action(bearing, rssi);
+	printf("North = %.1f, East = %.1f\n", naxy.first,naxy.second);
+	b2mat = getb2mat();
+	printmat(b2mat);
+
+	//bearing = 257.0; // for naiive
+	/*
+	bearing = 260.0;
+	naxy = get_next_pomdp_action(bearing, rssi);
+	printf("North = %.1f, East = %.1f\n", naxy.first,naxy.second);
+	b2mat = getb2mat();
+	printmat(b2mat);
+
+	// just ignore for naiive
+	bearing = 240.0;
+	naxy = get_next_pomdp_action(bearing, rssi);
+	printf("North = %.1f, East = %.1f\n", naxy.first,naxy.second);
+	b2mat = getb2mat();
+	printmat(b2mat);
+	*/
+}
 
 
 
@@ -217,7 +246,7 @@ int main()
 	//cout << obs_probs[2] << endl;
 
 	//test_naiive();
-	test_pomdp();
+	test_pomdp2();
 	
 
 	/*

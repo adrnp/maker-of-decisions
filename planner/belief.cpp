@@ -249,6 +249,7 @@ pair<float, float> get_next_pomdp_action(double &bearing, int &rssi)
 	int obs = sanitize_obs(bearing); 
 	write_bearing(bearing);
 	belief_crash = update_belief(obs);
+	pomdpfile << "update complete" << endl;
 	if (belief_crash == 1)
 	{
 		pomdpfile << "BELIEF CRASH" << endl;
@@ -262,7 +263,9 @@ pair<float, float> get_next_pomdp_action(double &bearing, int &rssi)
 	}
 
 	//d_pair = action_naiive();
+	pomdpfile << "before action select" << endl;
 	d_pair = action_qmdp();
+	pomdpfile << "after action select" << endl;
 
 	return d_pair;
 }
