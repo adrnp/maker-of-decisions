@@ -117,6 +117,13 @@ void send_next_command(uint8_t &prev_state, uint8_t &new_state, double &bearing,
 						commands_pair = get_next_pomdp_action(bearing, rssi);
 						d_north = commands_pair.first;
 						d_east = commands_pair.second;
+
+						if (d_north == 1000.0) {
+							printf("[COMMANDER] sending finish command\n");
+							send_finish_command();
+							return;
+						}
+
 						break;
 				 }
 			 	 
