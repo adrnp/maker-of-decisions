@@ -121,7 +121,7 @@ void *wifly_thread(void *param) {
 	// connect to the first wifly
 	WiflySerial* wifly1 = new WiflySerial(verbose, wifly_port1);
 	if (wifly1->fd < 0) {
-		printf("Error opening wifly connection\n");
+		printf("[WIFLY] Error opening wifly connection\n");
 		return NULL;
 	}
 
@@ -134,7 +134,7 @@ void *wifly_thread(void *param) {
 	if (wifly_file == NULL)
 	{
 		// TODO: figure out what we do want to return when there is an error
-		printf("Error opening wifly output file\n");
+		printf("[WIFLY] Error opening wifly file\n");
 		return NULL;
 	}
 
@@ -143,7 +143,7 @@ void *wifly_thread(void *param) {
 	if (bearing_file == NULL)
 	{
 		// TODO: figure out what we do want to return when there is an error
-		printf("Error opening bearing output file\n");
+		printf("[WIFLY] Error opening bearing output file\n");
 		return NULL;
 	}
 
@@ -151,7 +151,7 @@ void *wifly_thread(void *param) {
 	if (dual_wifly) {
 		bearing_file_mle = fopen(bearing_mle_file_name, "a");
 		if (bearing_file_mle == NULL) {
-			printf("Error opening bearing mle output file\n");
+			printf("[WIFLY] Error opening bearing mle output file\n");
 			return NULL;
 		}
 	}
@@ -160,7 +160,7 @@ void *wifly_thread(void *param) {
 	if (get_commands) {
 		bool loaded = load_move_commands();
 		if (!loaded) {
-			printf("Error loading move commands\n");
+			printf("[WIFLY] Error loading move commands\n");
 			return NULL;
 		}
 	}
@@ -193,15 +193,18 @@ void *wifly_thread(void *param) {
 		}
 		prev_loop_timestamp = current_loop_time;
 
+		printf("\n--------------------------------\n");
+		printf("[WIFLY] Top of wifly loop\n");
+
 		// handle hunt state changes required (sending of commands)
 		if (uavData->tracking_status.hunt_mode_state != current_hunt_state) {
 			
-			printf("State changed from %u to %u\n", current_hunt_state, uavData->tracking_status.hunt_mode_state);
+			printf("[WIFLY][STATE] State changed from %u to %u\n", current_hunt_state, uavData->tracking_status.hunt_mode_state);
 
 			// update the prev hunt state to be the "current" state and update the current state to be the new current state
 			prev_hunt_state = current_hunt_state;
 			current_hunt_state = uavData->tracking_status.hunt_mode_state;
-			printf("Prev State changed to: %u\n", prev_hunt_state);
+			printf("[WIFLY][STATE] Prev State changed to: %u\n", prev_hunt_state);
 
 			// update state information
 			update_state(current_hunt_state);
@@ -209,14 +212,9 @@ void *wifly_thread(void *param) {
 			// check to see if need to flag the next command to be sent
 			// NOTE: want to send to the command at the end of this iteration to use the calculated data
 			if (current_hunt_state == TRACKING_HUNT_STATE_WAIT) {
-				printf("flagging next command to be sent\n");
+				printf("[WIFLY][CMD] flagging next command to be sent\n");
 				send_next = true;
-
-				// TODO: maybe want to update the state immediately here...
-				// send_next_command(prev_hunt_state, uavData->tracking_status.hunt_mode_state, bearing_cc, max_rssi);
-			}
-
-			
+			}	
 		}
 
 		//-----------------------------------------------//
@@ -229,11 +227,11 @@ void *wifly_thread(void *param) {
 
 		int dir_rssi = INT_MAX;
 
-		if (verbose) printf("scanning wifly 1...\n");
+		if (verbose) printf("[WIFLY] scanning wifly 1...\n");
 		int16_t heading_dir_pre = uavData->vfr_hud.heading;
 		dir_rssi = wifly1->scanrssi(ssid);
 		
-		if (verbose) printf("dir rssi recevied: %i\n", dir_rssi);
+		if (verbose) printf("[WIFLY] dir rssi recevied: %i\n", dir_rssi);
 		
 		int16_t heading_dir_post = uavData->vfr_hud.heading;
 
@@ -244,7 +242,7 @@ void *wifly_thread(void *param) {
 		/* check if we are in an official rotation */
 		if (rotating) {
 			if (!in_rotation) {
-				if (verbose) printf("rotation started\n");
+				printf("[WIFLY][STATE][ROT] rotation started\n");
 				// set our logic to mark we are now running the rotation logic
 				in_rotation = true;
 
@@ -255,7 +253,7 @@ void *wifly_thread(void *param) {
 				norm_gains.clear();
 			}
 
-			if (verbose) printf("rotating\n");
+			printf("[WIFLY][STATE][ROT] rotating\n");
 
 			// add heading and rssi to the correct arrays
 			angles.push_back((double) heading_dir_pre);
@@ -272,7 +270,7 @@ void *wifly_thread(void *param) {
 				norm_gains.push_back(gains2normgain(dir_rssi, omni_rssi));
 
 				// do constant calculation of bearing
-				if (verbose) printf("calculating bearing mle\n");
+				if (verbose) printf("[WIFLY] calculating bearing mle\n");
 				double curr_bearing_est = get_bearing_mle(angles, norm_gains);
 
 				// save the calculated mle bearing
@@ -287,22 +285,22 @@ void *wifly_thread(void *param) {
 
 		/* catch the end of a rotation in order to do the cc gain measurement */
 		if (!rotating && in_rotation) {
-			if (verbose) printf("ended rotation\n");
+			printf("[WIFLY][STATE][ROT] ended rotation\n");
 			in_rotation = false;
 
-			if (verbose) printf("calculating end of rotation bearing...\n");
+			if (verbose) printf("[WIFLY] calculating end of rotation bearing...\n");
 
 			// do bearing calculation at this point
 			bearing_cc = get_bearing_cc(angles, gains);
-			if (verbose) printf("calculated cc bearing: %f\n", bearing_cc);
+			if (verbose) printf("[WIFLY] calculated cc bearing: %f\n", bearing_cc);
 
 			// also do max bearing calculation
 			bearing_max = get_bearing_max(angles, gains);
-			if (verbose) printf("calculated max bearing: %f\n", bearing_max);
+			if (verbose) printf("[WIFLY] calculated max bearing: %f\n", bearing_max);
 
 			// get what the max value was for the rssi
 			max_rssi = get_max_rssi(gains);
-			if (verbose) printf("max rssi value: %i\n", max_rssi);
+			if (verbose) printf("[WIFLY] max rssi value: %i\n", max_rssi);
 
 			// save bearing cc to file (with important information)
 			fprintf(bearing_file, "%llu,%i,%i,%f,%f,%f,%i\n", uavData->sys_time_us.time_unix_usec,
@@ -324,7 +322,7 @@ void *wifly_thread(void *param) {
 
 
 		/* write the directional atenna information */
-		printf("writing dir rssi to file: %i\n", dir_rssi);
+		printf("[WIFLY] writing dir rssi to file: %i\n", dir_rssi);
 		fprintf(wifly_file, "%llu,%u,%i,%i,%i,%i,%i,%f,%i\n",
 				uavData->sys_time_us.time_unix_usec, uavData->custom_mode, rotating, heading_dir_pre, heading_dir_post,
 				uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, dir_rssi);
@@ -340,7 +338,7 @@ void *wifly_thread(void *param) {
 
 		// if sending the next command has been flagged, send the next command, using the calculated data
 		if (send_next) {
-			printf("calling to send the next command...\n");
+			printf("[WIFLY][CMD] calling to send the next command...\n");
 			send_next_command(prev_hunt_state, uavData->tracking_status.hunt_mode_state, bearing_max, max_rssi);
 			send_next = false;
 		}

@@ -157,8 +157,8 @@ void quit_handler(int sig) {
 
 int main(int argc, char **argv) {
 
-	cout << "starting...\n";
-	printf("printf starting...\n");
+	cout << "[MOD] starting...\n";
+	printf("[MOD] printf starting...\n");
 
 	// ids of the threads
 	pthread_t readId;
@@ -177,17 +177,17 @@ int main(int argc, char **argv) {
 
 	int baudrate = 115200;
 
-	cout << "reading arguments\n";
+	cout << "[MOD] reading arguments\n";
 	// read the input arguments
 	read_arguments(argc, argv, &uart_name, &baudrate, &wifly_port1, &wifly_port2);
 
 	// open and configure the com port being used for communication
 	// begin_serial(uart_name, baudrate);
-	cout << "creating new mavlink serial object\n";
+	cout << "[MOD] creating new mavlink serial object\n";
 	pixhawk = new MavlinkSerial(verbose, uart_name, baudrate);
 
-	cout << "pixhawk fd " << pixhawk->fd << "\n";
-	cout << "pixhawk get fd " << pixhawk->get_fd() << "\n";
+	cout << "[MOD] pixhawk fd " << pixhawk->fd << "\n";
+	cout << "[MOD] pixhawk get fd " << pixhawk->get_fd() << "\n";
 
 	// also create connection to df arduino if needed here
 	if (emily) {
@@ -199,22 +199,22 @@ int main(int argc, char **argv) {
 
 
 	// need to create read and write threads
-	cout<< "handling threads\n";
+	cout<< "[MOD] handling threads\n";
 	pthread_create(&readId, NULL, read_thread, (void *)&uav);
 	
 	// create a thread for the wifly stuff (only if want wifly running)
 	if (!nowifly && !phased_array) {
-		printf("starting wifly thread...\n");
+		printf("[MOD] starting wifly thread...\n");
 		pthread_create(&wiflyId, NULL, wifly_thread, (void *)&uav);
 	}
 
 	if (dual_wifly) {
-		printf("starting wifly2 thread...\n");
+		printf("[MOD] starting wifly2 thread...\n");
 		pthread_create(&wifly2Id, NULL, wifly2_thread, (void *) &uav);
 	}
 
 	if (phased_array) {
-		printf("starting dirk antenna thread...\n");
+		printf("[MOD] starting dirk antenna thread...\n");
 		pthread_create(&phasedId, NULL, dirk_thread, (void *)&uav);
 	}
 
@@ -232,9 +232,7 @@ int main(int argc, char **argv) {
 		pthread_join(phasedId, NULL);
 	}
 	
-	// pthread_join(wiflyId, NULL);
-	// pthread_join(phasedId, NULL);
-
+	// close the pixhawk connection
 	pixhawk->end_serial();
 
 	return 0;
