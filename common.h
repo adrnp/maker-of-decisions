@@ -56,4 +56,11 @@ extern float flight_alt;
 /* stuff needed for emily antenna */
 extern bool emily;
 
+/* variables for dual wifly */
+extern unsigned long omni_update_timestamp;
+extern int omni_rssi;
+extern int16_t heading_omni_pre;
+extern int16_t heading_omni_post;
+
+
 #endif /* COMMON_H_ */

@@ -8,6 +8,7 @@
 
 #include "read_thread.h"
 #include "wifly_thread.h"
+#include "wifly2_thread.h"
 #include "mod.h"
 #include "dirk_thread.h"
 
@@ -156,6 +157,7 @@ int main(int argc, char **argv) {
 	pthread_t readId;
 	pthread_t wiflyId;
 	pthread_t phasedId;
+	pthread_t wifly2Id;
 
 	/* default values for arguments */
 	char *uart_name = (char*)"/dev/ttyUSB1";
@@ -199,6 +201,11 @@ int main(int argc, char **argv) {
 		pthread_create(&wiflyId, NULL, wifly_thread, (void *)&uav);
 	}
 
+	if (dual_wifly) {
+		printf("starting wifly2 thread...\n");
+		pthread_create(&wifly2Id, NULL, wifly2_thread, (void *) &uav);
+	}
+
 	if (phased_array) {
 		printf("starting dirk antenna thread...\n");
 		pthread_create(&phasedId, NULL, dirk_thread, (void *)&uav);
@@ -208,6 +215,10 @@ int main(int argc, char **argv) {
 	
 	if (!nowifly && !phased_array) {
 		pthread_join(wiflyId, NULL);
+	}
+
+	if (dual_wifly) {
+		pthread_join(wifly2Id, NULL);
 	}
 
 	if (phased_array) {
