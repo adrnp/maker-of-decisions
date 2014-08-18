@@ -5,14 +5,9 @@
  *      Author: Adrien Perkins
  */
 
-// include mavlink message structure ... should move it over to .h
-#include <jager/mavlink.h>
-
-
 #include "mod.h"
 #include "port_setup.h"
 #include "read_thread.h"
-#include "read_thread.cpp"
 
 using std::string;
 using namespace std;

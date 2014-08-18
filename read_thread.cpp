@@ -1,7 +1,6 @@
-#include <jager/mavlink.h>
 
-
-#include "mod.h"
+#include "common_vars.h"
+#include "common_include.h"
 #include "read_thread.h"
 
 using std::string;
