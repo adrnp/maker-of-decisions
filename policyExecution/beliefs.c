@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "constants.h"
 #include "policyExecution.h"
 
 int initBelief(double *belief, int xStart, int yStart)
