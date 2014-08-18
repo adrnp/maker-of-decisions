@@ -8,8 +8,6 @@
 #ifndef READ_THREAD_H_
 #define READ_THREAD_H_
 
-bool heartbeatReceived = false;
-
 
 // list of functions
 void parse_heartbeat(const mavlink_message_t *message, MAVInfo *uavRead);
@@ -33,6 +31,9 @@ void parse_tracking_status(const mavlink_message_t *message, MAVInfo *uavRead);
 void parse_current_cmd_id(const mavlink_message_t *message, MAVInfo *uavRead);
 void parse_last_cmd_finished_id(const mavlink_message_t *message, MAVInfo *uavRead);
 
+
+// the most important function
+void *serial_read(void *param);
 
 
 #endif /* READ_THREAD_H_ */
