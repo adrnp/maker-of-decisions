@@ -29,7 +29,7 @@ int fd;
 // function definitions
 
 /* open and setup the com port */
-void begin_serial(const char* &uart_name, const char* &buadrate);
+void begin_serial( char* &uart_name, const int &buadrate);
 
 /* close out the serial connection */
 void end_serial();

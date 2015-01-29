@@ -15,7 +15,7 @@
  * function to open and configure the com port to be used.
  *
  */
-void begin_serial(const char* &uart_name, const char &baudrate) {
+void begin_serial( char* &uart_name, const int &baudrate) {
 
 	// display status as needed
 	if (verbose) printf("Trying to connect to %s.. ", uart_name);
