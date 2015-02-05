@@ -16,6 +16,7 @@
 #include <string.h>
 #include <inttypes.h>
 #include <fstream>
+
 // Serial includes
 #include <stdio.h>   /* Standard input/output definitions */
 #include <string.h>  /* String function definitions */
@@ -23,6 +24,7 @@
 #include <fcntl.h>   /* File control definitions */
 #include <errno.h>   /* Error number definitions */
 #include <termios.h> /* POSIX terminal control definitions */
+#
 #ifdef __linux
 #include <sys/ioctl.h>
 #endif
