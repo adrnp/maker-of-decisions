@@ -16,8 +16,12 @@ using namespace std;
 
 // variable declarations
 
-bool verbose = false;  // default verbose to false
-bool debug = false;    // default debug to false
+bool verbose = false;	// default verbose to false
+bool debug = false;		// default debug to false
+
+MAVInfo uav;			// object to hold all the state information on the UAV
+
+int RUNNING_FLAG = 1;	// default the read and write threads to be running
 
 
 /**
