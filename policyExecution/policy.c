@@ -11,7 +11,6 @@
 #include <math.h>
 #include <string.h>		/* For strcmp */
 
-#include "constants.h"
 #include "policyExecution.h"
 
 #define TESTING 1

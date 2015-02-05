@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "constants.h"
 #include "policyExecution.h"
 
 double transitionFunction(int s_prime[], int s[], int a)

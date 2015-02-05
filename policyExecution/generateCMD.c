@@ -1,6 +1,7 @@
+#include "policyExecution.h"
 
 /* Return a command structure */
-int generateCMD(double *belief)
+int generateCommand(double *belief)
 {
 	/* First, get observation */
 	int obs;

@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "constants.h"
 #include "policyExecution.h"
 
 // In the julia version:
