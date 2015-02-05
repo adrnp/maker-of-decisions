@@ -32,6 +32,10 @@ void parse_current_cmd_id(const mavlink_message_t *message, MAVInfo *uavRead);
 void parse_last_cmd_finished_id(const mavlink_message_t *message, MAVInfo *uavRead);
 
 
+// handle the incoming message (save data and trigger events as needed
+void handle_message(const mavlink_message_t &message, MAVInfo *uavRead);
+
+
 // the most important function
 void *serial_read(void *param);
 

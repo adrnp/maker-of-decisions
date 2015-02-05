@@ -1,6 +1,5 @@
-
-#include "common_vars.h"
-#include "common_include.h"
+ 
+#include "common.h"
 #include "read_thread.h"
 
 using std::string;
@@ -110,6 +109,14 @@ void parse_last_cmd_finished_id(const mavlink_message_t *message, MAVInfo *uavRe
 
 
 
+void handle_message(const mavlink_message_t &message, MAVInfo *uavRead) {
+
+}
+
+
+
+
+
 /**
  * function to read from the serial device
  * right now only looks for the apnt_gps_status message and prints out
@@ -117,37 +124,50 @@ void parse_last_cmd_finished_id(const mavlink_message_t *message, MAVInfo *uavRe
  */
 void *serial_read(void *param) {
 
+	// retrieve the MAVInfo struct that is sent to this function as a parameter
 	struct MAVInfo *uavRead = (struct MAVInfo *)param;
 
 
+	// variables to hold information about the connection health
 	mavlink_status_t lastStatus;
-	lastStatus.packet_rx_drop_count = 0;
+	lastStatus.packet_rx_drop_count = 0;	// initialize to 0 just for the first pass
 
-	// Blocking wait for new data
-	while (!closeAll)
-	{
+	// run this infinite loop (as long as RUNNING_FLAG == 1) which reads messages as they come in
+	while (RUNNING_FLAG) {
 
-		uint8_t cp;
-		mavlink_message_t message;
-		mavlink_status_t status;
-		uint8_t msgReceived = false;
+		// variables needed for the message reading
+		uint8_t cp;					// not sure
+		mavlink_message_t message;	// the message itself
+		mavlink_status_t status;	// current message status
+		uint8_t msgReceived = false; // whether or not a message was correctly received
 
+		// read in from the file
 		if (read(fd, &cp, 1) > 0) {
+
 			// Check if a message could be decoded, return the message in case yes
 			msgReceived = mavlink_parse_char(MAVLINK_COMM_1, cp, &message, &status);
-			if (lastStatus.packet_rx_drop_count != status.packet_rx_drop_count)
-			{
+
+			// check the packet drop count to see if there was a packet dropped during this message reading
+			if (lastStatus.packet_rx_drop_count != status.packet_rx_drop_count) {
+
+				// print out some error information containing dropped packet indo
 				if (verbose || debug) printf("ERROR: DROPPED %d PACKETS\n", status.packet_rx_drop_count);
-				if (debug)
-				{
+				
+				// print out the characters of the packets themselves
+				if (debug) {
 					unsigned char v=cp;
 					fprintf(stderr,"%02x ", v);
 				}
 			}
+
+			// update the last message status 
 			lastStatus = status;
-		}
-		else {
-			if (!silent) fprintf(stderr, "ERROR: Could not read from fd %d\n", fd);
+
+		} else { // means unable to read from the serial device
+
+			// print out error as needed
+			if (verbose) fprintf(stderr, "ERROR: Could not read from fd %d\n", fd);
+
 		}
 
 		// If a message could be decoded, handle it
