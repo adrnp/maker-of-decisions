@@ -29,6 +29,10 @@
 /* read in the command line arguments */
 void read_arguments(int argc, char **argv, char **uart_name, char *baudrate);
 
+/* quit using CTRL-C */
+void quit_handler(int sig);
+
+
 /* main function */
 int main(int argc, char **argv);
 

@@ -81,6 +81,17 @@ void read_arguments(int argc, char **argv, char **uart_name, int *baudrate) {
 }
 
 
+void quit_handler(int sig) {
+
+	// notify user of termination
+	printf("Terminating script\n");
+
+	// set the running flag to 0 to kill all loops
+	RUNNING_FLAG = 0;
+
+}
+
+
 
 int main(int argc, char **argv) {
 
@@ -96,6 +107,9 @@ int main(int argc, char **argv) {
 
 	// open and configure the com port being used for communication
 	begin_serial(uart_name, baudrate);
+
+	// setup termination using CRT-C
+	signal(SIGINT, quit_handler);
 
 
 	// need to create read and write threads
