@@ -1,18 +1,15 @@
 all: mod
 
-mod: mod.o port_setup.o read_thread.o
-	g++ mod.o port_setup.o serial_port.o -o mod -pthread
+mod: mod.o serial_port.o read_thread.o
+	g++ mod.o serial_port.o -o mod -pthread
 
-mod.o: mod.h mod.cpp port_setup.h read_thread.h mav_struct.h common_vars.h common_include.h
+mod.o: mod.h mod.cpp serial_port.h read_thread.h mav_struct.h common.h
 	g++ -I mavlink -Wall -c mod.cpp
 
-port_setup.o: port_setup.cpp port_setup.h
-	g++ -c -Wall port_setup.cpp
-
 serial_port.o: serial_port.cpp serial_port.h
-	g++ -c -Wall serial_port.cpp
+	g++ -c -I mavlink -Wall serial_port.cpp
 
-read_thread.o: read_thread.cpp read_thread.h common_vars.h common_include.h
+read_thread.o: read_thread.cpp read_thread.h
 	g++ -c -I mavlink -Wall read_thread.cpp
 
 clean:
