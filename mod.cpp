@@ -4,11 +4,11 @@
  *  Created on: August, 2014
  *      Author: Adrien Perkins
  */
-
-#include "mod.h"
-#include "serial_port.h"
-
 #include "common.h"
+
+#include "serial_port.h"
+#include "read_thread.h"
+#include "mod.h"
 
 using std::string;
 using namespace std;
@@ -89,6 +89,8 @@ void quit_handler(int sig) {
 	// set the running flag to 0 to kill all loops
 	RUNNING_FLAG = 0;
 
+	end_serial();
+
 }
 
 
@@ -113,12 +115,11 @@ int main(int argc, char **argv) {
 
 
 	// need to create read and write threads
-	/*
-	pthread_create(&readId, NULL, serial_read, (void *)&uav);
-
+	
+	pthread_create(&readId, NULL, read_thread, (void *)&uav);
 
 	pthread_join(readId, NULL);
-	*/
+	
 
 	end_serial();
 
