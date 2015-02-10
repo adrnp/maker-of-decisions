@@ -1,9 +1,39 @@
- 
+
+// Standard includes
+#include <iostream>
+#include <cstdlib>
+#include <unistd.h>
+#include <cmath>
+#include <string.h>
+#include <inttypes.h>
+#include <fstream>
+
+// Serial includes
+#include <stdio.h>   /* Standard input/output definitions */
+#include <string.h>  /* String function definitions */
+#include <unistd.h>  /* UNIX standard function definitions */
+#include <fcntl.h>   /* File control definitions */
+#include <errno.h>   /* Error number definitions */
+#include <termios.h> /* POSIX terminal control definitions */
+#
+#ifdef __linux
+#include <sys/ioctl.h>
+#endif
+
+// Latency Benchmarking
+#include <sys/time.h>
+#include <time.h>
+
+
 #include "common.h"
 #include "read_thread.h"
+#include "serial_port.h"
 
 using std::string;
 using namespace std;
+
+/* whether or not we have received a heartbeat from the pixhawk */
+bool heartbeatReceived = false;
 
 
 void parse_heartbeat(const mavlink_message_t *message, MAVInfo *uavRead) {
@@ -22,6 +52,7 @@ void parse_heartbeat(const mavlink_message_t *message, MAVInfo *uavRead) {
 	heartbeatReceived = true;
 }
 
+/*
 void parse_sys_status(const mavlink_message_t *message, MAVInfo *uavRead) {
 	mavlink_sys_status_t sysStatus;
 	mavlink_msg_sys_status_decode(message, &sysStatus);
@@ -106,13 +137,144 @@ void parse_last_cmd_finished_id(const mavlink_message_t *message, MAVInfo *uavRe
 
 
 }
+*/
 
 
+void handle_message(const mavlink_message_t *message, MAVInfo *uavRead) {
 
-void handle_message(const mavlink_message_t &message, MAVInfo *uavRead) {
 
+	switch (message->msgid)
+	{
+		//normal messages
+		case MAVLINK_MSG_ID_HEARTBEAT: // #0
+		{
+			parse_heartbeat(message, uavRead);
+			break;
+		}
+		case MAVLINK_MSG_ID_HIGHRES_IMU:
+		{
+			mavlink_msg_highres_imu_decode(message, &(uavRead->highres_imu));
+			break;
+		}
+		case MAVLINK_MSG_ID_ATTITUDE:
+		{
+			mavlink_msg_attitude_decode(message, &(uavRead->attitude));
+
+			// cout << "heading: " << uavRead->attitude.yaw*180/3.14 << "\n";
+			break;
+		}
+		case MAVLINK_MSG_ID_VFR_HUD:
+		{
+			mavlink_msg_vfr_hud_decode(message, &(uavRead->vfr_hud));
+
+			cout << "heading: " << uavRead->vfr_hud.heading << "\n";
+			break;
+		}
+		case MAVLINK_MSG_ID_GPS_RAW_INT:
+		{
+			// XXX: not interesting for now
+			break;
+		}
+		/*
+		case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:
+		{
+			parse_global_position_int(&message, uavRead);
+			break;
+		}
+		case MAVLINK_MSG_ID_POSITION_TARGET_GLOBAL_INT:
+		{
+			parse_gps_setpoint(&message, uavRead);
+			break;
+		}
+		case MAVLINK_MSG_ID_ATTITUDE_TARGET:
+		{
+			parse_rpwt_setpoint(&message, uavRead);
+			break;
+		} */
+		
+		// tracking specific messages
+			/*
+		case MAVLINK_MSG_ID_TRACKING_STATUS:
+		{
+			parse_tracking_status(&message, uavRead);
+
+			break;
+		}
+		case MAVLINK_MSG_ID_TRACKING_CMD:
+		{
+			parse_tracking_cmd(&message, uavRead);
+			break;
+		}
+		case MAVLINK_MSG_ID_HUNT_MISSION_CURRENT:
+		{
+			parse_current_cmd_id(&message, uavRead);
+			break;
+		}
+		case MAVLINK_MSG_ID_HUNT_MISSION_REACHED:
+		{
+			parse_last_cmd_finished_id(&message, uavRead);
+			break;
+		}
+		case MAVLINK_MSG_ID_SYS_STATUS:
+		{
+			parse_sys_status(&message, uavRead);
+			break;
+		} // TODO add all the needed stuff for louis
+		*/
+
+		/* // COMMENTING OUT APNT MESSAGES FOR NOW
+		case MAVLINK_MSG_ID_APNT_GPS_STATUS:
+		{
+			parse_apnt_gps_status(&message, uavRead);
+			break;
+		}
+		case MAVLINK_MSG_ID_APNT_SITE_STATUS:
+		{
+			parse_apnt_site_status(&message, uavRead);
+			break;
+		}
+		*/
+	} // end of switch
 }
 
+
+uint8_t read_from_serial(mavlink_status_t *lastStatus, mavlink_message_t *message) {
+	// variables needed for the message reading
+	uint8_t cp;					// not sure
+	mavlink_status_t status;	// current message status
+	uint8_t msgReceived = false; // whether or not a message was correctly received
+
+	// read in from the file
+	if (read(fd, &cp, 1) > 0) {
+
+		// Check if a message could be decoded, return the message in case yes
+		msgReceived = mavlink_parse_char(MAVLINK_COMM_1, cp, message, &status);
+
+		// check the packet drop count to see if there was a packet dropped during this message reading
+		if (lastStatus->packet_rx_drop_count != status.packet_rx_drop_count) {
+
+			// print out some error information containing dropped packet indo
+			if (verbose || debug) printf("ERROR: DROPPED %d PACKETS\n", status.packet_rx_drop_count);
+			
+			// print out the characters of the packets themselves
+			if (debug) {
+				unsigned char v=cp;
+				fprintf(stderr,"%02x ", v);
+			}
+		}
+
+		// update the last message status 
+		*lastStatus = status;
+
+	} else { // means unable to read from the serial device
+
+		// print out error as needed
+		if (verbose) fprintf(stderr, "ERROR: Could not read from fd %d\n", fd);
+	}
+
+	// return whether or not the message was received
+	return msgReceived;
+}
 
 
 
@@ -122,7 +284,7 @@ void handle_message(const mavlink_message_t &message, MAVInfo *uavRead) {
  * right now only looks for the apnt_gps_status message and prints out
  * the current status (which happens to also be sent from this script)
  */
-void *serial_read(void *param) {
+void *read_thread(void *param) {
 
 	// retrieve the MAVInfo struct that is sent to this function as a parameter
 	struct MAVInfo *uavRead = (struct MAVInfo *)param;
@@ -136,39 +298,10 @@ void *serial_read(void *param) {
 	while (RUNNING_FLAG) {
 
 		// variables needed for the message reading
-		uint8_t cp;					// not sure
 		mavlink_message_t message;	// the message itself
-		mavlink_status_t status;	// current message status
-		uint8_t msgReceived = false; // whether or not a message was correctly received
-
-		// read in from the file
-		if (read(fd, &cp, 1) > 0) {
-
-			// Check if a message could be decoded, return the message in case yes
-			msgReceived = mavlink_parse_char(MAVLINK_COMM_1, cp, &message, &status);
-
-			// check the packet drop count to see if there was a packet dropped during this message reading
-			if (lastStatus.packet_rx_drop_count != status.packet_rx_drop_count) {
-
-				// print out some error information containing dropped packet indo
-				if (verbose || debug) printf("ERROR: DROPPED %d PACKETS\n", status.packet_rx_drop_count);
-				
-				// print out the characters of the packets themselves
-				if (debug) {
-					unsigned char v=cp;
-					fprintf(stderr,"%02x ", v);
-				}
-			}
-
-			// update the last message status 
-			lastStatus = status;
-
-		} else { // means unable to read from the serial device
-
-			// print out error as needed
-			if (verbose) fprintf(stderr, "ERROR: Could not read from fd %d\n", fd);
-
-		}
+		
+		// read from serial, if message received, will be written to message variable
+		uint8_t msgReceived = read_from_serial(&lastStatus, &message);
 
 		// If a message could be decoded, handle it
 		// TODO: only need to do this once
@@ -179,86 +312,8 @@ void *serial_read(void *param) {
 				uavRead->compId = message.compid;
 			}
 
-
-			switch (message.msgid)
-			{
-			case MAVLINK_MSG_ID_HEARTBEAT: // #0
-			{
-				parse_heartbeat(&message, uavRead);
-				break;
-			}
-			case MAVLINK_MSG_ID_APNT_GPS_STATUS:
-			{
-				parse_apnt_gps_status(&message, uavRead);
-				break;
-			}
-			case MAVLINK_MSG_ID_APNT_SITE_STATUS:
-			{
-				parse_apnt_site_status(&message, uavRead);
-				break;
-			}
-			case MAVLINK_MSG_ID_TRACKING_STATUS:
-			{
-				parse_tracking_status(&message, uavRead);
-
-				break;
-			}
-			case MAVLINK_MSG_ID_TRACKING_CMD:
-			{
-				parse_tracking_cmd(&message, uavRead);
-				break;
-			}
-			case MAVLINK_MSG_ID_HUNT_MISSION_CURRENT:
-			{
-				parse_current_cmd_id(&message, uavRead);
-				break;
-			}
-			case MAVLINK_MSG_ID_HUNT_MISSION_REACHED:
-			{
-				parse_last_cmd_finished_id(&message, uavRead);
-				break;
-			}
-			case MAVLINK_MSG_ID_SYS_STATUS:
-			{
-				parse_sys_status(&message, uavRead);
-				break;
-			} // TODO add all the needed stuff for louis
-			case MAVLINK_MSG_ID_HIGHRES_IMU:
-			{
-				parse_highres_imu(&message, uavRead);
-				break;
-			}
-			case MAVLINK_MSG_ID_ATTITUDE:
-			{
-				parse_attitude(&message, uavRead);
-				break;
-			}
-			case MAVLINK_MSG_ID_VFR_HUD:
-			{
-				parse_vfr_hud(&message, uavRead);
-				break;
-			}
-			case MAVLINK_MSG_ID_GPS_RAW_INT:
-			{
-				// XXX: not interesting for now
-				break;
-			}
-			case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:
-			{
-				parse_global_position_int(&message, uavRead);
-				break;
-			}
-			case MAVLINK_MSG_ID_GLOBAL_POSITION_SETPOINT_INT:
-			{
-				parse_gps_setpoint(&message, uavRead);
-				break;
-			}
-			case MAVLINK_MSG_ID_ROLL_PITCH_YAW_THRUST_SETPOINT:
-			{
-				parse_rpwt_setpoint(&message, uavRead);
-				break;
-			}
-			} // end of switch
+			// handle what need to happen with the message
+			handle_message(&message, uavRead);	
 		}
 	}
 

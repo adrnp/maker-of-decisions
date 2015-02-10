@@ -13,6 +13,7 @@
 void parse_heartbeat(const mavlink_message_t *message, MAVInfo *uavRead);
 
 // default mavlink info
+/*
 void parse_sys_status(const mavlink_message_t *message, MAVInfo *uavRead);
 void parse_highres_imu(const mavlink_message_t *message, MAVInfo *uavRead);
 void parse_attitude(const mavlink_message_t *message, MAVInfo *uavRead);
@@ -30,14 +31,20 @@ void parse_tracking_status(const mavlink_message_t *message, MAVInfo *uavRead);
 
 void parse_current_cmd_id(const mavlink_message_t *message, MAVInfo *uavRead);
 void parse_last_cmd_finished_id(const mavlink_message_t *message, MAVInfo *uavRead);
-
+*/
 
 // handle the incoming message (save data and trigger events as needed
 void handle_message(const mavlink_message_t &message, MAVInfo *uavRead);
 
 
+/* read from the serial port to get message. 
+ *  Will return true if got message, false otherwise
+ */
+uint8_t read_from_serial(mavlink_status_t *lastStatus, mavlink_message_t *message);
+
+
 // the most important function
-void *serial_read(void *param);
+void *read_thread(void *param);
 
 
 #endif /* READ_THREAD_H_ */
