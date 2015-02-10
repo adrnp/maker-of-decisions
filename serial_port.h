@@ -20,12 +20,6 @@
  #include <cstdlib>
 
 
-// variables to be accessible by other functions
-
-/** id of the serial port that has been opened and that want to access **/
-int fd;
-
-
 // function definitions
 
 /* open and setup the com port */

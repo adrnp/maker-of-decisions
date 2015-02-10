@@ -10,6 +10,11 @@
 #include "common.h"			// set of common variables to be used throughout
 
 
+// variables to be accessible by other functions
+/** id of the serial port that has been opened and that want to access **/
+int fd;
+
+
 
 /**
  * function to open and configure the com port to be used.
