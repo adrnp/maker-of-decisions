@@ -49,7 +49,7 @@ struct MAVInfo {
 	// structures that contain information on position (raw, filtered and NED positions)
 	mavlink_gps_raw_int_t gps_raw;
 	mavlink_global_position_int_t gps_position;
-	mavlink_local_position_NED local_ned;
+	mavlink_local_position_ned_t local_ned;
 
 
 	// useful battery info

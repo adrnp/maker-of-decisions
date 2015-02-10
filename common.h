@@ -12,6 +12,8 @@
 #ifndef COMMON_H_
 #define COMMON_H_
 
+ #include "mav_struct.h"
+
 
 /** boolean to determine whether or not to show all outputs */
 extern bool verbose;
