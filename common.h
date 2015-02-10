@@ -27,6 +27,13 @@ extern MAVInfo uav;
 /** flag to determine whether or not the read and write should be running */
 extern int RUNNING_FLAG;
 
+/** the file descriptor for the serial port connection */
+// currently here, but may move to have all serial operations 
+// be in the same class.
+// hesitating on that, as don't know how that will work out with 
+// potentially have multiple threads reading and writing....
+extern int fd;
+
 
 
 
