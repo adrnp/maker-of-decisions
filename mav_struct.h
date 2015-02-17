@@ -28,12 +28,12 @@ struct MAVInfo {
 	// mavlink_apnt_site_status_t apnt_site_status;
 
 	// tracking info (NOT NEEDED FOR LOUIS)
-	// mavlink_tracking_cmd_t last_tracking_cmd;
-	// mavlink_tracking_status_t tracking_status;
+	mavlink_tracking_cmd_t last_tracking_cmd;
+	mavlink_tracking_status_t tracking_status;
 
 	// cmd info
-	// uint16_t last_cmd_finished_id;
-	// uint16_t current_cmd_id;
+	uint16_t last_cmd_finished_id;
+	uint16_t current_cmd_id;
 
 	// structures that contain information on the attitude of the vehicle
 	mavlink_highres_imu_t highres_imu;
@@ -43,7 +43,7 @@ struct MAVInfo {
 	
 	// structures that contain setpoint information (attitude and position)
 	// setpoints are targets the vehicle is trying to hit (e.g. attitude setpoint is the desired vehicle attitude)
-	mavlink_attitude_target_t attitude_targer;
+	mavlink_attitude_target_t attitude_target;
 	mavlink_position_target_global_int_t position_target_gps;
 
 	// structures that contain information on position (raw, filtered and NED positions)
