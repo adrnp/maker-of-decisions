@@ -11,6 +11,12 @@
 #include "wifly_thread.h"
 
 
+int start_connection(char *port)
+{
+	int fd = open(port, O_RDWR | O_NOCTTY | O_NDELAY);
+	return fd;
+}
+
 int wifly_connect(char *port) {
 	
 	/* Start the connection to the WiFly */
@@ -36,9 +42,9 @@ void *wifly_thread(void *param) {
 	
 	// some constants that all need to become parameters
 	int num_samples = 1;
-	char *ssid = "JAMMER01";
-	char *file_name = "wifly.csv";
-	char *port = "/dev/ttyUSB0";
+	char *ssid = (char *) "JAMMER01";
+	char *file_name = (char *) "wifly.csv";
+	char *port = (char *) "/dev/ttyUSB0";
 	
 	// connect to the wifly
 	int wifly_fd = wifly_connect(port);
@@ -49,7 +55,7 @@ void *wifly_thread(void *param) {
 	/* Open a file to write values to */
 	/* Appending values */
 	FILE *wifly_file = fopen(file_name, "a");
-	if (f == NULL)
+	if (wifly_file == NULL)
 	{
 		// TODO: figure out what we do want to return when there is an error
 		printf("Error opening output file\n");
@@ -63,7 +69,7 @@ void *wifly_thread(void *param) {
 		/* Scan values to this file */
 		/* Add degree at which you measure first */
 		fprintf(wifly_file, "%i,", uavData->vfr_hud.heading);
-		scanrssi_f(wifly_fd, ssid, wifly_file, numtimes);
+		scanrssi_f(wifly_fd, ssid, wifly_file, num_samples);
 		
 		/* sleep for some time before making another measurement (300 ms for now) */
 		usleep(300000);
@@ -72,7 +78,8 @@ void *wifly_thread(void *param) {
 	
 	
 	/* Be sure to close the output file and connection */
-	fclose(f);
-	close(fd);
-	
+	fclose(wifly_file);
+	close(wifly_fd);
+
+	return NULL;
 }
