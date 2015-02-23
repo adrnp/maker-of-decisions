@@ -1,21 +1,31 @@
-#include <fcntl.h> /* File control definitions */
-#include <errno.h>
-#include <termios.h>
+// Standard includes
+#include <iostream>
+#include <cstdlib>
 #include <unistd.h>
-#include <stdio.h>
+#include <cmath>
 #include <string.h>
-#include <limits.h>
+#include <inttypes.h>
+#include <fstream>
+
+// Serial includes
+#include <stdio.h>   /* Standard input/output definitions */
+#include <string.h>  /* String function definitions */
+#include <unistd.h>  /* UNIX standard function definitions */
+#include <fcntl.h>   /* File control definitions */
+#include <errno.h>   /* Error number definitions */
+#include <termios.h> /* POSIX terminal control definitions */
+#
+#ifdef __linux
+#include <sys/ioctl.h>
+#endif
 
 #include "serialwifly.h" // this is from Louis' wifly code, which will be a library
 #include "common.h"
 #include "wifly_thread.h"
 
+using std::string;
+using namespace std;
 
-int start_connection(char *port)
-{
-	int fd = open(port, O_RDWR | O_NOCTTY | O_NDELAY);
-	return fd;
-}
 
 int wifly_connect(char *port) {
 	
