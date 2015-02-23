@@ -137,7 +137,7 @@ void handle_message(const mavlink_message_t *message, MAVInfo *uavRead) {
 		{
 			mavlink_msg_vfr_hud_decode(message, &(uavRead->vfr_hud));
 
-			cout << "heading: " << uavRead->vfr_hud.heading << "\n";
+			// cout << "heading: " << uavRead->vfr_hud.heading << "\n";
 			break;
 		}
 		
