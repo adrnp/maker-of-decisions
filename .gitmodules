@@ -1,6 +1,3 @@
 [submodule "mavlink"]
 	path = mavlink
 	url = https://github.com/adrnp/jager_c_mavlink_library.git
-[submodule "wifly"]
-	path = wifly
-	url = https://github.com/dressel/wiflyrssi.git
