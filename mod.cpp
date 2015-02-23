@@ -8,6 +8,7 @@
 
 #include "serial_port.h"
 #include "read_thread.h"
+#include "wifly_thread.h"
 #include "mod.h"
 
 using std::string;
@@ -99,6 +100,7 @@ int main(int argc, char **argv) {
 
 	// ids of the threads
 	pthread_t readId;
+	pthread_t wiflyId;
 
 	/* default values for arguments */
 	char *uart_name = (char*)"/dev/ttyUSB0";
@@ -117,8 +119,12 @@ int main(int argc, char **argv) {
 	// need to create read and write threads
 	
 	pthread_create(&readId, NULL, read_thread, (void *)&uav);
+	
+	// create a thread for the wifly stuff
+	pthread_create(&wiflyId, NULL, wifly_thread, (void *)&uav);
 
 	pthread_join(readId, NULL);
+	pthread_join(wiflyId, NULL);
 	
 
 	end_serial();
