@@ -19,12 +19,18 @@
 #include <sys/ioctl.h>
 #endif
 
-#include "serialwifly.h" // this is from Louis' wifly code, which will be a library
+#include "serialwifly.h" 	// this is from Louis' wifly code, which will be a library
 #include "common.h"
 #include "wifly_thread.h"
+#include "test.h" 			// for bearing calculation
+#include "commander.h"
 
 using std::string;
+using std::vector;
 using namespace std;
+
+/* this is to help with some of the rotation logic */
+bool in_rotation = false;
 
 
 int wifly_connect(char *port) {
@@ -54,6 +60,7 @@ void *wifly_thread(void *param) {
 	int num_samples = 1;
 	char *ssid = (char *) "JAMMER01";
 	char *file_name = (char *) "wifly.csv";
+	char *bearing_file_name = (char *) "bearing_calc.csv";
 	char *port = (char *) "/dev/ttyUSB0";
 	
 	// connect to the wifly
@@ -73,19 +80,63 @@ void *wifly_thread(void *param) {
 	if (wifly_file == NULL)
 	{
 		// TODO: figure out what we do want to return when there is an error
-		printf("Error opening output file\n");
+		printf("Error opening wifly output file\n");
+		return NULL;
+	}
+
+	/* Open a file to write bearing calcs to */
+	FILE *bearing_file = fopen(bearing_file_name, "a");
+	if (bearing_file == NULL)
+	{
+		// TODO: figure out what we do want to return when there is an error
+		printf("Error opening bearing output file\n");
 		return NULL;
 	}
 	
+	vector<double> angles;
+	vector<double> gains;
+
+
 	// main loop that should be constantly taking measurements
 	// until the main program is stopped
 	while (RUNNING_FLAG) {
+
+		/* check if we are in an official rotation */
+		if (rotating) {
+			if (!in_rotation) {
+				// set our logic to mark we are now running the rotation logic
+				in_rotation = true;
+
+				// clear the vectors
+				angles.clear();
+				gains.clear();
+			}
+
+			angles.push_back((double) uavData->vfr_hud.heading);
+			gains.push_back(scanrssi(wifly_fd, ssid));
+
+		}
+
+		if (!rotating && in_rotation) {
+			in_rotation = false;
+
+			// do bearing calculation at this point
+			double bearing = get_bearing(angles, gains);
+
+			// write the lat, lon, alt and bearing to file
+			fprintf(bearing_file, "%i,%i,%f,%f\n", uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, bearing);
+
+			// send a mavlink message of the calculated bearing
+			send_bearing_message(bearing, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
+		}
 		
 		/* Scan values to this file */
 		/* Add degree at which you measure first */
 		cout << uavData->vfr_hud.heading << " ";
-		fprintf(wifly_file, "%i,%i,%i,%f", uavData->vfr_hud.heading, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
+		fprintf(wifly_file, "%ui,%i,%i,%i,%f,", uavData->custom_mode, uavData->vfr_hud.heading, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
 		scanrssi_f(wifly_fd, ssid, wifly_file, num_samples);
+
+		// TODO: send mavlink message of calculated rssi...
 		
 		/* sleep for some time before making another measurement (30 ms for now) */
 		usleep(30000);
