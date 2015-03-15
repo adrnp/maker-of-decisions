@@ -67,6 +67,18 @@ void sendRotateCommand() {
 
 void send_bearing_message(double &bearing, int32_t &lat, int32_t &lon, float &alt) {
 
+	mavlink_bearing_t bear;
+	bear.bearing = bearing;
+	bear.lat = lat;
+	bear.lon = lon;
+	bear.alt = alt;
+
+	mavlink_message_t message;
+	mavlink_msg_bearing_encode(sysid, compid, &message, &bear);
+
+	int len = write_to_serial(message);
+	printf("Sent buffer of length %i\n",len);
+
 	return;
 }
 
