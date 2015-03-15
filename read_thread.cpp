@@ -165,6 +165,8 @@ void handle_message(const mavlink_message_t *message, MAVInfo *uavRead) {
 		{
 			mavlink_msg_tracking_status_decode(message, &(uavRead->tracking_status));
 
+			cout << "HUNT STATE changed to: " << uavRead->tracking_status.hunt_mode_state << "\n";
+
 			// need to check to see if we have changed into waiting for the first time
 			if (!hunting && uavRead->tracking_status.hunt_mode_state > TRACKING_HUNT_STATE_OFF) {
 				hunting = true;
