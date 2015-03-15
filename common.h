@@ -34,6 +34,8 @@ extern int RUNNING_FLAG;
 // potentially have multiple threads reading and writing....
 extern int fd;
 
+/** boolean stating whether or not we are currently in a rotating mode */
+extern bool rotating;
 
 
 
