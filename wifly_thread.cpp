@@ -128,6 +128,9 @@ void *wifly_thread(void *param) {
 
 			// send a mavlink message of the calculated bearing
 			send_bearing_message(bearing, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
+
+			// tell pixhawk we are finished with the rotation
+			// send_finish_command();
 		}
 		
 		/* Scan values to this file */

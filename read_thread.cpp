@@ -191,9 +191,6 @@ void handle_message(const mavlink_message_t *message, MAVInfo *uavRead) {
 				// finishing the rotation
 				rotating = false;
 
-				// tell pixhawk we are finished with the rotation
-				send_finish_command();
-
 				// TODO: this is where we will want to calculate the bearing....
 				// NOTE: wifly thread is currently doing bearing calculations
 			}
