@@ -42,6 +42,9 @@ bool hunting = false;
 /* whether or not we are currently rotating */
 bool rotating = false;
 
+/* keep track of the previous hunt state, as hunt state is sent periodically, not just on updates */
+int prev_hunt_state = -1;
+
 
 void parse_heartbeat(const mavlink_message_t *message, MAVInfo *uavRead) {
 	mavlink_heartbeat_t heartbeat;
@@ -164,6 +167,13 @@ void handle_message(const mavlink_message_t *message, MAVInfo *uavRead) {
 		case MAVLINK_MSG_ID_TRACKING_STATUS:
 		{
 			mavlink_msg_tracking_status_decode(message, &(uavRead->tracking_status));
+
+			if (uavRead->tracking_status.hunt_mode_state == prev_hunt_state) {
+				break;
+			}
+
+			// set this hunt state as the previous hunt state
+			prev_hunt_state = uavRead->tracking_status.hunt_mode_state;
 
 			cout << "HUNT STATE changed to: " << (int) uavRead->tracking_status.hunt_mode_state << "\n";
 
