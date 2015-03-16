@@ -45,6 +45,9 @@ bool rotating = false;
 /* keep track of the previous hunt state, as hunt state is sent periodically, not just on updates */
 int prev_hunt_state = -1;
 
+/* keep track of whether or not the mode has changed */
+bool mode_change = false;
+
 
 void parse_heartbeat(const mavlink_message_t *message, MAVInfo *uavRead) {
 	mavlink_heartbeat_t heartbeat;
@@ -54,8 +57,13 @@ void parse_heartbeat(const mavlink_message_t *message, MAVInfo *uavRead) {
 	uavRead->type = heartbeat.type;
 	uavRead->autopilot = heartbeat.autopilot;
 	uavRead->base_mode = heartbeat.base_mode;
-	uavRead->custom_mode = heartbeat.custom_mode;
+	// uavRead->custom_mode = heartbeat.custom_mode;
 	uavRead->status = heartbeat.system_status;
+
+	if (heartbeat.custom_mode != uavRead->custom_mode) {
+		mode_change = true;
+		uavRead->custom_mode = heartbeat.custom_mode;
+	}
 
 	// so we don't keep rewriting known values that stay constant
 	// realizing not really doing anything with this....
@@ -168,7 +176,7 @@ void handle_message(const mavlink_message_t *message, MAVInfo *uavRead) {
 		{
 			mavlink_msg_tracking_status_decode(message, &(uavRead->tracking_status));
 
-			if (uavRead->tracking_status.hunt_mode_state == prev_hunt_state) {
+			if (uavRead->tracking_status.hunt_mode_state == prev_hunt_state && !mode_change) {
 				break;
 			}
 
@@ -204,6 +212,8 @@ void handle_message(const mavlink_message_t *message, MAVInfo *uavRead) {
 				// TODO: this is where we will want to calculate the bearing....
 				// NOTE: wifly thread is currently doing bearing calculations
 			}
+
+			mode_change = false;
 
 
 
