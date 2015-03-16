@@ -64,6 +64,30 @@ void sendRotateCommand() {
 	return;
 }
 
+void send_finish_command() {
+
+	// retrieve the id of the last finished cmd
+	int nextCmd = uav.last_cmd_finished_id++;
+
+	mavlink_tracking_cmd_t tracking_cmd;
+
+	tracking_cmd.timestamp_usec = 0;
+	tracking_cmd.north = 0.0;			
+	tracking_cmd.east = 0.0;			
+	tracking_cmd.yaw_angle = 0.0;		
+	tracking_cmd.altitude = 0.0;		
+	tracking_cmd.cmd_id = nextCmd;
+	tracking_cmd.cmd_type = TRACKING_CMD_FINISH;
+
+	mavlink_message_t message;
+	mavlink_msg_tracking_cmd_encode(sysid, compid, &message, &tracking_cmd);
+
+	int len = write_to_serial(message);
+	printf("Sent buffer of length %i\n",len);
+
+	return;
+}
+
 
 void send_bearing_message(double &bearing, int32_t &lat, int32_t &lon, float &alt) {
 
