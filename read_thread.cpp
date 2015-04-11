@@ -185,7 +185,8 @@ void handle_message(const mavlink_message_t *message, MAVInfo *uavRead) {
 				uavRead->last_cmd_finished_id = -1; // set the last cmd id to -1, so that when we run get next cmd it sends the correct one
 
 				// command the vehicle to rotate
-				sendRotateCommand();
+				// sendRotateCommand();
+				sendNextCommand();
 
 				// mark that we are now rotating
 				rotating = true;
@@ -193,7 +194,8 @@ void handle_message(const mavlink_message_t *message, MAVInfo *uavRead) {
 
 			/* if the pixhawk is in wait mode, send a rotate command */
 			if (!rotating && uavRead->tracking_status.hunt_mode_state == TRACKING_HUNT_STATE_WAIT) {
-				sendRotateCommand();
+				// sendRotateCommand();
+				sendNextCommand();
 
 				// mark that we are now rotating
 				rotating = true;

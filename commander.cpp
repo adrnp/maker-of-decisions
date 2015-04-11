@@ -4,8 +4,8 @@
 #include "commander.h"
 
 
-float north[4] = {-10.0, 0.0, 10.0, 0.0};
-float east[4] =  {0.0, 10.0, 0.0, -10.0};
+float north[4] = {-30.0, 0.0, 30.0, 0.0};
+float east[4] =  {0.0, 30.0, 0.0, -30.0};
 
 
 void sendNextCommand() {
