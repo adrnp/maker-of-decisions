@@ -41,7 +41,7 @@ void sendNextCommand() {
 
 }
 
-void sendRotateCommand() {
+void sendRotateCommand(float direction) {
 	// retrieve the id of the last finished cmd
 	int nextCmd = uav.last_cmd_finished_id++;
 
@@ -50,7 +50,7 @@ void sendRotateCommand() {
 	tracking_cmd.timestamp_usec = 0;
 	tracking_cmd.north = 0.0;			// don't travel any distance north
 	tracking_cmd.east = 0.0;			// don't travel any distacne east
-	tracking_cmd.yaw_angle = 1.0;		// rotate clockwise (NOTE: yaw angle no longer means yaw angle, but rather rotation direction)
+	tracking_cmd.yaw_angle = direction;		// rotate clockwise (NOTE: yaw angle no longer means yaw angle, but rather rotation direction)
 	tracking_cmd.altitude = 0.0;		// will have pixhawk just use current altitude
 	tracking_cmd.cmd_id = nextCmd;
 	tracking_cmd.cmd_type = TRACKING_CMD_ROTATE;

@@ -11,8 +11,10 @@
 /* send the next command for testing movement */
 void sendNextCommand();
 
-/* send a command to rotate the vehicle */
-void sendRotateCommand();
+/* send a command to rotate the vehicle
+ * direction: -1 is CCW and 1 is CW
+ */
+void sendRotateCommand(float direction);
 
 /* send a command to go into off mode */
 void send_finish_command();
