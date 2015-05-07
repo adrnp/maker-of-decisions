@@ -238,7 +238,12 @@ void handle_message(const mavlink_message_t *message, MAVInfo *uavRead) {
 			parse_last_cmd_finished_id(message, uavRead);
 			break;
 		}
-		 // TODO add all the needed stuff for louis
+		case MAVLINK_MSG_ID_SYSTEM_TIME_USEC:
+		{
+			mavlink_msg_system_time_usec_decode(message, &(uavRead->system_time_us));
+		}
+
+		// TODO add all the needed stuff for louis
 
 		/* // COMMENTING OUT APNT MESSAGES FOR NOW
 		case MAVLINK_MSG_ID_APNT_GPS_STATUS:

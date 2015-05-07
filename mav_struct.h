@@ -51,6 +51,8 @@ struct MAVInfo {
 	mavlink_global_position_int_t gps_position;
 	mavlink_local_position_ned_t local_ned;
 
+	// system time information
+	mavlink_system_time_usec_t sys_time_us;
 
 	// useful battery info
 	float battery_voltage;
