@@ -107,7 +107,7 @@ void send_bearing_message(double &bearing, int32_t &lat, int32_t &lon, float &al
 }
 
 
-void send_rssi_message(int &rssi, float &heading, int32_t &lat, int32_t &lon, float &alt) {
+void send_rssi_message(int &rssi, int16_t &heading, int32_t &lat, int32_t &lon, float &alt) {
 	mavlink_rssi_t rssi_msg;
 	rssi_msg.rssi_value = rssi;
 	rssi_msg.heading = heading;
