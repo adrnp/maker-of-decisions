@@ -127,7 +127,7 @@ int scanrssi_f(int fd, char *ssid, FILE *f, int numtimes)
 	fprintf(f, "%i\n", rssi_value);
 	//printf("rssi_value = %i\n", rssi_value);
 
-	return 0;
+	return rssi;
 }
 
 

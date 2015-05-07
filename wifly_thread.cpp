@@ -137,7 +137,10 @@ void *wifly_thread(void *param) {
 		/* Add degree at which you measure first */
 		cout << uavData->vfr_hud.heading << " ";
 		fprintf(wifly_file, "%llu,%u,%i,%i,%i,%f,", uavData->system_time_us.time_unix_usec, uavData->custom_mode, uavData->vfr_hud.heading, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
-		scanrssi_f(wifly_fd, ssid, wifly_file, num_samples);
+		int rssi = scanrssi_f(wifly_fd, ssid, wifly_file, num_samples);
+
+		// send a mavlink message with the current rssi
+		send_rssi_message(rssi, uavData->vfr_hud.heading, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
 
 		// TODO: send mavlink message of calculated rssi...
 		
