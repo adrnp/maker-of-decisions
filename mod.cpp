@@ -19,6 +19,7 @@ using namespace std;
 
 bool verbose = false;	// default verbose to false
 bool debug = false;		// default debug to false
+bool nowifly = false;	// default to wanting wifly
 
 MAVInfo uav;			// object to hold all the state information on the UAV
 
@@ -78,6 +79,11 @@ void read_arguments(int argc, char **argv, char **uart_name, int *baudrate) {
 			debug = true;
 		}
 
+		/* wifly state */
+		if (strcmp(argv[i], "-nw") == 0 || strcmp(argv[i], "--nowifly") == 0) {
+			nowifly = true;
+		}
+
 	}
 }
 
@@ -120,8 +126,10 @@ int main(int argc, char **argv) {
 	
 	pthread_create(&readId, NULL, read_thread, (void *)&uav);
 	
-	// create a thread for the wifly stuff
-	pthread_create(&wiflyId, NULL, wifly_thread, (void *)&uav);
+	// create a thread for the wifly stuff (only if want wifly running)
+	if (!nowifly) {
+		pthread_create(&wiflyId, NULL, wifly_thread, (void *)&uav);
+	}
 
 	pthread_join(readId, NULL);
 	pthread_join(wiflyId, NULL);
