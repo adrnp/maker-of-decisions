@@ -65,6 +65,12 @@ void parse_heartbeat(const mavlink_message_t *message, MAVInfo *uavRead) {
 		uavRead->custom_mode = heartbeat.custom_mode;
 	}
 
+	if (!heartbeatReceived) {
+		printf("Received vehicle heartbeat\n");
+		printf("The system id: %u\n", message->sysid);
+		printf("The component id: %u\n", message->compid);
+	}
+
 	// so we don't keep rewriting known values that stay constant
 	// realizing not really doing anything with this....
 	heartbeatReceived = true;
