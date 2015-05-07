@@ -23,6 +23,9 @@ void send_finish_command();
 // TODO: instead of commander, need a writer thread....
 void send_bearing_message(double &bearing, int32_t &lat, int32_t &lon, float &alt);
 
+/* send the rssi message */
+void send_rssi_message(int &rssi, float &heading, int32_t &lat, int32_t &lon, float &alt);
+
 int write_to_serial(mavlink_message_t &message);
 
 

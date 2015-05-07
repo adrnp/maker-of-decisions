@@ -107,6 +107,21 @@ void send_bearing_message(double &bearing, int32_t &lat, int32_t &lon, float &al
 }
 
 
+void send_rssi_message(int &rssi, float &heading, int32_t &lat, int32_t &lon, float &alt) {
+	mavlink_rssi_t rssi_msg;
+	rssi_msg.rssi_value = rssi;
+	rssi_msg.heading = heading;
+	rssi_msg.lat = lat;
+	rssi_msg.lon = lon;
+	rssi_msg.alt = alt;
+
+	mavlink_message_t message;
+	mavlink_msg_rssi_encode(sysid, compid, &message, &rssi_msg);
+
+	int len = write_to_serial(message);
+	printf("Sent buffer of length %i\n", len);
+}
+
 
 int write_to_serial(mavlink_message_t &message) {
 	
