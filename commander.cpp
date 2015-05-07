@@ -35,7 +35,8 @@ void sendNextCommand() {
 	mavlink_msg_tracking_cmd_encode(sysid, compid, &message, &tracking_cmd);
 
 	int len = write_to_serial(message);
-	printf("Sent buffer of length %i\n",len);
+	printf("sending next move command\n");
+	// printf("Sent buffer of length %i\n",len);
 
 	return;
 
@@ -59,7 +60,8 @@ void sendRotateCommand(float direction) {
 	mavlink_msg_tracking_cmd_encode(sysid, compid, &message, &tracking_cmd);
 
 	int len = write_to_serial(message);
-	printf("Sent buffer of length %i\n",len);
+	printf("sending next rotate command\n");
+	// printf("Sent buffer of length %i\n",len);
 
 	return;
 }
@@ -83,7 +85,8 @@ void send_finish_command() {
 	mavlink_msg_tracking_cmd_encode(sysid, compid, &message, &tracking_cmd);
 
 	int len = write_to_serial(message);
-	printf("Sent buffer of length %i\n",len);
+	printf("sending finish command\n");
+	// printf("Sent buffer of length %i\n",len);
 
 	return;
 }
@@ -101,7 +104,8 @@ void send_bearing_message(double &bearing, int32_t &lat, int32_t &lon, float &al
 	mavlink_msg_bearing_encode(sysid, compid, &message, &bear);
 
 	int len = write_to_serial(message);
-	printf("Sent buffer of length %i\n",len);
+	printf("sending bearing message\n");
+	// printf("Sent buffer of length %i\n",len);
 
 	return;
 }
@@ -119,7 +123,8 @@ void send_rssi_message(int &rssi, int16_t &heading, int32_t &lat, int32_t &lon, 
 	mavlink_msg_rssi_encode(sysid, compid, &message, &rssi_msg);
 
 	int len = write_to_serial(message);
-	printf("Sent buffer of length %i\n", len);
+	printf("sending rssi message\n");
+	// printf("Sent buffer of length %i\n", len);
 }
 
 
