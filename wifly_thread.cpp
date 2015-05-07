@@ -124,7 +124,7 @@ void *wifly_thread(void *param) {
 			double bearing = get_bearing(angles, gains);
 
 			// write the lat, lon, alt and bearing to file
-			fprintf(bearing_file, "%llu, %i,%i,%f,%f\n", uavData->system_time_us.time_unix_usec, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, bearing);
+			fprintf(bearing_file, "%llu, %i,%i,%f,%f\n", uavData->sys_time_us.time_unix_usec, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, bearing);
 
 			// send a mavlink message of the calculated bearing
 			send_bearing_message(bearing, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
@@ -136,7 +136,7 @@ void *wifly_thread(void *param) {
 		/* Scan values to this file */
 		/* Add degree at which you measure first */
 		cout << uavData->vfr_hud.heading << " ";
-		fprintf(wifly_file, "%llu,%u,%i,%i,%i,%f,", uavData->system_time_us.time_unix_usec, uavData->custom_mode, uavData->vfr_hud.heading, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
+		fprintf(wifly_file, "%llu,%u,%i,%i,%i,%f,", uavData->sys_time_us.time_unix_usec, uavData->custom_mode, uavData->vfr_hud.heading, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
 		int rssi = scanrssi_f(wifly_fd, ssid, wifly_file, num_samples);
 
 		// send a mavlink message with the current rssi

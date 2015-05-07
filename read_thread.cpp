@@ -240,7 +240,7 @@ void handle_message(const mavlink_message_t *message, MAVInfo *uavRead) {
 		}
 		case MAVLINK_MSG_ID_SYSTEM_TIME_USEC:
 		{
-			mavlink_msg_system_time_usec_decode(message, &(uavRead->system_time_us));
+			mavlink_msg_system_time_usec_decode(message, &(uavRead->sys_time_us));
 		}
 
 		// TODO add all the needed stuff for louis
