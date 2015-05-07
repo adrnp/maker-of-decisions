@@ -124,7 +124,7 @@ void *wifly_thread(void *param) {
 			double bearing = get_bearing(angles, gains);
 
 			// write the lat, lon, alt and bearing to file
-			fprintf(bearing_file, "%i,%i,%f,%f\n", uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, bearing);
+			fprintf(bearing_file, "%llu, %i,%i,%f,%f\n", uavData->system_time_us.time_unix_usec, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, bearing);
 
 			// send a mavlink message of the calculated bearing
 			send_bearing_message(bearing, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
