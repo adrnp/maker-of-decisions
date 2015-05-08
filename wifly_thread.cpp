@@ -143,6 +143,9 @@ void *wifly_thread(void *param) {
 		send_rssi_message(rssi, uavData->vfr_hud.heading, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
 
 		// TODO: send mavlink message of calculated rssi...
+
+		// send a message with a rotate command for testing purposes at the moment
+		sendRotateCommand(-1.0);
 		
 		/* sleep for some time before making another measurement (30 ms for now) */
 		usleep(30000);
