@@ -114,7 +114,7 @@ void send_bearing_message(double &bearing, int32_t &lat, int32_t &lon, float &al
 void send_rssi_message(int &rssi, int16_t &heading, int32_t &lat, int32_t &lon, float &alt) {
 	mavlink_rssi_t rssi_msg;
 	rssi_msg.rssi_value = rssi;
-	rssi_msg.heading = heading;
+	rssi_msg.heading = (float) heading;
 	rssi_msg.lat = lat;
 	rssi_msg.lon = lon;
 	rssi_msg.alt = alt;
