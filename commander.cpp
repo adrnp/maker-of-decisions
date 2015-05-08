@@ -115,9 +115,9 @@ void send_rssi_message(int &rssi, int16_t &heading, int32_t &lat, int32_t &lon, 
 	mavlink_rssi_t rssi_msg;
 	rssi_msg.rssi_value = rssi;
 	rssi_msg.heading = (float) heading;
-	rssi_msg.lat = lat;
-	rssi_msg.lon = lon;
-	rssi_msg.alt = alt;
+	rssi_msg.lat = 0; //lat;
+	rssi_msg.lon = 0; //lon;
+	rssi_msg.alt = 0.0; // alt;
 
 	mavlink_message_t message;
 	mavlink_msg_rssi_encode(sysid, compid, &message, &rssi_msg);
