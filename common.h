@@ -37,6 +37,9 @@ extern int fd;
 /** boolean stating whether or not we are currently in a rotating mode */
 extern bool rotating;
 
+/** boolean stating whether or not we are currently in a moving mode */
+extern bool moving;
+
 
 
 #endif /* COMMON_H_ */
