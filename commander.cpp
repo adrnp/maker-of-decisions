@@ -125,12 +125,13 @@ void send_rssi_message(int &rssi, int16_t &heading, int32_t &lat, int32_t &lon, 
 	int len = write_to_serial(message);
 	printf("sending rssi message\n");
 	// printf("Sent buffer of length %i\n", len);
+	return;
 }
 
 
 int write_to_serial(mavlink_message_t &message) {
 	
-	// buffer needed for mavlink msg send function
+	// buffer needed for mavlink msg and function
 	char buf[300];
 
 	// Send message to buffer
