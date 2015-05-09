@@ -33,7 +33,7 @@ using namespace std;
 bool in_rotation = false;
 
 /* keep track of the previous hunt state, as hunt state is sent periodically, not just on updates */
-int prev_hunt_state = -1;
+uint8_t prev_hunt_state = 10;
 
 /* whether or not we are currently rotating */
 bool rotating = false;
@@ -60,7 +60,7 @@ int wifly_connect(char *port) {
 }
 
 
-void update_state(int &new_state) {
+void update_state(uint8_t &new_state) {
 
 	switch (new_state) {
 	case TRACKING_HUNT_STATE_ROTATE:
@@ -130,19 +130,19 @@ void *wifly_thread(void *param) {
 	while (RUNNING_FLAG) {
 
 		// handle hunt state changes required (sending of commands)
-		if (uavRead->tracking_status.hunt_mode_state != prev_hunt_state) {
+		if (uavData->tracking_status.hunt_mode_state != prev_hunt_state) {
 			
-			if (uavRead->tracking_status.hunt_mode_state == TRACKING_HUNT_STATE_WAIT) {
-				send_next_command();
+			if (uavData->tracking_status.hunt_mode_state == TRACKING_HUNT_STATE_WAIT) {
+				send_next_command(prev_hunt_state, uavData->tracking_status.hunt_mode_state);
 				
 				// TODO: maybe want to update the state immediately here...
 			} else {
-				update_state(uavRead->tracking_status.hunt_mode_state);
+				update_state(uavData->tracking_status.hunt_mode_state);
 			}
 			
 			
 			// update the prev hunt state to be this new state
-			prev_hunt_state = uavRead->tracking_status.hunt_mode_state;
+			prev_hunt_state = uavData->tracking_status.hunt_mode_state;
 		}
 	
 		// make measurements (depending on the current state)

@@ -8,7 +8,7 @@
 #define COMMANDER_H_
 
 /* handles the overall decision of which command to actually send */
-void send_next_command(int &prev_state, int &new_state);
+void send_next_command(uint8_t &prev_state, uint8_t &new_state);
 
 /* send the next command for testing movement */
 void sendMoveCommand();

@@ -43,7 +43,7 @@ bool hunting = false;
 // bool rotating = false;
 
 /* keep track of the previous hunt state, as hunt state is sent periodically, not just on updates */
-int prev_hunt_state = -1;
+int prev_hs = -1;
 
 /* keep track of whether or not the mode has changed */
 bool mode_change = false;
@@ -182,12 +182,12 @@ void handle_message(const mavlink_message_t *message, MAVInfo *uavRead) {
 		{
 			mavlink_msg_tracking_status_decode(message, &(uavRead->tracking_status));
 
-			if (uavRead->tracking_status.hunt_mode_state == prev_hunt_state && !mode_change) {
+			if (uavRead->tracking_status.hunt_mode_state == prev_hs && !mode_change) {
 				break;
 			}
 
 			// set this hunt state as the previous hunt state
-			prev_hunt_state = uavRead->tracking_status.hunt_mode_state;
+			prev_hs = uavRead->tracking_status.hunt_mode_state;
 
 			cout << "HUNT STATE changed to: " << (int) uavRead->tracking_status.hunt_mode_state << "\n";
 

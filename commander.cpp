@@ -8,7 +8,7 @@ float north[4] = {-30.0, 0.0, 30.0, 0.0};
 float east[4] =  {0.0, 30.0, 0.0, -30.0};
 
 
-void send_next_command(int &prev_state, int &new_state) {
+void send_next_command(uint8_t &prev_state, uint8_t &new_state) {
 	
 	switch (prev_state) {
 	case TRACKING_HUNT_STATE_START:
