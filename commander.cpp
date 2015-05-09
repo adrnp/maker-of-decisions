@@ -8,7 +8,32 @@ float north[4] = {-30.0, 0.0, 30.0, 0.0};
 float east[4] =  {0.0, 30.0, 0.0, -30.0};
 
 
-void sendNextCommand() {
+void send_next_command(int &prev_state, int &new_state) {
+	
+	switch (prev_state) {
+	case TRACKING_HUNT_STATE_START:
+	case TRACKING_HUNT_STATE_ROTATE:
+		rotating = false;
+
+		// send the next move command
+		sendMoveCommand();
+		break;
+	case TRACKING_HUNT_STATE_MOVE:
+		moving = false;
+		
+		// send a rotate command
+		sendRotateCommand(-1.0);
+		break;
+		
+	}
+	
+	return;
+}
+
+
+
+
+void sendMoveCommand() {
 
 	// retrieve the id of the last finished cmd
 	int nextCmd = uav.last_cmd_finished_id++;

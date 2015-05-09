@@ -7,9 +7,11 @@
 #ifndef COMMANDER_H_
 #define COMMANDER_H_
 
+/* handles the overall decision of which command to actually send */
+void send_next_command(int &prev_state, int &new_state);
 
 /* send the next command for testing movement */
-void sendNextCommand();
+void sendMoveCommand();
 
 /* send a command to rotate the vehicle
  * direction: -1 is CCW and 1 is CW

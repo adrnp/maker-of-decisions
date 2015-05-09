@@ -32,6 +32,15 @@ using namespace std;
 /* this is to help with some of the rotation logic */
 bool in_rotation = false;
 
+/* keep track of the previous hunt state, as hunt state is sent periodically, not just on updates */
+int prev_hunt_state = -1;
+
+/* whether or not we are currently rotating */
+bool rotating = false;
+
+/* whether or not we are currently moving */
+bool moving = false;
+
 
 int wifly_connect(char *port) {
 	
@@ -48,6 +57,25 @@ int wifly_connect(char *port) {
 	}
 	
 	return fd;
+}
+
+
+void update_state(int &new_state) {
+
+	switch (new_state) {
+	case TRACKING_HUNT_STATE_ROTATE:
+		rotating = true;
+		break;
+	case TRACKING_HUNT_STATE_MOVE:
+		moving = true;
+		break;
+	case TRACKING_HUNT_STATE_OFF:
+		// finished = true;
+		break;
+	case TRACKING_HUNT_STATE_START:
+		// starting = true;
+		break;
+	}
 }
 
 
@@ -101,6 +129,24 @@ void *wifly_thread(void *param) {
 	// until the main program is stopped
 	while (RUNNING_FLAG) {
 
+		// handle hunt state changes required (sending of commands)
+		if (uavRead->tracking_status.hunt_mode_state != prev_hunt_state) {
+			
+			if (uavRead->tracking_status.hunt_mode_state == TRACKING_HUNT_STATE_WAIT) {
+				send_next_command();
+				
+				// TODO: maybe want to update the state immediately here...
+			} else {
+				update_state(uavRead->tracking_status.hunt_mode_state);
+			}
+			
+			
+			// update the prev hunt state to be this new state
+			prev_hunt_state = uavRead->tracking_status.hunt_mode_state;
+		}
+	
+		// make measurements (depending on the current state)
+
 		/* check if we are in an official rotation */
 		if (rotating) {
 			if (!in_rotation) {
@@ -145,7 +191,7 @@ void *wifly_thread(void *param) {
 		// TODO: send mavlink message of calculated rssi...
 
 		// send a message with a rotate command for testing purposes at the moment
-		sendRotateCommand(-1.0);
+		// sendRotateCommand(-1.0);
 		
 		/* sleep for some time before making another measurement (30 ms for now) */
 		usleep(30000);

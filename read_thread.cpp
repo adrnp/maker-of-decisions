@@ -40,7 +40,7 @@ bool heartbeatReceived = false;
 bool hunting = false;
 
 /* whether or not we are currently rotating */
-bool rotating = false;
+// bool rotating = false;
 
 /* keep track of the previous hunt state, as hunt state is sent periodically, not just on updates */
 int prev_hunt_state = -1;
@@ -199,25 +199,25 @@ void handle_message(const mavlink_message_t *message, MAVInfo *uavRead) {
 				uavRead->last_cmd_finished_id = -1; // set the last cmd id to -1, so that when we run get next cmd it sends the correct one
 
 				// command the vehicle to rotate
-				cout << "Sending Rotate Command\n";
-				sendRotateCommand(-1.0);
+				// cout << "Sending Rotate Command\n";
+				// sendRotateCommand(-1.0);
 				// sendNextCommand();
 
 				// mark that we are now rotating
-				rotating = true;
+				// rotating = true;
 			}
 
 			/* if the pixhawk is in wait mode, send a rotate command */
 			if (!rotating && uavRead->tracking_status.hunt_mode_state == TRACKING_HUNT_STATE_WAIT) {
-				cout << "Sending Rotate Command\n";
-				sendRotateCommand(-1.0);
+				// cout << "Sending Rotate Command\n";
+				// sendRotateCommand(-1.0);
 				// sendNextCommand();
 
 				// mark that we are now rotating
-				rotating = true;
+				// rotating = true;
 			} else {
 				// finishing the rotation
-				rotating = false;
+				// rotating = false;
 
 				// TODO: this is where we will want to calculate the bearing....
 				// NOTE: wifly thread is currently doing bearing calculations
