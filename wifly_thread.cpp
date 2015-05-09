@@ -132,6 +132,8 @@ void *wifly_thread(void *param) {
 		// handle hunt state changes required (sending of commands)
 		if (uavData->tracking_status.hunt_mode_state != prev_hunt_state) {
 			
+			printf("State changed from %u to %u\n", prev_hunt_state, uavData->tracking_status.hunt_mode_state);
+
 			if (uavData->tracking_status.hunt_mode_state == TRACKING_HUNT_STATE_WAIT) {
 				send_next_command(prev_hunt_state, uavData->tracking_status.hunt_mode_state);
 				
@@ -143,6 +145,7 @@ void *wifly_thread(void *param) {
 			
 			// update the prev hunt state to be this new state
 			prev_hunt_state = uavData->tracking_status.hunt_mode_state;
+			printf("Prev State changed to: %u\n", prev_hunt_state);
 		}
 	
 		// make measurements (depending on the current state)
@@ -181,12 +184,12 @@ void *wifly_thread(void *param) {
 		
 		/* Scan values to this file */
 		/* Add degree at which you measure first */
-		cout << uavData->vfr_hud.heading << " ";
+		// cout << uavData->vfr_hud.heading << " ";
 		fprintf(wifly_file, "%llu,%u,%i,%i,%i,%f,", uavData->sys_time_us.time_unix_usec, uavData->custom_mode, uavData->vfr_hud.heading, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
 		int rssi = scanrssi_f(wifly_fd, ssid, wifly_file, num_samples);
 
 		// send a mavlink message with the current rssi
-		send_rssi_message(rssi, uavData->vfr_hud.heading, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
+		// send_rssi_message(rssi, uavData->vfr_hud.heading, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
 
 		// TODO: send mavlink message of calculated rssi...
 

@@ -11,19 +11,20 @@ float east[4] =  {0.0, 30.0, 0.0, -30.0};
 void send_next_command(uint8_t &prev_state, uint8_t &new_state) {
 	
 	switch (prev_state) {
-	case TRACKING_HUNT_STATE_START:
-	case TRACKING_HUNT_STATE_ROTATE:
-		rotating = false;
+		case TRACKING_HUNT_STATE_OFF:
+		case TRACKING_HUNT_STATE_START:
+		case TRACKING_HUNT_STATE_ROTATE:
+			rotating = false;
 
-		// send the next move command
-		sendMoveCommand();
-		break;
-	case TRACKING_HUNT_STATE_MOVE:
-		moving = false;
+			// send the next move command
+			sendMoveCommand();
+			break;
+		case TRACKING_HUNT_STATE_MOVE:
+			moving = false;
 		
-		// send a rotate command
-		sendRotateCommand(-1.0);
-		break;
+			// send a rotate command
+			sendRotateCommand(-1.0);
+			break;
 		
 	}
 	
