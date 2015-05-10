@@ -107,7 +107,11 @@ void sendMoveCommand() {
 	float nextNorth = cmd_north[cmd_index];
 	float nextEast = cmd_east[cmd_index];
 	float nextAlt = cmd_alt[cmd_index];
+
+	printf("sending command %i: N %f\tE %f\tA %f\n", cmd_index, nextNorth, nextEast, nextAlt);
+
 	cmd_index++;
+
 
 	mavlink_tracking_cmd_t tracking_cmd;
 	tracking_cmd.timestamp_usec = 0;
