@@ -56,5 +56,5 @@ The files bearing\_mle.cpp and bearing\_cc.cpp contain two methods for getting t
 The model required to make some of these methods work is stored in obs\_model.csv.
 
 The get\_bearing functions currently implemented are:
-* get\_bearing\_mle(vector\<double\> angles, vector<int> norm\_gains)
-* get\_bearing\_cc(vector<double>angles, vector<double> dir\_gains)
+* get\_bearing\_mle(vector\<double\> angles, vector\<int\> norm\_gains)
+* get\_bearing\_cc(vector\<double\>angles, vector\<double\> dir\_gains)
