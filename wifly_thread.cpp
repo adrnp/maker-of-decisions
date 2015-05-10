@@ -6,7 +6,7 @@
 #include <string.h>
 #include <inttypes.h>
 #include <fstream>
-#include <time.h>
+#include <sys/time.h>
 
 // Serial includes
 #include <stdio.h>   /* Standard input/output definitions */
@@ -145,7 +145,7 @@ void *wifly_thread(void *param) {
 		// calculation, we will only pause as long as required so measurements are really made every 30 ms
 		// (unless of course bearing calculations take too long)
 		gettimeofday(&tv, NULL);
-		unsigned long current_loop_time = 1000000 * tv_sec + tv_usec;
+		unsigned long current_loop_time = 1000000 * tv.tv_sec + tv.tv_usec;
 		if (prev_loop_timestamp != 0 && (current_loop_time - prev_loop_timestamp) < 30000) {
 			continue;
 		}
