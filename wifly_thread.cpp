@@ -192,8 +192,10 @@ void *wifly_thread(void *param) {
 		fprintf(wifly_file, "%llu,%u,%i,%i,%i,%f,", uavData->sys_time_us.time_unix_usec, uavData->custom_mode, uavData->vfr_hud.heading, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
 		int rssi = scanrssi_f(wifly_fd, ssid, wifly_file, num_samples);
 
+		cout << uavData->vfr_hud.heading << " " << rssi << "\n";
+
 		// send a mavlink message with the current rssi
-		// send_rssi_message(rssi, uavData->vfr_hud.heading, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
+		send_rssi_message(rssi, uavData->vfr_hud.heading, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
 
 		// TODO: send mavlink message of calculated rssi...
 
