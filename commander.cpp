@@ -1,11 +1,69 @@
+// Standard includes
+#include <iostream>
+#include <cstdlib>
+#include <unistd.h>
+#include <cmath>
+#include <string.h>
+#include <inttypes.h>
+#include <fstream>
+
+// Serial includes
+#include <stdio.h>   /* Standard input/output definitions */
+#include <string.h>  /* String function definitions */
+#include <unistd.h>  /* UNIX standard function definitions */
+#include <fcntl.h>   /* File control definitions */
+#include <errno.h>   /* Error number definitions */
+#include <termios.h> /* POSIX terminal control definitions */
+#
+#ifdef __linux
+#include <sys/ioctl.h>
+#endif
+
 #include "common.h"
 #include "serial_port.h"
 #include "system_ids.h"
 #include "commander.h"
 
+using namespace std;
+
 
 float north[4] = {-30.0, 0.0, 30.0, 0.0};
 float east[4] =  {0.0, 30.0, 0.0, -30.0};
+
+vector<float> cmd_north;
+vector<float> cmd_east;
+
+
+bool load_move_commands() {
+
+	ifstream cmd_file ("commands.csv");
+
+	if (!cmd_file.is_open()) {
+		// means there is an error in loading the file
+		return false;
+	}
+
+	// make sure vectors are clean
+	cmd_north.clear();
+	cmd_east.clear();
+
+	string cmd;
+	while (cmd_file.good()) {
+		// get the north command
+		getline(cmd_file, cmd, ',');
+		cmd_north.push_back(atof(cmd));
+
+		cout << "north command: " << cmd << "\n";
+
+		// get the east command
+		getline(cmd_file, cmd, ',');
+		cmd_east.push_back(atof(cmd));
+
+		cout << "east command: " << cmd << "\n";
+	}
+
+	return true;
+}
 
 
 void send_next_command(uint8_t &prev_state, uint8_t &new_state) {
@@ -30,8 +88,6 @@ void send_next_command(uint8_t &prev_state, uint8_t &new_state) {
 	
 	return;
 }
-
-
 
 
 void sendMoveCommand() {

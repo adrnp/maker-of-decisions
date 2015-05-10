@@ -120,6 +120,10 @@ void *wifly_thread(void *param) {
 		printf("Error opening bearing output file\n");
 		return NULL;
 	}
+
+	if (get_commands) {
+		load_move_commands();
+	}
 	
 	vector<double> angles;
 	vector<double> gains;

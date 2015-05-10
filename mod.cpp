@@ -20,6 +20,7 @@ using namespace std;
 bool verbose = false;	// default verbose to false
 bool debug = false;		// default debug to false
 bool nowifly = false;	// default to wanting wifly
+bool get_commands = false;	// default for whether or not we want to read the command file
 
 MAVInfo uav;			// object to hold all the state information on the UAV
 
@@ -82,6 +83,11 @@ void read_arguments(int argc, char **argv, char **uart_name, int *baudrate) {
 		/* wifly state */
 		if (strcmp(argv[i], "-nw") == 0 || strcmp(argv[i], "--nowifly") == 0) {
 			nowifly = true;
+		}
+
+		/* command file state */
+		if (strcmp(argv[i], "-c") == 0 || strcmp(argv[i], "--commands") == 0) {
+			get_commands = true;
 		}
 
 	}

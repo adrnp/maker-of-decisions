@@ -21,6 +21,9 @@ extern bool verbose;
 /** boolean to determine whether or not to show debug outputs */
 extern bool debug;
 
+/** use command file */
+extern bool get_commands;
+
 /** MAVInfo object containing the current state information of the uav */
 extern MAVInfo uav;
 
