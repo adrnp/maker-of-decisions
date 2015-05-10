@@ -6,6 +6,7 @@
 #include <string.h>
 #include <inttypes.h>
 #include <fstream>
+#include <time.h>
 
 // Serial includes
 #include <stdio.h>   /* Standard input/output definitions */
@@ -40,6 +41,9 @@ bool rotating = false;
 
 /* whether or not we are currently moving */
 bool moving = false;
+
+/* microsecond timestamp of the previous loop iteration */
+unsigned long prev_loop_timestamp = 0;
 
 
 int wifly_connect(char *port) {
@@ -128,10 +132,24 @@ void *wifly_thread(void *param) {
 	vector<double> angles;
 	vector<double> gains;
 
+	struct timeval tv;
+
+
 
 	// main loop that should be constantly taking measurements
 	// until the main program is stopped
 	while (RUNNING_FLAG) {
+
+		// only want to execute this at most ever 30 ms
+		// basically does a dynamic sleep in the sense that if there is a lot of processing time for doing the bearing
+		// calculation, we will only pause as long as required so measurements are really made every 30 ms
+		// (unless of course bearing calculations take too long)
+		gettimeofday(&tv, NULL);
+		unsigned long current_loop_time = 1000000 * tv_sec + tv_usec;
+		if (prev_loop_timestamp != 0 && (current_loop_time - prev_loop_timestamp) < 30000) {
+			continue;
+		}
+		prev_loop_timestamp = current_loop_time;
 
 		// handle hunt state changes required (sending of commands)
 		if (uavData->tracking_status.hunt_mode_state != prev_hunt_state) {
@@ -203,7 +221,7 @@ void *wifly_thread(void *param) {
 		// sendRotateCommand(-1.0);
 		
 		/* sleep for some time before making another measurement (30 ms for now) */
-		usleep(30000);
+		// usleep(30000);
 		
 	}
 	
