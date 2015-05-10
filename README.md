@@ -58,3 +58,13 @@ The model required to make some of these methods work is stored in obs\_model.cs
 The get\_bearing functions currently implemented are:
 * get\_bearing\_mle(vector\<double\> angles, vector\<int\> norm\_gains)
 * get\_bearing\_cc(vector\<double\>angles, vector\<double\> dir\_gains)
+
+The MLE method can be called before a full rotation is made.
+The cross-correlation (cc) method requires a full rotation before it will work.
+
+To get the normalized gains, you can use the function `gains2normgain` located in bearing\_helper.cpp. 
+It takes in the directional antenna gain and the omnidirectional antenna gain as arguments (in that order).
+The argument gains can be either ints or doubles, but they must both be of the same type.
+The output normalized gain is an integer.
+
+
