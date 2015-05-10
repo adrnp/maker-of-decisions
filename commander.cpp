@@ -6,6 +6,7 @@
 #include <string.h>
 #include <inttypes.h>
 #include <fstream>
+#include <vector>
 
 // Serial includes
 #include <stdio.h>   /* Standard input/output definitions */
@@ -24,6 +25,8 @@
 #include "system_ids.h"
 #include "commander.h"
 
+using std::string;
+using std::vector;
 using namespace std;
 
 
@@ -32,6 +35,7 @@ float east[4] =  {0.0, 30.0, 0.0, -30.0};
 
 vector<float> cmd_north;
 vector<float> cmd_east;
+vector<float> cmd_alt;
 
 
 bool load_move_commands() {
@@ -46,21 +50,35 @@ bool load_move_commands() {
 	// make sure vectors are clean
 	cmd_north.clear();
 	cmd_east.clear();
+	cmd_alt.clear();
 
-	string cmd;
+	float cmdN;
+	float cmdE;
+	float cmdA;
+	char comma;
+	while (cmd_file >> cmdN >> comma >> cmdE >> comma >> cmdA) {
+		cmd_north.push_back(cmdN);
+		cmd_east.push_back(cmdE);
+		cmd_alt.push_back(cmdA);
+
+		printf("North command: %f\n", cmdN);
+		printf("East cmd: %f\n", cmdE);
+		printf("Alt cmd: %f\n", cmdA);
+	}
+	/*
 	while (cmd_file.good()) {
 		// get the north command
 		getline(cmd_file, cmd, ',');
-		cmd_north.push_back(atof(cmd));
+		cmd_north.push_back(atof(cmd.c_str()));
 
 		cout << "north command: " << cmd << "\n";
 
 		// get the east command
 		getline(cmd_file, cmd, ',');
-		cmd_east.push_back(atof(cmd));
+		cmd_east.push_back(atof(cmd.c_str()));
 
 		cout << "east command: " << cmd << "\n";
-	}
+	}*/
 
 	return true;
 }

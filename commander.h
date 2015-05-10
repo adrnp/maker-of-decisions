@@ -7,6 +7,9 @@
 #ifndef COMMANDER_H_
 #define COMMANDER_H_
 
+/* load in a set of move commands from a file */
+bool load_move_commands();
+
 /* handles the overall decision of which command to actually send */
 void send_next_command(uint8_t &prev_state, uint8_t &new_state);
 
