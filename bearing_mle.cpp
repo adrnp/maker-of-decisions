@@ -2,9 +2,29 @@
 
 #include <iostream>
 using std::cout;
+
 /**
+ * Returns bearing given vehicle headings and NORMALIZED gains.
+ * Just calls the more complex version that requires obs_matrix.
+ * This version creates the observation matrix.
+ * Because this requires more resources, it might be better to create
+ *  the obs_matrix once rather than every time this is created.
+ * The obs_matrix is static; it is a model of the system and doesn't change.
+ *
  * theta_v is a vector of vehicle headings
  * gains is a vector of the rssi values measured at the vehicle headings
+ */
+double get_bearing_mle(vector<double>& theta_v, vector<int>& gains)
+{
+	vector<vector<double> > obs_matrix = make_obs_matrix();
+	return get_bearing_mle(theta_v, gains, obs_matrix);
+}
+
+/**
+ * Returns bearing given vehicle headings and NORMALIZED gains.
+ *
+ * theta_v is a vector of vehicle headings
+ * gains is a vector of the normalized gain values measured at the headings
  */
 double get_bearing_mle(vector<double>& theta_v, vector<int>& gains, vector<vector<double> >& obs_matrix)
 {
@@ -38,13 +58,14 @@ double get_bearing_mle(vector<double>& theta_v, vector<int>& gains, vector<vecto
 		{
 			prob = prob * obs_matrix[theta_rel[i]][indices[i]];
 		}
-		cout << "theta_j = " << theta_j << ", " << "prob = " << prob << "\n";
+		//cout << "theta_j = " << theta_j << ", " << "prob = " << prob << "\n";
 		if (prob > best_prob)
 		{
 			best_prob = prob;
 			best_theta_j = theta_j;
 		}
 	}
+	/* The following correction is prob best only for simlations */
 	best_theta_j = (best_theta_j + 4) % 360;
 	return best_theta_j;
 }
