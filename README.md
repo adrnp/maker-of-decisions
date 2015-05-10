@@ -42,4 +42,18 @@ The the groundstation can be started with the following command:
 
 Once connected you should see a message appear with the heartbeat information (almost instantly, at most a couple seconds after connected).  If you do not see this message and are hardwired into the pixhawk, then you have the wrong device and try another ttyUSB#.
 
+### Bearing
+The bearing files currently consist of:
+* bearing.h
+* bearing\_helper.cpp
+* bearing\_mle.h
+* bearing\_cc.h
+* obs\_model.csv
+The function prototypes are stored in the header file bearing.h.
+The file bearing\_helper.cpp contains functions that I imagine many bearing methods will require.
+The files bearing\_mle.cpp and bearing\_cc.cpp contain two methods for getting the bearing.
+The model required to make some of these methods work is stored in obs\_model.csv.
 
+The get\_bearing functions currently implemented are:
+* get\_bearing\_mle(vector<double> angles, vector<int> norm\_gains)
+* get\_bearing\_cc(vector<double>angles, vector<double> dir\_gains)
