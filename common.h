@@ -43,6 +43,12 @@ extern bool rotating;
 /** boolean stating whether or not we are currently in a moving mode */
 extern bool moving;
 
+/** wifly device locations */
+extern char * wifly_port1;
+extern char * wifly_port2;
+
+extern bool dual_wifly;
+
 
 
 #endif /* COMMON_H_ */

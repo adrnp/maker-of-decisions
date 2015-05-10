@@ -7,6 +7,7 @@
 #include <inttypes.h>
 #include <fstream>
 #include <sys/time.h>
+#include <limits.h>
 
 // Serial includes
 #include <stdio.h>   /* Standard input/output definitions */
@@ -23,8 +24,9 @@
 #include "serialwifly.h" 	// this is from Louis' wifly code, which will be a library
 #include "common.h"
 #include "wifly_thread.h"
-#include "test.h" 			// for bearing calculation
+// #include "test.h" 			// for bearing calculation
 #include "commander.h"
+#include "bearing.h"		// this should be all the functions required for bearing calculations
 
 using std::string;
 using std::vector;
@@ -92,19 +94,35 @@ void *wifly_thread(void *param) {
 	int num_samples = 1;
 	char *ssid = (char *) "JAMMER01";
 	char *file_name = (char *) "wifly.csv";
-	char *bearing_file_name = (char *) "bearing_calc.csv";
-	char *port = (char *) "/dev/ttyUSB0";
+	char *file_name2 = (char *) "wifly2.csv";
+	char *bearing_file_name = (char *) "bearing_calc_cc.csv";
+	char *bearing_mle_file_name = (char *) "bearing_calc_mle.csv";
+	// char *port = (char *) "/dev/ttyUSB0";
 	
-	// connect to the wifly
-	int wifly_fd = wifly_connect(port);
-
+	// connect to the first wifly
+	int wifly_fd = wifly_connect(wifly_port1);
 	if (wifly_fd < 0) {
 		printf("Error opening wifly connection\n");
 		return NULL;
 	}
+
+	// connect to the second wifly
+	int wifly_fd2 = -1;
+	if (dual_wifly) {
+		wifly_fd2 = wifly_connect(wifly_port2);
+		if (wifly_fd2 < 0) {
+			printf("Error opening wifly connection\n");
+			return NULL;
+		}
+	}
+
 	
 	/* Go into command mode */
 	commandmode(wifly_fd);
+	if (dual_wifly) {
+		commandmode(wifly_fd2);
+	}
+
 
 	/* Open a file to write values to */
 	/* Appending values */
@@ -116,6 +134,18 @@ void *wifly_thread(void *param) {
 		return NULL;
 	}
 
+
+	FILE *wifly_file2 = NULL;
+	if (dual_wifly) {
+		wifly_file2 = fopen(file_name2, "a");
+		if (wifly_file2 == NULL) {
+			// TODO: figure out what we do want to return when there is an error
+			printf("Error opening wifly2 output file\n");
+			return NULL;
+		}
+	}
+	
+
 	/* Open a file to write bearing calcs to */
 	FILE *bearing_file = fopen(bearing_file_name, "a");
 	if (bearing_file == NULL)
@@ -125,12 +155,28 @@ void *wifly_thread(void *param) {
 		return NULL;
 	}
 
+	FILE *bearing_file_mle = NULL;
+	if (dual_wifly) {
+		bearing_file_mle = fopen(bearing_mle_file_name, "a");
+		if (bearing_file_mle == NULL) {
+			printf("Error opening bearing mle output file\n");
+			return NULL;
+		}
+	}
+
+
 	if (get_commands) {
-		load_move_commands();
+		bool loaded = load_move_commands();
+		if (!loaded) {
+			printf("Error loading move commands\n");
+			return NULL;
+		}
 	}
 	
 	vector<double> angles;
 	vector<double> gains;
+	vector<double> omni_gains;
+	vector<int> norm_gains;
 
 	struct timeval tv;
 
@@ -171,6 +217,8 @@ void *wifly_thread(void *param) {
 		}
 	
 		// make measurements (depending on the current state)
+		int dir_rssi = INT_MAX;
+		int omni_rssi = INT_MAX;
 
 		/* check if we are in an official rotation */
 		if (rotating) {
@@ -181,18 +229,36 @@ void *wifly_thread(void *param) {
 				// clear the vectors
 				angles.clear();
 				gains.clear();
+				omni_gains.clear();
+				norm_gains.clear();
 			}
 
 			angles.push_back((double) uavData->vfr_hud.heading);
-			gains.push_back(scanrssi(wifly_fd, ssid));
+			dir_rssi = scanrssi(wifly_fd, ssid);
+			gains.push_back(dir_rssi);
 
+			if (dual_wifly) {
+				omni_rssi = scanrssi(wifly_fd2, ssid);
+				omni_gains.push_back(omni_rssi);
+
+				// calculate the normalized gains
+				norm_gains.push_back(gains2normgain(dir_rssi, omni_rssi));
+
+				// do constant calculation of bearing
+				double curr_bearing_est = get_bearing_mle(angles, norm_gains);
+				fprintf(bearing_file_mle, "%llu, %i,%i,%f,%f\n", uavData->sys_time_us.time_unix_usec, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, curr_bearing_est);
+
+				// TODO: send mle bearing message here!
+
+			}
 		}
 
+		/* catch the end of a rotation in order to do the cc gain measurement */
 		if (!rotating && in_rotation) {
 			in_rotation = false;
 
 			// do bearing calculation at this point
-			double bearing = get_bearing(angles, gains);
+			double bearing = get_bearing_cc(angles, gains);
 
 			// write the lat, lon, alt and bearing to file
 			fprintf(bearing_file, "%llu, %i,%i,%f,%f\n", uavData->sys_time_us.time_unix_usec, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, bearing);
@@ -203,17 +269,47 @@ void *wifly_thread(void *param) {
 			// tell pixhawk we are finished with the rotation
 			// send_finish_command();
 		}
-		
-		/* Scan values to this file */
-		/* Add degree at which you measure first */
-		// cout << uavData->vfr_hud.heading << " ";
-		fprintf(wifly_file, "%llu,%u,%i,%i,%i,%f,", uavData->sys_time_us.time_unix_usec, uavData->custom_mode, uavData->vfr_hud.heading, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
-		int rssi = scanrssi_f(wifly_fd, ssid, wifly_file, num_samples);
 
-		cout << uavData->vfr_hud.heading << " " << rssi << "\n";
+		/* no need to make another measurement to write to the file if we already made one */
+		if (rotating) {
+
+			/* write the directional measurement information */
+			fprintf(wifly_file, "%llu,%u,%i,%i,%i,%f,%i\n",
+				uavData->sys_time_us.time_unix_usec, uavData->custom_mode, uavData->vfr_hud.heading,
+				uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, dir_rssi);
+
+			/* write the omni measurement as needed */
+			if (dual_wifly) {
+				fprintf(wifly_file2, "%llu,%u,%i,%i,%i,%f,%i\n",
+					uavData->sys_time_us.time_unix_usec, uavData->custom_mode, uavData->vfr_hud.heading,
+					uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, omni_rssi);
+			}
+		
+		} else { /* need to make a measurement to save to the file */
+
+			/* Scan values to this file */
+			/* Add degree at which you measure first */
+			fprintf(wifly_file, "%llu,%u,%i,%i,%i,%f,",
+				uavData->sys_time_us.time_unix_usec, uavData->custom_mode, uavData->vfr_hud.heading,
+				uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
+
+			dir_rssi = scanrssi_f(wifly_fd, ssid, wifly_file, num_samples);
+			cout << uavData->vfr_hud.heading << ": wifly1: " << dir_rssi << "\n";
+
+			if (dual_wifly) {
+
+				fprintf(wifly_file2, "%llu,%u,%i,%i,%i,%f,",
+					uavData->sys_time_us.time_unix_usec, uavData->custom_mode, uavData->vfr_hud.heading,
+					uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
+
+				omni_rssi = scanrssi_f(wifly_fd2, ssid, wifly_file2, num_samples);
+				cout << uavData->vfr_hud.heading << ": wifly2: " << omni_rssi << "\n";
+			}
+
+		}
 
 		// send a mavlink message with the current rssi
-		send_rssi_message(rssi, uavData->vfr_hud.heading, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
+		send_rssi_message(dir_rssi, uavData->vfr_hud.heading, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
 
 		// TODO: send mavlink message of calculated rssi...
 
@@ -228,7 +324,14 @@ void *wifly_thread(void *param) {
 	
 	/* Be sure to close the output file and connection */
 	fclose(wifly_file);
+	fclose(bearing_file);
 	close(wifly_fd);
+
+	if (dual_wifly) {
+		fclose(wifly_file2);
+		fclose(bearing_file_mle);
+		close(wifly_fd2);
+	}
 
 	return NULL;
 }

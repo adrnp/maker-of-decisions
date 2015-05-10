@@ -27,7 +27,7 @@
 
 
 /* read in the command line arguments */
-void read_arguments(int argc, char **argv, char **uart_name, char *baudrate);
+void read_arguments(int argc, char **argv, char **uart_name, char *baudrate, char **wifly1, char **wifly2);
 
 /* quit using CTRL-C */
 void quit_handler(int sig);

@@ -21,10 +21,14 @@ bool verbose = false;	// default verbose to false
 bool debug = false;		// default debug to false
 bool nowifly = false;	// default to wanting wifly
 bool get_commands = false;	// default for whether or not we want to read the command file
+bool dual_wifly = false;	// default to only have one wifly active
 
 MAVInfo uav;			// object to hold all the state information on the UAV
 
 int RUNNING_FLAG = 1;	// default the read and write threads to be running
+
+char* wifly_port1;
+char* wifly_port2;
 
 
 /**
@@ -32,7 +36,7 @@ int RUNNING_FLAG = 1;	// default the read and write threads to be running
  *
  * TODO: figure out what to return and how to handle uart and baud values
  */
-void read_arguments(int argc, char **argv, char **uart_name, int *baudrate) {
+void read_arguments(int argc, char **argv, char **uart_name, int *baudrate, char **wifly1, char **wifly2) {
 
 	// string to be displayed on incorrect inputs to show correct function usage
 	const char *commandline_usage = "\tusage: %s -d <devicename> -b <baudrate> [options]\n\n"
@@ -90,6 +94,17 @@ void read_arguments(int argc, char **argv, char **uart_name, int *baudrate) {
 			get_commands = true;
 		}
 
+		/* wifly 1 port */
+		if (strcmp(argv[i], "-w1") == 0 || strcmp(argv[i], "--wifly1") == 0) {
+			*wifly1 = argv[i + 1];
+		}
+
+		/* wifly 2 port */
+		if (strcmp(argv[i], "-w2") == 0 || strcmp(argv[i], "--wifly2") == 0) {
+			*wifly2 = argv[i + 1];
+			dual_wifly = true;
+		}
+
 	}
 }
 
@@ -115,11 +130,15 @@ int main(int argc, char **argv) {
 	pthread_t wiflyId;
 
 	/* default values for arguments */
-	char *uart_name = (char*)"/dev/ttyUSB0";
+	char *uart_name = (char*)"/dev/ttyUSB1";
+
+	wifly_port1 = (char*) "/dev/ttyUSB0";
+	wifly_port2 = (char*) "/dev/ttyUSB2";
+
 	int baudrate = 115200;
 
 	// read the input arguments
-	read_arguments(argc, argv, &uart_name, &baudrate);
+	read_arguments(argc, argv, &uart_name, &baudrate, &wifly_port1, &wifly_port2);
 
 	// open and configure the com port being used for communication
 	begin_serial(uart_name, baudrate);
