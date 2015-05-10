@@ -29,14 +29,12 @@ using std::string;
 using std::vector;
 using namespace std;
 
-
-float north[4] = {-30.0, 0.0, 30.0, 0.0};
-float east[4] =  {0.0, 30.0, 0.0, -30.0};
-
 vector<float> cmd_north;
 vector<float> cmd_east;
 vector<float> cmd_alt;
 
+int num_cmds = 0;
+int cmd_index = 0;
 
 bool load_move_commands() {
 
@@ -65,21 +63,8 @@ bool load_move_commands() {
 		printf("East cmd: %f\n", cmdE);
 		printf("Alt cmd: %f\n", cmdA);
 	}
-	/*
-	while (cmd_file.good()) {
-		// get the north command
-		getline(cmd_file, cmd, ',');
-		cmd_north.push_back(atof(cmd.c_str()));
 
-		cout << "north command: " << cmd << "\n";
-
-		// get the east command
-		getline(cmd_file, cmd, ',');
-		cmd_east.push_back(atof(cmd.c_str()));
-
-		cout << "east command: " << cmd << "\n";
-	}*/
-
+	num_cmds = cmd_north.size();
 	return true;
 }
 
@@ -114,20 +99,22 @@ void sendMoveCommand() {
 	int nextCmd = uav.last_cmd_finished_id++;
 
 	// cycle the cmds (ids should go from 0 -> 3)
-	if (nextCmd > 3) {
-		nextCmd = 0;
+	if (cmd_index >= num_cmds) {
+		cmd_index = 0;
 	}
 
 	// extract the next north and east commands
-	float nextNorth = north[nextCmd];
-	float nextEast = east[nextCmd];
+	float nextNorth = cmd_north[cmd_index];
+	float nextEast = cmd_east[cmd_index];
+	float nextAlt = cmd_alt[cmd_index];
+	cmd_index++;
 
 	mavlink_tracking_cmd_t tracking_cmd;
 	tracking_cmd.timestamp_usec = 0;
 	tracking_cmd.north = nextNorth;
 	tracking_cmd.east = nextEast;
 	tracking_cmd.yaw_angle = 0.0;
-	tracking_cmd.altitude = 60.0;
+	tracking_cmd.altitude = nextAlt;
 	tracking_cmd.cmd_id = nextCmd;
 	tracking_cmd.cmd_type = TRACKING_CMD_TRAVEL;
 
