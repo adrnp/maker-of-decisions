@@ -10,6 +10,7 @@
 #include "read_thread.h"
 #include "wifly_thread.h"
 #include "mod.h"
+#include "dirk_thread.h"
 
 using std::string;
 using namespace std;
@@ -22,6 +23,10 @@ bool debug = false;		// default debug to false
 bool nowifly = false;	// default to wanting wifly
 bool get_commands = false;	// default for whether or not we want to read the command file
 bool dual_wifly = false;	// default to only have one wifly active
+bool phased_array = false;	// default to not using a phased array antenna
+
+bool execute_tracking = false;	// default to not executing a tracking mission
+float flight_alt = 380;			// default flight is AMSL
 
 MAVInfo uav;			// object to hold all the state information on the UAV
 
@@ -29,7 +34,7 @@ int RUNNING_FLAG = 1;	// default the read and write threads to be running
 
 char* wifly_port1;
 char* wifly_port2;
-
+char* pa_port;
 
 /**
  * read in the passed arguments to the function on start
@@ -58,8 +63,9 @@ void read_arguments(int argc, char **argv, char **uart_name, int *baudrate, char
 				*uart_name = argv[i + 1];
 
 			} else {
-				printf(commandline_usage, argv[0], *uart_name, *baudrate);
-				throw EXIT_FAILURE;
+				cout << "nope\n";
+				//printf(commandline_usage, argv[0], *uart_name, *baudrate);
+				//throw EXIT_FAILURE;
 			}
 		}
 
@@ -69,8 +75,9 @@ void read_arguments(int argc, char **argv, char **uart_name, int *baudrate, char
 				*baudrate = atoi(argv[i + 1]);
 
 			} else {
-				printf(commandline_usage, argv[0], *uart_name, *baudrate);
-				throw EXIT_FAILURE;
+				cout << "more nope\n";
+				//printf(commandline_usage, argv[0], *uart_name, *baudrate);
+				//throw EXIT_FAILURE;
 			}
 		}
 
@@ -105,6 +112,15 @@ void read_arguments(int argc, char **argv, char **uart_name, int *baudrate, char
 			dual_wifly = true;
 		}
 
+		/* phased array port */
+		if (strcmp(argv[i], "-pa") == 0 || strcmp(argv[i], "--phased") == 0) {
+			phased_array = true;
+		}
+
+		/* whether or not executing a tracking mission */
+		if (strcmp(argv[i], "-pp") == 0 || strcmp(argv[i], "--planning") == 0) {
+			execute_tracking = true;
+		}
 	}
 }
 
@@ -125,9 +141,13 @@ void quit_handler(int sig) {
 
 int main(int argc, char **argv) {
 
+	cout << "starting...\n";
+	printf("printf starting...\n");
+
 	// ids of the threads
 	pthread_t readId;
 	pthread_t wiflyId;
+	pthread_t phasedId;
 
 	/* default values for arguments */
 	char *uart_name = (char*)"/dev/ttyUSB1";
@@ -137,28 +157,44 @@ int main(int argc, char **argv) {
 
 	int baudrate = 115200;
 
+	cout << "reading arguments\n";
 	// read the input arguments
 	read_arguments(argc, argv, &uart_name, &baudrate, &wifly_port1, &wifly_port2);
 
 	// open and configure the com port being used for communication
-	begin_serial(uart_name, baudrate);
+	//begin_serial(uart_name, baudrate);
 
 	// setup termination using CRT-C
 	signal(SIGINT, quit_handler);
 
 
 	// need to create read and write threads
-	
-	pthread_create(&readId, NULL, read_thread, (void *)&uav);
+	cout<< "handling threads\n";
+	//pthread_create(&readId, NULL, read_thread, (void *)&uav);
 	
 	// create a thread for the wifly stuff (only if want wifly running)
-	if (!nowifly) {
+	if (!nowifly && !phased_array) {
+		printf("starting wifly thread...\n");
 		pthread_create(&wiflyId, NULL, wifly_thread, (void *)&uav);
 	}
 
-	pthread_join(readId, NULL);
-	pthread_join(wiflyId, NULL);
+	if (phased_array) {
+		printf("starting dirk antenna thread...\n");
+		pthread_create(&phasedId, NULL, dirk_thread, (void *)&uav);
+	}
+
+	//pthread_join(readId, NULL);
 	
+	if (!nowifly && !phased_array) {
+		pthread_join(wiflyId, NULL);
+	}
+
+	if (phased_array) {
+		pthread_join(phasedId, NULL);
+	}
+	
+	// pthread_join(wiflyId, NULL);
+	// pthread_join(phasedId, NULL);
 
 	end_serial();
 

@@ -13,6 +13,9 @@ bool load_move_commands();
 /* handles the overall decision of which command to actually send */
 void send_next_command(uint8_t &prev_state, uint8_t &new_state);
 
+/* send the next tracking command */
+void sendTrackingCommand(float &north, float &east);
+
 /* send the next command for testing movement */
 void sendMoveCommand();
 

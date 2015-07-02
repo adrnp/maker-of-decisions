@@ -64,6 +64,8 @@ bool load_move_commands() {
 		printf("Alt cmd: %f\n", cmdA);
 	}
 
+	printf("num commands read: %d\n", num_cmds);
+
 	num_cmds = cmd_north.size();
 	return true;
 }
@@ -77,8 +79,17 @@ void send_next_command(uint8_t &prev_state, uint8_t &new_state) {
 		case TRACKING_HUNT_STATE_ROTATE:
 			rotating = false;
 
-			// send the next move command
-			sendMoveCommand();
+			/* send next command depending on flight mode */
+			if (execute_tracking) {
+				printf("should not be seeing this BAD!!!!\n");
+				/*
+				vector<float> commands = get_tracking_command();
+				sendTrackingCommand(commands[0], commands[1]);
+				*/
+			} else {	
+				// send the next move command
+				sendMoveCommand();
+			}
 			break;
 		case TRACKING_HUNT_STATE_MOVE:
 			moving = false;
@@ -92,6 +103,46 @@ void send_next_command(uint8_t &prev_state, uint8_t &new_state) {
 	return;
 }
 
+void sendTrackingCommand(float &north, float &east) {
+	
+	// retrieve the id of the last finished cmd
+	int nextCmd = uav.last_cmd_finished_id++;
+
+	// cycle the cmds (ids should go from 0 -> 3)
+	if (cmd_index >= num_cmds) {
+		cmd_index = 0;
+	}
+
+	// extract the next north and east commands
+	float nextNorth = north;
+	float nextEast = east;
+	float nextAlt = flight_alt;
+
+	printf("sending command %i: N %f\tE %f\tA %f\n", cmd_index, nextNorth, nextEast, nextAlt);
+
+	cmd_index++;
+
+
+	mavlink_tracking_cmd_t tracking_cmd;
+	tracking_cmd.timestamp_usec = 0;
+	tracking_cmd.north = nextNorth;
+	tracking_cmd.east = nextEast;
+	tracking_cmd.yaw_angle = 0.0;
+	tracking_cmd.altitude = nextAlt;
+	tracking_cmd.cmd_id = nextCmd;
+	tracking_cmd.cmd_type = TRACKING_CMD_TRAVEL;
+
+	mavlink_message_t message;
+	mavlink_msg_tracking_cmd_encode(sysid, compid, &message, &tracking_cmd);
+
+	/* printing stuff for debug purposes */
+	printf("sending next move command\n");
+	// int len = write_to_serial(message);
+	// printf("Sent buffer of length %i\n",len);
+
+	return;
+}
+
 
 void sendMoveCommand() {
 
@@ -102,6 +153,8 @@ void sendMoveCommand() {
 	if (cmd_index >= num_cmds) {
 		cmd_index = 0;
 	}
+
+	printf("sending move command with index: %d\n", cmd_index);
 
 	// extract the next north and east commands
 	float nextNorth = cmd_north[cmd_index];

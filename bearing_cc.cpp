@@ -11,15 +11,15 @@ using std::string;
 /* helper functions */
 pair<vector<double>, vector<double> > get_gains(string filename);
 pair<vector<double>, vector<int> > get_norm_gains(string filename);
-double mean(vector<double> vec);
-double std_dev(vector<double> vec, double mean);
-vector<double> normalize(vector<double> gains);
+double mean(vector<double>& vec);
+double std_dev(vector<double>& vec, double mean);
+vector<double> normalize(vector<double>& gains);
 double cc_helper(vector<double> & angles, vector<double> & gains, vector<double> & ref_angles, vector<double> & ref_gains, double shift);
 double cross_correlate(vector<double> & angles, vector<double> & gains, vector<double> & ref_angles, vector<double> & ref_gains);
 double interp_gain(double angle, double shift, vector<double> & ref_angles, vector<double> & ref_gains);
 
 
-double get_bearing_cc(vector<double> angles, vector<double> gains)
+double get_bearing_cc(vector<double> & angles, vector<double> & gains)
 {
 	pair<vector<double>, vector<double> > angles_gains = get_gains("norm.csv");
 	vector<double> ref_angles = angles_gains.first;
@@ -81,7 +81,7 @@ pair<vector<double>, vector<int> > get_norm_gains(string filename)
 /**
  * Returns the mean of an input vector
  */
-double mean(vector<double> gains)
+double mean(vector<double>& gains)
 {
 	int len = gains.size();
 	int i = 0;
@@ -98,7 +98,7 @@ double mean(vector<double> gains)
  * Returns the standard deviation of an input vector
  * Takes in an input vector (gains) and the mean of that vector
  */
-double std_dev(vector<double> gains, double mean)
+double std_dev(vector<double>& gains, double mean)
 {
 	int len = gains.size();
 	int i = 0;
@@ -116,7 +116,7 @@ double std_dev(vector<double> gains, double mean)
  * Returns a new, normalized vector
  * Input is the vector of measured gains
  */
-vector<double> normalize(vector<double> gains)
+vector<double> normalize(vector<double>& gains)
 {
 	int len = gains.size();
 	double mg = mean(gains);

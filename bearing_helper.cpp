@@ -17,6 +17,13 @@ using std::string;
  */
 int gains2normgain(int dir_gain, int omni_gain)
 {
+	if (dir_gain > 20) {
+		return dir_gain;
+	}
+
+	if (omni_gain > 20) {
+		return omni_gain;
+	}
 	return dir_gain - omni_gain + 5;
 }
 
@@ -25,6 +32,14 @@ int gains2normgain(int dir_gain, int omni_gain)
  */
 int gains2normgain(double dir_gain, double omni_gain)
 {
+	if (dir_gain > 20) {
+		return dir_gain;
+	}
+
+	if (omni_gain > 20) {
+		return omni_gain;
+	}
+	
 	return (int)(dir_gain - omni_gain + 5);
 }
 

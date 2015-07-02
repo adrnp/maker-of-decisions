@@ -49,6 +49,9 @@ extern char * wifly_port2;
 
 extern bool dual_wifly;
 
+/* stuff needed for the tracking command */
+extern bool execute_tracking;
+extern float flight_alt;
 
 
 #endif /* COMMON_H_ */

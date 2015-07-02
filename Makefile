@@ -1,9 +1,9 @@
 all: mod
 
-mod: mod.o serial_port.o read_thread.o commander.o serialwifly.o wifly_thread.o bearing_cc.o bearing_helper.o bearing_mle.o
-	g++ mod.o serial_port.o read_thread.o commander.o serialwifly.o wifly_thread.o bearing_cc.o bearing_helper.o bearing_mle.o -o mod -pthread
+mod: mod.o serial_port.o read_thread.o commander.o serialwifly.o wifly_thread.o bearing_cc.o bearing_helper.o bearing_mle.o dirk_thread.o
+	g++ mod.o serial_port.o read_thread.o commander.o serialwifly.o wifly_thread.o bearing_cc.o bearing_helper.o bearing_mle.o dirk_thread.o -o mod -pthread
 
-mod.o: mod.h mod.cpp serial_port.h read_thread.h serialwifly.h wifly_thread.h mav_struct.h common.h bearing.h
+mod.o: mod.h mod.cpp serial_port.h read_thread.h serialwifly.h wifly_thread.h mav_struct.h common.h bearing.h dirk_thread.h
 	g++ -I mavlink -Wall -c mod.cpp -pthread
 
 serial_port.o: serial_port.cpp serial_port.h
@@ -29,6 +29,9 @@ bearing_helper.o: bearing_helper.cpp bearing.h
 
 bearing_mle.o: bearing_mle.cpp bearing.h
 	g++ -std=c++11 -c -Wall bearing_mle.cpp
+
+dirk_thread.o: dirk_thread.cpp dirk_thread.h
+	g++ -c -Wall -I mavlink dirk_thread.cpp
 
 clean:
 	\rm *.o mod

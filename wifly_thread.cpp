@@ -223,6 +223,7 @@ void *wifly_thread(void *param) {
 		/* check if we are in an official rotation */
 		if (rotating) {
 			if (!in_rotation) {
+				printf("rotation started\n");
 				// set our logic to mark we are now running the rotation logic
 				in_rotation = true;
 
@@ -233,6 +234,7 @@ void *wifly_thread(void *param) {
 				norm_gains.clear();
 			}
 
+			printf("rotating\n");
 			angles.push_back((double) uavData->vfr_hud.heading);
 			dir_rssi = scanrssi(wifly_fd, ssid);
 			gains.push_back(dir_rssi);
@@ -245,6 +247,7 @@ void *wifly_thread(void *param) {
 				norm_gains.push_back(gains2normgain(dir_rssi, omni_rssi));
 
 				// do constant calculation of bearing
+				printf("calculating bearing mle\n");
 				double curr_bearing_est = get_bearing_mle(angles, norm_gains);
 				fprintf(bearing_file_mle, "%llu, %i,%i,%f,%f\n", uavData->sys_time_us.time_unix_usec, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, curr_bearing_est);
 
@@ -255,10 +258,13 @@ void *wifly_thread(void *param) {
 
 		/* catch the end of a rotation in order to do the cc gain measurement */
 		if (!rotating && in_rotation) {
+			printf("ended rotation\n");
 			in_rotation = false;
 
+			printf("calculating cc bearing\n");
 			// do bearing calculation at this point
-			double bearing = get_bearing_cc(angles, gains);
+			// double bearing = get_bearing_cc(angles, gains);
+			double bearing = 32.0;
 
 			// write the lat, lon, alt and bearing to file
 			fprintf(bearing_file, "%llu, %i,%i,%f,%f\n", uavData->sys_time_us.time_unix_usec, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, bearing);
@@ -272,7 +278,7 @@ void *wifly_thread(void *param) {
 
 		/* no need to make another measurement to write to the file if we already made one */
 		if (rotating) {
-
+			printf("writing directly to file\n");
 			/* write the directional measurement information */
 			fprintf(wifly_file, "%llu,%u,%i,%i,%i,%f,%i\n",
 				uavData->sys_time_us.time_unix_usec, uavData->custom_mode, uavData->vfr_hud.heading,
@@ -286,6 +292,8 @@ void *wifly_thread(void *param) {
 			}
 		
 		} else { /* need to make a measurement to save to the file */
+
+			printf("making measurement for writing to file\n");
 
 			/* Scan values to this file */
 			/* Add degree at which you measure first */
