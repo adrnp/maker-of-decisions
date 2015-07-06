@@ -162,7 +162,7 @@ int main(int argc, char **argv) {
 	read_arguments(argc, argv, &uart_name, &baudrate, &wifly_port1, &wifly_port2);
 
 	// open and configure the com port being used for communication
-	//begin_serial(uart_name, baudrate);
+	begin_serial(uart_name, baudrate);
 
 	// setup termination using CRT-C
 	signal(SIGINT, quit_handler);
@@ -170,7 +170,7 @@ int main(int argc, char **argv) {
 
 	// need to create read and write threads
 	cout<< "handling threads\n";
-	//pthread_create(&readId, NULL, read_thread, (void *)&uav);
+	pthread_create(&readId, NULL, read_thread, (void *)&uav);
 	
 	// create a thread for the wifly stuff (only if want wifly running)
 	if (!nowifly && !phased_array) {
@@ -183,7 +183,7 @@ int main(int argc, char **argv) {
 		pthread_create(&phasedId, NULL, dirk_thread, (void *)&uav);
 	}
 
-	//pthread_join(readId, NULL);
+	pthread_join(readId, NULL);
 	
 	if (!nowifly && !phased_array) {
 		pthread_join(wiflyId, NULL);
