@@ -26,7 +26,7 @@ public:
 	~WiflySerial();
 
 	/* Ensure that you are in command mode */
-	void commandmode();
+	void enter_commandmode();
 
 	/* Scan the channels for a specific SSID */
 
@@ -34,7 +34,7 @@ public:
 	int scanrssi(char* ssid);
 
 	// scan a given number of times and right each to a file
-	void scanrssi_f(char *ssid, FILE *f, int numtimes);
+	int scanrssi_f(char *ssid, FILE *f, int numtimes);
 
 private:
 

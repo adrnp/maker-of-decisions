@@ -44,7 +44,7 @@ WiflySerial::~WiflySerial() {
 }
 
 
-void WiflySerial::commandmode() {
+void WiflySerial::enter_commandmode() {
 	// First, we must make sure we are in command mode
 	// For now, let's assume we just booted up
 	write(fd, "exit\r", 5);
@@ -75,7 +75,7 @@ int WiflySerial::scanrssi(char *ssid) {
 /**
  * Scans numtimes times and prints rssi values to a line in a file
  */
-void WiflySerial::scanrssi_f(char *ssid, FILE *f, int numtimes)
+int WiflySerial::scanrssi_f(char *ssid, FILE *f, int numtimes)
 {
 	int rssi_value, i;
 	for (i = 1; i <= (numtimes-1); i++)
@@ -90,7 +90,7 @@ void WiflySerial::scanrssi_f(char *ssid, FILE *f, int numtimes)
 	fprintf(f, "%i\n", rssi_value);
 	//printf("rssi_value = %i\n", rssi_value);
 
-	//return rssi_value;
+	return rssi_value;
 }
 
 
