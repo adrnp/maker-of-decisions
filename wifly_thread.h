@@ -3,9 +3,6 @@
 #define WIFLY_THREAD_H_
 
 
-/* create connection to the wify module */
-int wifly_connect(char *port);
-
 /* update the booleans that keep track of the current state */
 void update_state(uint8_t &new_state);
 

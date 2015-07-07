@@ -21,7 +21,8 @@
 #include <sys/ioctl.h>
 #endif
 
-#include "serialwifly.h" 	// this is from Louis' wifly code, which will be a library
+//#include "serialwifly.h" 	// this is from Louis' wifly code, which will be a library
+#include "serial_lib/wifly_serial_class.h" // include the new class for handling a wifly
 #include "common.h"
 #include "wifly_thread.h"
 // #include "test.h" 			// for bearing calculation
@@ -46,24 +47,6 @@ bool moving = false;
 
 /* microsecond timestamp of the previous loop iteration */
 unsigned long prev_loop_timestamp = 0;
-
-
-int wifly_connect(char *port) {
-	
-	/* Start the connection to the WiFly */
-	/* If the connection does not exist, quit */
-	/* This is assuming we want to connect to /dev/ttyUSB0 */
-	/* TODO: Don't make that assumption */
-	int fd = start_connection(port);
-	if (fd < 0)
-	{
-		// TODO: figure out what we do want to return when there is an error
-		printf("Error connecting to wifly. Exiting...\n");
-		return 0;
-	}
-	
-	return fd;
-}
 
 
 void update_state(uint8_t &new_state) {
@@ -98,19 +81,19 @@ void *wifly_thread(void *param) {
 	char *bearing_file_name = (char *) "bearing_calc_cc.csv";
 	char *bearing_mle_file_name = (char *) "bearing_calc_mle.csv";
 	// char *port = (char *) "/dev/ttyUSB0";
-	
+
 	// connect to the first wifly
-	int wifly_fd = wifly_connect(wifly_port1);
-	if (wifly_fd < 0) {
+	WiflySerial wifly1(false, wifly_port1);
+	if (wifly1.fd < 0) {
 		printf("Error opening wifly connection\n");
 		return NULL;
 	}
 
 	// connect to the second wifly
-	int wifly_fd2 = -1;
+	WiflySerial wifly2(false);
 	if (dual_wifly) {
-		wifly_fd2 = wifly_connect(wifly_port2);
-		if (wifly_fd2 < 0) {
+		wifly2.open_serial(wifly_port2);
+		if (wifly2.fd < 0) {
 			printf("Error opening wifly connection\n");
 			return NULL;
 		}
@@ -118,9 +101,9 @@ void *wifly_thread(void *param) {
 
 	
 	/* Go into command mode */
-	commandmode(wifly_fd);
+	wifly1.enter_commandmode();
 	if (dual_wifly) {
-		commandmode(wifly_fd2);
+		wifly2.enter_commandmode();
 	}
 
 
@@ -236,11 +219,11 @@ void *wifly_thread(void *param) {
 
 			printf("rotating\n");
 			angles.push_back((double) uavData->vfr_hud.heading);
-			dir_rssi = scanrssi(wifly_fd, ssid);
+			dir_rssi = wifly1.scanrssi(ssid);
 			gains.push_back(dir_rssi);
 
 			if (dual_wifly) {
-				omni_rssi = scanrssi(wifly_fd2, ssid);
+				omni_rssi = wifly2.scanrssi(ssid);
 				omni_gains.push_back(omni_rssi);
 
 				// calculate the normalized gains
@@ -301,7 +284,7 @@ void *wifly_thread(void *param) {
 				uavData->sys_time_us.time_unix_usec, uavData->custom_mode, uavData->vfr_hud.heading,
 				uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
 
-			dir_rssi = scanrssi_f(wifly_fd, ssid, wifly_file, num_samples);
+			dir_rssi = wifly1.scanrssi_f(ssid, wifly_file, num_samples);
 			cout << uavData->vfr_hud.heading << ": wifly1: " << dir_rssi << "\n";
 
 			if (dual_wifly) {
@@ -310,7 +293,7 @@ void *wifly_thread(void *param) {
 					uavData->sys_time_us.time_unix_usec, uavData->custom_mode, uavData->vfr_hud.heading,
 					uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
 
-				omni_rssi = scanrssi_f(wifly_fd2, ssid, wifly_file2, num_samples);
+				omni_rssi = wifly2.scanrssi_f(ssid, wifly_file2, num_samples);
 				cout << uavData->vfr_hud.heading << ": wifly2: " << omni_rssi << "\n";
 			}
 
@@ -333,12 +316,12 @@ void *wifly_thread(void *param) {
 	/* Be sure to close the output file and connection */
 	fclose(wifly_file);
 	fclose(bearing_file);
-	close(wifly_fd);
+	wifly1.end_serial();
 
 	if (dual_wifly) {
 		fclose(wifly_file2);
 		fclose(bearing_file_mle);
-		close(wifly_fd2);
+		wifly2.end_serial();
 	}
 
 	return NULL;
