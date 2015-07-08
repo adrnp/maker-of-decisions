@@ -1,43 +1,30 @@
-all: mod
+CC=g++
+CFLAGS=-c -Wall -std=c++11
+INC=-I ~/git-uav/maker-of-decisions/mavlink
+THREAD=-pthread
 
-mod: mod.o serial_port.o read_thread.o commander.o serialwifly.o wifly_thread.o bearing_cc.o bearing_helper.o bearing_mle.o dirk_thread.o serial_port_class.o wifly_serial_class.o
-	g++ mod.o serial_port.o read_thread.o commander.o serialwifly.o wifly_thread.o bearing_cc.o bearing_helper.o bearing_mle.o dirk_thread.o serial_port_class.o wifly_serial_class.o -o mod -pthread
+SOURCES = mod.cpp serial_port.cpp read_thread.cpp commander.cpp serialwifly.cpp wifly_thread.cpp \
+bearing_cc.cpp bearing_helper.cpp bearing_mle.cpp dirk_thread.cpp serial_lib/serial_port_class.cpp \
+serial_lib/wifly_serial_class.cpp serial_lib/mavlink_serial_class.cpp
 
-mod.o: mod.h mod.cpp serial_port.h read_thread.h serialwifly.h wifly_thread.h mav_struct.h common.h bearing.h dirk_thread.h
-	g++ -I mavlink -Wall -c mod.cpp -pthread
+OBJECTS = $(SOURCES:.cpp=.o)
 
-serial_port.o: serial_port.cpp serial_port.h
-	g++ -c -I mavlink -Wall serial_port.cpp
+EXEC = mod
 
-commander.o: commander.cpp commander.h
-	g++ -c -I mavlink -Wall commander.cpp
+all: $(EXEC) cleano
 
-read_thread.o: read_thread.cpp read_thread.h
-	g++ -c -I mavlink -Wall read_thread.cpp
 
-serialwifly.o: serialwifly.cpp serialwifly.h
-	g++ -c -Wall -I mavlink serialwifly.cpp
+$(EXEC): $(OBJECTS)
+	$(CC) -Wall -std=c++11 $(INC) $^ -o $@ $(THREAD)
 
-wifly_thread.o: wifly_thread.cpp wifly_thread.h
-	g++ -c -Wall -I mavlink wifly_thread.cpp
+%.o: %.cpp
+	$(CC) $(CFLAGS) $(INC) $< -o $@
 
-bearing_cc.o: bearing_cc.cpp bearing.h
-	g++ -std=c++11 -c -Wall bearing_cc.cpp
-
-bearing_helper.o: bearing_helper.cpp bearing.h
-	g++ -std=c++11 -c -Wall bearing_helper.cpp
-
-bearing_mle.o: bearing_mle.cpp bearing.h
-	g++ -std=c++11 -c -Wall bearing_mle.cpp
-
-dirk_thread.o: dirk_thread.cpp dirk_thread.h
-	g++ -c -Wall -I mavlink dirk_thread.cpp
-
-serial_port_class.o: serial_lib/serial_port_class.cpp
-	g++ -c -Wall serial_lib/serial_port_class.cpp
-
-wifly_serial_class.o: serial_lib/wifly_serial_class.cpp
-	g++ -c -Wall serial_lib/wifly_serial_class.cpp
+serial_lib/%.o: serial_lib/%.cpp
+	$(CC) $(CFLAGS) $(INC) $< -o $@
 
 clean:
 	\rm *.o mod
+
+cleano:
+	\rm *.o serial_lib/*.o

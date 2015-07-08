@@ -1,0 +1,63 @@
+CC=g++
+CFLAGS=-c -Wall -std=c++11
+INC=-I ~/git-uav/maker-of-decisions/mavlink
+THREAD=-pthread
+
+SOURCES = mod.cpp serial_port.cpp read_thread.cpp commander.cpp serialwifly.cpp wifly_thread.cpp \
+bearing_cc.cpp bearing_helper.cpp bearing_mle.cpp dirk_thread.cpp serial_lib/serial_port_class.cpp \
+serial_lib/wifly_serial_class.cpp serial_lib/mavlink_serial_class.cpp
+
+OBJECTS = $(SOURCES:.cpp=.o)
+
+EXEC = mod
+
+all: $(EXEC) cleano
+
+
+$(EXEC): $(OBJECTS)
+	$(CC) -Wall -std=c++11 $(INC) $^ -o $@ $(THREAD)
+
+mod.o: mod.cpp mod.h serial_port.h read_thread.h serialwifly.h wifly_thread.h mav_struct.h common.h bearing.h dirk_thread.h
+	$(CC) $(CFLAGS) $(INC) $< $(THREAD)
+
+serial_port.o: serial_port.cpp serial_port.h
+	$(CC) $(CFLAGS) $(INC) $< -o $@
+
+commander.o: commander.cpp commander.h
+	$(CC) $(CFLAGS) $(INC) $<
+
+read_thread.o: read_thread.cpp read_thread.h
+	$(CC) $(CFLAGS) $(INC) $<
+
+serialwifly.o: serialwifly.cpp serialwifly.h
+	$(CC) $(CFLAGS) $(INC) $<
+
+wifly_thread.o: wifly_thread.cpp wifly_thread.h
+	$(CC) $(CFLAGS) $(INC) $<
+
+bearing_cc.o: bearing_cc.cpp bearing.h
+	$(CC) $(CFLAGS) $<
+
+bearing_helper.o: bearing_helper.cpp bearing.h
+	$(CC) $(CFLAGS) $<
+
+bearing_mle.o: bearing_mle.cpp bearing.h
+	$(CC) $(CFLAGS) $<
+
+dirk_thread.o: dirk_thread.cpp dirk_thread.h
+	$(CC) $(CFLAGS) $(INC) $<
+
+serial_lib/serial_port_class.o: serial_lib/serial_port_class.cpp
+	$(CC) $(CFLAGS) $< -o $@
+
+serial_lib/wifly_serial_class.o: serial_lib/wifly_serial_class.cpp
+	$(CC) $(CFLAGS) $< -o $@
+
+serial_lib/mavlink_serial_class.o: serial_lib/mavlink_serial_class.cpp serial_lib/mavlink_serial_class.h
+	$(CC) $(CFLAGS) $(INC) $< -o $@
+
+clean:
+	\rm *.o mod
+
+cleano:
+	\rm *.o serial_lib/*.o
