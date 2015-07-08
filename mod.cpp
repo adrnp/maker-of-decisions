@@ -6,7 +6,6 @@
  */
 #include "common.h"
 
-#include "serial_port.h"
 #include "read_thread.h"
 #include "wifly_thread.h"
 #include "mod.h"
@@ -135,7 +134,7 @@ void quit_handler(int sig) {
 	// set the running flag to 0 to kill all loops
 	RUNNING_FLAG = 0;
 
-	end_serial();
+	pixhawk.end_serial();
 
 }
 
@@ -199,7 +198,7 @@ int main(int argc, char **argv) {
 	// pthread_join(wiflyId, NULL);
 	// pthread_join(phasedId, NULL);
 
-	end_serial();
+	pixhawk.end_serial();
 
 	return 0;
 }

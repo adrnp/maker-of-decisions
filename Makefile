@@ -3,7 +3,7 @@ CFLAGS=-c -Wall -std=c++11
 INC=-I ~/git-uav/maker-of-decisions/mavlink
 THREAD=-pthread
 
-SOURCES = mod.cpp serial_port.cpp read_thread.cpp commander.cpp serialwifly.cpp wifly_thread.cpp \
+SOURCES = mod.cpp read_thread.cpp commander.cpp wifly_thread.cpp \
 bearing_cc.cpp bearing_helper.cpp bearing_mle.cpp dirk_thread.cpp serial_lib/serial_port_class.cpp \
 serial_lib/wifly_serial_class.cpp serial_lib/mavlink_serial_class.cpp
 

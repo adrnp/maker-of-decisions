@@ -21,7 +21,6 @@
 #endif
 
 #include "common.h"
-#include "serial_port.h"
 #include "system_ids.h"
 #include "commander.h"
 

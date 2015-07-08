@@ -27,7 +27,6 @@
 
 #include "common.h"
 #include "read_thread.h"
-#include "serial_port.h"
 #include "commander.h"
 
 using std::string;

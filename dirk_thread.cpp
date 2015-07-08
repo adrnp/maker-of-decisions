@@ -24,8 +24,8 @@
 #include "common.h"
 #include "dirk_thread.h"
 #include "commander.h"
-#include "serial_port.h"	// this is the library needed to connect with the arduino
-
+//#include "serial_port.h"	// this is the library needed to connect with the arduino
+#include "serial_lib/serial_port_class.h"
 
 using std::string;
 using namespace std;
@@ -98,17 +98,8 @@ void *dirk_thread(void *param) {
 	char *dirk_uart = (char *) "/dev/ttyACM0";
 
 	// connect to the arduino
-	int afd = _open_port(dirk_uart);
-	if (afd <= 0) {
-		printf("Unable to open the com port\n");
-		return NULL;
-	}
-
-	bool success = _setup_port(baudrate, 8, 1, false, false);
-	if (!success) {
-		printf("Error connecting to the arduino\n");
-		return NULL;
-	}
+	SerialPort arduino(false);
+	arduino.begin_serial(dirk_uart, baudrate);
 
 	/* Open a file to write bearing calcs to */
 	FILE *bearing_file = fopen(bearing_file_name, "a");
@@ -171,13 +162,13 @@ void *dirk_thread(void *param) {
 		// printf("before here\n");
 
 		// check how many bytes are waiting to be read
-		ioctl(afd, FIONREAD, &num_bytes);
+		ioctl(arduino.fd, FIONREAD, &num_bytes);
 
 		// printf("number of available bytes: %d\n", num_bytes);
 
 		if (num_bytes > 0) {
 			// printf("before read\n");
-			int n = read(afd, cur_char, 1);
+			int n = read(arduino.fd, cur_char, 1);
 			
 			if (cur_char[0] == '\n') {
 				// printf("newline\n");
@@ -232,7 +223,7 @@ void *dirk_thread(void *param) {
 	
 	/* Be sure to close the output file and connection */
 	fclose(bearing_file);
-	close(afd);
+	arduino.end_serial();
 
 	return NULL;
 }
