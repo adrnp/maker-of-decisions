@@ -267,47 +267,6 @@ void handle_message(const mavlink_message_t *message, MAVInfo *uavRead) {
 }
 
 
-uint8_t read_from_serial(mavlink_status_t *lastStatus, mavlink_message_t *message) {
-	// variables needed for the message reading
-	uint8_t cp;					// not sure
-	mavlink_status_t status;	// current message status
-	uint8_t msgReceived = false; // whether or not a message was correctly received
-
-	// read in from the file
-	if (read(fd, &cp, 1) > 0) {
-
-		// Check if a message could be decoded, return the message in case yes
-		msgReceived = mavlink_parse_char(MAVLINK_COMM_1, cp, message, &status);
-
-		// check the packet drop count to see if there was a packet dropped during this message reading
-		if (lastStatus->packet_rx_drop_count != status.packet_rx_drop_count) {
-
-			// print out some error information containing dropped packet indo
-			if (verbose || debug) printf("ERROR: DROPPED %d PACKETS\n", status.packet_rx_drop_count);
-			
-			// print out the characters of the packets themselves
-			if (debug) {
-				unsigned char v=cp;
-				fprintf(stderr,"%02x ", v);
-			}
-		}
-
-		// update the last message status 
-		*lastStatus = status;
-
-	} else { // means unable to read from the serial device
-
-		// print out error as needed
-		if (verbose) fprintf(stderr, "ERROR: Could not read from fd %d\n", fd);
-	}
-
-	// return whether or not the message was received
-	return msgReceived;
-}
-
-
-
-
 /**
  * function to read from the serial device
  * right now only looks for the apnt_gps_status message and prints out
@@ -330,7 +289,7 @@ void *read_thread(void *param) {
 		mavlink_message_t message;	// the message itself
 		
 		// read from serial, if message received, will be written to message variable
-		uint8_t msgReceived = read_from_serial(&lastStatus, &message);
+		uint8_t msgReceived = pixhawk.read_serial(&lastStatus, &message);
 
 		// If a message could be decoded, handle it
 		// TODO: only need to do this once

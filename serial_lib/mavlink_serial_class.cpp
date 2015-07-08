@@ -28,11 +28,11 @@ MavlinkSerial::MavlinkSerial(bool verbose) : SerialPort(verbose) {
 	_verbose = verbose;
 }
 
-MavlinkSerial::MavlinkSerial(bool verbose, char* &uart_name) : SerialPort(verbose) {
+MavlinkSerial::MavlinkSerial(bool verbose, char* &uart_name,  const int &baudrate) : SerialPort(verbose) {
 	_verbose = verbose;
 
 	// open the serial connection
-	open_serial(uart_name);
+	begin_serial(uart_name, baudrate);
 }
 
 MavlinkSerial::~MavlinkSerial() {

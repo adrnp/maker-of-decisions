@@ -34,8 +34,6 @@ void send_bearing_message(double &bearing, int32_t &lat, int32_t &lon, float &al
 /* send the rssi message */
 void send_rssi_message(int &rssi, int16_t &heading, int32_t &lat, int32_t &lon, float &alt);
 
-int write_to_serial(mavlink_message_t &message);
-
 
 
 

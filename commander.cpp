@@ -178,7 +178,7 @@ void sendMoveCommand() {
 	mavlink_message_t message;
 	mavlink_msg_tracking_cmd_encode(sysid, compid, &message, &tracking_cmd);
 
-	int len = write_to_serial(message);
+	int len = pixhawk.write_serial(message);
 	printf("sending next move command\n");
 	// printf("Sent buffer of length %i\n",len);
 
@@ -203,7 +203,7 @@ void sendRotateCommand(float direction) {
 	mavlink_message_t message;
 	mavlink_msg_tracking_cmd_encode(sysid, compid, &message, &tracking_cmd);
 
-	int len = write_to_serial(message);
+	int len = pixhawk.write_serial(message);
 	printf("sending next rotate command\n");
 	// printf("Sent buffer of length %i\n",len);
 
@@ -228,7 +228,7 @@ void send_finish_command() {
 	mavlink_message_t message;
 	mavlink_msg_tracking_cmd_encode(sysid, compid, &message, &tracking_cmd);
 
-	int len = write_to_serial(message);
+	int len = pixhawk.write_serial(message);
 	printf("sending finish command\n");
 	// printf("Sent buffer of length %i\n",len);
 
@@ -247,7 +247,7 @@ void send_bearing_message(double &bearing, int32_t &lat, int32_t &lon, float &al
 	mavlink_message_t message;
 	mavlink_msg_bearing_encode(sysid, compid, &message, &bear);
 
-	int len = write_to_serial(message);
+	int len = pixhawk.write_serial(message);
 	printf("sending bearing message\n");
 	// printf("Sent buffer of length %i\n",len);
 
@@ -266,28 +266,8 @@ void send_rssi_message(int &rssi, int16_t &heading, int32_t &lat, int32_t &lon, 
 	mavlink_message_t message;
 	mavlink_msg_rssi_encode(sysid, compid, &message, &rssi_msg);
 
-	int len = write_to_serial(message);
+	int len = pixhawk.write_serial(message);
 	printf("sending rssi message\n");
 	// printf("Sent buffer of length %i\n", len);
 	return;
-}
-
-
-int write_to_serial(mavlink_message_t &message) {
-	
-	// buffer needed for mavlink msg and function
-	char buf[300];
-
-	// Send message to buffer
-	unsigned len = mavlink_msg_to_send_buffer((uint8_t*)buf, &message);
-
-	// Write packet via serial link
-	write(fd, buf, len);
-
-	// Wait until all data has been written
-	tcdrain(fd);
-
-	return len;
-
-
 }

@@ -30,6 +30,8 @@ float flight_alt = 380;			// default flight is AMSL
 
 MAVInfo uav;			// object to hold all the state information on the UAV
 
+MavlinkSerial pixhawk = NULL;	// serial connection to the pixhawk
+
 int RUNNING_FLAG = 1;	// default the read and write threads to be running
 
 char* wifly_port1;
@@ -162,7 +164,8 @@ int main(int argc, char **argv) {
 	read_arguments(argc, argv, &uart_name, &baudrate, &wifly_port1, &wifly_port2);
 
 	// open and configure the com port being used for communication
-	begin_serial(uart_name, baudrate);
+	// begin_serial(uart_name, baudrate);
+	pixhawk = new MavlinkSerial(verbose, uart_name, baudrate);
 
 	// setup termination using CRT-C
 	signal(SIGINT, quit_handler);

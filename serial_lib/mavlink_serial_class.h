@@ -22,7 +22,7 @@ public:
 
 	/* constructor */
 	MavlinkSerial(bool verbose);
-	MavlinkSerial(bool verbose, char* &uart_name);
+	MavlinkSerial(bool verbose, char* &uart_name,  const int &baudrate);
 
 	/* destructor */
 	~MavlinkSerial();

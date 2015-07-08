@@ -33,12 +33,6 @@ void parse_apnt_site_status(const mavlink_message_t *message, MAVInfo *uavRead);
 void handle_message(const mavlink_message_t &message, MAVInfo *uavRead);
 
 
-/* read from the serial port to get message. 
- *  Will return true if got message, false otherwise
- */
-uint8_t read_from_serial(mavlink_status_t *lastStatus, mavlink_message_t *message);
-
-
 // the most important function
 void *read_thread(void *param);
 

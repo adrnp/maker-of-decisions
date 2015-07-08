@@ -24,7 +24,7 @@ serial_lib/%.o: serial_lib/%.cpp
 	$(CC) $(CFLAGS) $(INC) $< -o $@
 
 clean:
-	\rm *.o mod
+	\rm mod
 
 cleano:
 	\rm *.o serial_lib/*.o
