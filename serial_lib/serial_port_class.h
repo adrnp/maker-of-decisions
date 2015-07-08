@@ -40,7 +40,6 @@ private:
 	/* state variables */
 	bool _verbose;
 
-
 	/* open com port */
 	void open_port(const char* port);
 	//void open_ports(const char* port1, const char* port2);
