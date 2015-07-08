@@ -20,7 +20,7 @@
 #endif
 
 
-#include "mavlink_serial_class.h"
+#include "mavlink_serial.h"
 
 
 MavlinkSerial::MavlinkSerial(bool verbose) : SerialPort(verbose) {

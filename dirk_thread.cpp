@@ -25,7 +25,7 @@
 #include "dirk_thread.h"
 #include "commander.h"
 //#include "serial_port.h"	// this is the library needed to connect with the arduino
-#include "serial_lib/serial_port_class.h"
+#include "serial_lib/serial_port.h"
 
 using std::string;
 using namespace std;

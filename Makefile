@@ -3,9 +3,9 @@ CFLAGS=-c -Wall -std=c++11
 INC=-I ~/git-uav/maker-of-decisions/mavlink
 THREAD=-pthread
 
-SOURCES = mod.cpp read_thread.cpp commander.cpp wifly_thread.cpp \
-bearing_cc.cpp bearing_helper.cpp bearing_mle.cpp dirk_thread.cpp serial_lib/serial_port_class.cpp \
-serial_lib/wifly_serial_class.cpp serial_lib/mavlink_serial_class.cpp
+SOURCES = mod.cpp read_thread.cpp commander.cpp wifly_thread.cpp dirk_thread.cpp \
+bearing_lib/bearing_cc.cpp bearing_lib/bearing_helper.cpp bearing_lib/bearing_mle.cpp \
+serial_lib/serial_port.cpp serial_lib/wifly_serial.cpp serial_lib/mavlink_serial.cpp
 
 OBJECTS = $(SOURCES:.cpp=.o)
 
@@ -20,8 +20,11 @@ $(EXEC): $(OBJECTS)
 %.o: %.cpp
 	$(CC) $(CFLAGS) $(INC) $< -o $@
 
-serial_lib/%.o: serial_lib/%.cpp
+serial_lib/%.o: serial_lib/%.cpp serial_lib/serial_port.h
 	$(CC) $(CFLAGS) $(INC) $< -o $@
+
+bearing_lib/%.o: bearing_lib/%.cpp bearing_lib/bearing.h
+	$(CC) $(CFLAGS) $(INC) %< -o $@
 
 clean:
 	\rm mod

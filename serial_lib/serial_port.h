@@ -1,5 +1,5 @@
 /*
- * serial_port_class.h
+ * serial_port.h
  *
  * A class to be able to handle serial communication and connection, etc
  *
@@ -7,8 +7,8 @@
  *      Author: Adrien Perkins <adrienp@stanford.edu>
  */
 
-#ifndef SERIAL_PORT_CLASS_H_
-#define SERIAL_PORT_CLASS_H_
+#ifndef SERIAL_PORT_H_
+#define SERIAL_PORT_H_
 
 
 class  SerialPort {
@@ -54,4 +54,4 @@ private:
 };
 
 
-#endif /* SERIAL_PORT_CLASS_H_ */
+#endif /* SERIAL_PORT_H_ */

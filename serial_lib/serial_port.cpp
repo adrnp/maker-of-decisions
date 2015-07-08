@@ -4,7 +4,7 @@
 #include <cstdio>
 #include <cstdlib>
 
-#include "serial_port_class.h"
+#include "serial_port.h"
 
 
 SerialPort::SerialPort(bool verbose) {

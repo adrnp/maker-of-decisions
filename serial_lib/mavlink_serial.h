@@ -1,5 +1,5 @@
 /*
- * mavlink_serial_class.h
+ * mavlink_serial.h
  *
  * Builds on the serial class. Class to handle mavlink specific communication
  *
@@ -7,11 +7,11 @@
  *      Author: Adrien Perkins <adrienp@stanford.edu>
  */
 
-#ifndef MAVLINK_SERIAL_CLASS_H_
-#define MAVLINK_SERIAL_CLASS_H_
+#ifndef MAVLINK_SERIAL_H_
+#define MAVLINK_SERIAL_H_
 
 // include the superclass SerialPort
-#include "serial_port_class.h"
+#include "serial_port.h"
 
 #include <jager/mavlink.h>
 
@@ -39,4 +39,4 @@ private:
 };
 
 
-#endif /* MAVLINK_SERIAL_CLASS_H_ */
+#endif /* MAVLINK_SERIAL_H_ */

@@ -7,11 +7,11 @@
  *      Author: Adrien Perkins <adrienp@stanford.edu>
  */
 
-#ifndef WIFLY_SERIAL_CLASS_H_
-#define WIFLY_SERIAL_CLASS_H_
+#ifndef WIFLY_SERIAL_H_
+#define WIFLY_SERIAL_H_
 
 // include the superclass SerialPort
-#include "serial_port_class.h"
+#include "serial_port.h"
 
 class WiflySerial : public SerialPort {
 
@@ -44,4 +44,4 @@ private:
 };
 
 
-#endif /* WIFLY_SERIAL_CLASS_H_ */
+#endif /* WIFLY_SERIAL_H_ */

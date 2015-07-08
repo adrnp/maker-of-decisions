@@ -21,7 +21,7 @@
 #endif
 
 // include class definition
-#include "wifly_serial_class.h"
+#include "wifly_serial.h"
 
 // TODO: Investigate this parameter... what exactly does it do?
 #define WD 1000
