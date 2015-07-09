@@ -232,7 +232,8 @@ void *wifly_thread(void *param) {
 				// do constant calculation of bearing
 				printf("calculating bearing mle\n");
 				double curr_bearing_est = get_bearing_mle(angles, norm_gains);
-				fprintf(bearing_file_mle, "%llu, %i,%i,%f,%f\n", uavData->sys_time_us.time_unix_usec, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, curr_bearing_est);
+				fprintf(bearing_file_mle, "%llu,%i,%i,%f,%f\n", uavData->sys_time_us.time_unix_usec,
+					uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, curr_bearing_est);
 
 				// TODO: send mle bearing message here!
 
@@ -250,7 +251,8 @@ void *wifly_thread(void *param) {
 			double bearing = 32.0;
 
 			// write the lat, lon, alt and bearing to file
-			fprintf(bearing_file, "%llu, %i,%i,%f,%f\n", uavData->sys_time_us.time_unix_usec, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, bearing);
+			fprintf(bearing_file, "%llu,%i,%i,%f,%f\n", uavData->sys_time_us.time_unix_usec,
+				uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, bearing);
 
 			// send a mavlink message of the calculated bearing
 			send_bearing_message(bearing, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);

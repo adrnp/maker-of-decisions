@@ -6,12 +6,28 @@
 
 #include "serial_port.h"
 
+SerialPort::SerialPort() :
+_verbose(false),
+fd(-1)
+{
+	printf("calling base constructor\n");
+}
 
-SerialPort::SerialPort(bool verbose) {
-	_verbose = verbose;
-	fd = -1;
+SerialPort::SerialPort(bool verbose) :
+_verbose(verbose),
+fd(-1)
+ {
+	printf("setting fd to -1, serial port initializer\n");
 	//fd2 = -1;
 	//num_conns = 1;
+}
+
+SerialPort::SerialPort(bool verbose, char* &uart_name, const int &baudrate) :
+_verbose(verbose),
+fd(-1)
+{
+	printf("calling more complex base constructor\n");
+	begin_serial(uart_name, baudrate);
 }
 
 /*

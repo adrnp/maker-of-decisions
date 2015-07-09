@@ -288,7 +288,7 @@ void *read_thread(void *param) {
 		mavlink_message_t message;	// the message itself
 		
 		// read from serial, if message received, will be written to message variable
-		uint8_t msgReceived = pixhawk.read_serial(&lastStatus, &message);
+		uint8_t msgReceived = pixhawk->read_serial(&lastStatus, &message);
 
 		// If a message could be decoded, handle it
 		// TODO: only need to do this once

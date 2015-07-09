@@ -19,6 +19,7 @@ class WiflySerial : public SerialPort {
 public:
 
 	/* constructor */
+	WiflySerial();
 	WiflySerial(bool verbose);
 	WiflySerial(bool verbose, char* &uart_name);
 

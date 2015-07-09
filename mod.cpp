@@ -29,7 +29,7 @@ float flight_alt = 380;			// default flight is AMSL
 
 MAVInfo uav;			// object to hold all the state information on the UAV
 
-MavlinkSerial pixhawk = NULL;	// serial connection to the pixhawk
+MavlinkSerial* pixhawk = nullptr;	// serial connection to the pixhawk
 
 int RUNNING_FLAG = 1;	// default the read and write threads to be running
 
@@ -134,7 +134,7 @@ void quit_handler(int sig) {
 	// set the running flag to 0 to kill all loops
 	RUNNING_FLAG = 0;
 
-	pixhawk.end_serial();
+	pixhawk->end_serial();
 
 }
 
@@ -164,7 +164,11 @@ int main(int argc, char **argv) {
 
 	// open and configure the com port being used for communication
 	// begin_serial(uart_name, baudrate);
+	cout << "creating new mavlink serial object\n";
 	pixhawk = new MavlinkSerial(verbose, uart_name, baudrate);
+
+	cout << "pixhawk fd " << pixhawk->fd << "\n";
+	cout << "pixhawk get fd " << pixhawk->get_fd() << "\n";
 
 	// setup termination using CRT-C
 	signal(SIGINT, quit_handler);
@@ -198,7 +202,7 @@ int main(int argc, char **argv) {
 	// pthread_join(wiflyId, NULL);
 	// pthread_join(phasedId, NULL);
 
-	pixhawk.end_serial();
+	pixhawk->end_serial();
 
 	return 0;
 }

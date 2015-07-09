@@ -22,21 +22,36 @@
 
 #include "mavlink_serial.h"
 
-
-MavlinkSerial::MavlinkSerial(bool verbose) : SerialPort(verbose) {
-	// nothing specific to do in this constructor
-	_verbose = verbose;
+MavlinkSerial::MavlinkSerial() {
+	printf("default mavlink serial constructor\n");
 }
 
-MavlinkSerial::MavlinkSerial(bool verbose, char* &uart_name,  const int &baudrate) : SerialPort(verbose) {
+MavlinkSerial::MavlinkSerial(bool verbose) {
+	// nothing specific to do in this constructor
 	_verbose = verbose;
+	printf("verbose mavlink serial constructor\n");
+}
+
+MavlinkSerial::MavlinkSerial(bool verbose, char* &uart_name,  const int &baudrate) : SerialPort(verbose, uart_name, baudrate) {
+	printf("complex mavlink serial constructor\n");
+
+	/*
+	_verbose = verbose;
+	fd = -1;
 
 	// open the serial connection
 	begin_serial(uart_name, baudrate);
+	*/
+	printf("fd = %i\n", fd);
 }
 
 MavlinkSerial::~MavlinkSerial() {
 	// nothing to do in the destructor
+}
+
+int MavlinkSerial::get_fd() {
+	printf("get fd = %i\n", fd);
+	return fd;
 }
 
 
@@ -71,7 +86,7 @@ uint8_t MavlinkSerial::read_serial(mavlink_status_t *lastStatus, mavlink_message
 	} else { // means unable to read from the serial device
 
 		// print out error as needed
-		if (_verbose) fprintf(stderr, "ERROR: Could not read from fd %d\n", fd);
+		//if (_verbose) fprintf(stderr, "ERROR: Could not read from fd %d\n", fd);
 	}
 
 	// return whether or not the message was received

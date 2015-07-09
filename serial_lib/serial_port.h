@@ -20,7 +20,9 @@ public:
 	//int num_conns;
 
 	/* constructor */
+	SerialPort();
 	SerialPort(bool verbose);
+	SerialPort(bool verbose, char* &uart_name, const int &baudrate);
 	//SerialPort(bool verbose, int num_connections);
 
 	/* destructor */
@@ -36,7 +38,7 @@ public:
 	/* end the serial connection */
 	void end_serial();
 
-private:
+protected:
 	/* state variables */
 	bool _verbose;
 

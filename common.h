@@ -32,7 +32,7 @@ extern MAVInfo uav;
 extern int RUNNING_FLAG;
 
 /** the connection to the pixhawk */
-extern MavlinkSerial pixhawk;
+extern MavlinkSerial* pixhawk;
 
 /** boolean stating whether or not we are currently in a rotating mode */
 extern bool rotating;

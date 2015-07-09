@@ -21,20 +21,21 @@ class MavlinkSerial : public SerialPort {
 public:
 
 	/* constructor */
+	MavlinkSerial();
 	MavlinkSerial(bool verbose);
 	MavlinkSerial(bool verbose, char* &uart_name,  const int &baudrate);
 
 	/* destructor */
 	~MavlinkSerial();
 
+	/* test function to get the file descriptor */
+	int get_fd();
+
 	/* function to write a mavlink message */
 	int write_serial(mavlink_message_t &message);
 
 	/* function to read a message */
 	uint8_t read_serial(mavlink_status_t *lastStatus, mavlink_message_t *message);
-
-private:
-	bool _verbose;
 
 };
 
