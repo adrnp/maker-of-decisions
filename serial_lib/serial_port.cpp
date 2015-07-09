@@ -16,10 +16,8 @@ fd(-1)
 SerialPort::SerialPort(bool verbose) :
 _verbose(verbose),
 fd(-1)
- {
+{
 	printf("setting fd to -1, serial port initializer\n");
-	//fd2 = -1;
-	//num_conns = 1;
 }
 
 SerialPort::SerialPort(bool verbose, char* &uart_name, const int &baudrate) :
@@ -30,13 +28,6 @@ fd(-1)
 	begin_serial(uart_name, baudrate);
 }
 
-/*
-SerialPort::SerialPort(bool verbose, int num_connections) {
-	_verbose = verbose;
-	fd = -1;
-	fd2 = -1;
-	num_conns = num_connections;
-} */
 
 SerialPort::~SerialPort() {
 	end_serial();
@@ -95,22 +86,6 @@ void SerialPort::open_serial(char* &uart_name) {
 	}
 }
 
-/*
-void SerialPort::open_serial(char* &uart_name1, char* &uart_name2) {
-	open_ports(uart_name1, uart_name2);
-	if (fd == -1) {
-		if (_verbose) printf("failure, could not open port.\n");
-		throw EXIT_FAILURE;
-	}
-
-	if (fd2 == -1) {
-		if (_verbose) printf("failure, could not open port.\n");
-		throw EXIT_FAILURE;
-	}
-
-	if (_verbose) printf("success.\n");
-} */
-
 
 void SerialPort::end_serial() {
 	close_port();
@@ -134,29 +109,6 @@ void SerialPort::open_port(const char* port) {
 	// finalize opening of the serial port
 	fcntl(fd, F_SETFL, 0);
 }
-
-/*
-void SerialPort::open_ports(const char* port1, const char* port2) {
-	// Open serial port
-	// O_RDWR - Read and write
-	// O_NOCTTY - Ignore special chars like CTRL-C
-	fd = open(port1, O_RDWR | O_NOCTTY | O_NDELAY);
-
-	// error checking
-	if (fd == -1) {
-		// Could not open the port.
-		return;
-	}
-
-	// finalize opening of the serial port
-	fcntl(fd, F_SETFL, 0);
-
-	// do the same for port 2
-
-	fd2 = open(port2, O_RDWR | O_NOCTTY | O_NDELAY);
-	if (fd2 == -1) { return; }
-	fcntl(fd2, F_SETFL, 0);
-} */
 
 /* close the port */
 void SerialPort::close_port() {

@@ -22,26 +22,17 @@
 
 #include "mavlink_serial.h"
 
-MavlinkSerial::MavlinkSerial() {
+MavlinkSerial::MavlinkSerial() : SerialPort() {
 	printf("default mavlink serial constructor\n");
 }
 
-MavlinkSerial::MavlinkSerial(bool verbose) {
+MavlinkSerial::MavlinkSerial(bool verbose) : SerialPort(verbose) {
 	// nothing specific to do in this constructor
-	_verbose = verbose;
 	printf("verbose mavlink serial constructor\n");
 }
 
 MavlinkSerial::MavlinkSerial(bool verbose, char* &uart_name,  const int &baudrate) : SerialPort(verbose, uart_name, baudrate) {
 	printf("complex mavlink serial constructor\n");
-
-	/*
-	_verbose = verbose;
-	fd = -1;
-
-	// open the serial connection
-	begin_serial(uart_name, baudrate);
-	*/
 	printf("fd = %i\n", fd);
 }
 
