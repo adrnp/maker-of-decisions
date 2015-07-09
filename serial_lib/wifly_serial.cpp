@@ -29,14 +29,18 @@
 using std::string;
 using namespace std;
 
+WiflySerial::WiflySerial() : SerialPort() {
+	printf("simple wifly constructor\n");
+}
+
 
 WiflySerial::WiflySerial(bool verbose) : SerialPort(verbose) {
 	// nothing specific to do in this constructor
+	printf("verbose wifly constructor\n");
 }
 
-WiflySerial::WiflySerial(bool verbose, char* &uart_name) : SerialPort(verbose) {
-	// open the serial connection
-	open_serial(uart_name);
+WiflySerial::WiflySerial(bool verbose, char* &uart_name) : SerialPort(verbose, uart_name) {
+	printf("complex wifly constructor\n");
 }
 
 WiflySerial::~WiflySerial() {
@@ -63,6 +67,7 @@ void WiflySerial::enter_commandmode() {
  * Scans the channels and returns the rssi of the specified SSID
  */
 int WiflySerial::scanrssi(char *ssid) {
+	if (_verbose) printf("scanning...\n");
 	char buf[1000];
 	write(fd, "scan 10\r", 8);
 	usleep(1000000);

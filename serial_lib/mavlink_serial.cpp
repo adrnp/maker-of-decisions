@@ -77,7 +77,7 @@ uint8_t MavlinkSerial::read_serial(mavlink_status_t *lastStatus, mavlink_message
 	} else { // means unable to read from the serial device
 
 		// print out error as needed
-		//if (_verbose) fprintf(stderr, "ERROR: Could not read from fd %d\n", fd);
+		if (_verbose) fprintf(stderr, "ERROR: Could not read from fd %d\n", fd);
 	}
 
 	// return whether or not the message was received

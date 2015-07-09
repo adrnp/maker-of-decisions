@@ -75,7 +75,7 @@ void *wifly_thread(void *param) {
 	
 	// some constants that all need to become parameters
 	int num_samples = 1;
-	char *ssid = (char *) "JAMMER01";
+	char *ssid = (char *) "ADL"; //"JAMMER01";
 	char *file_name = (char *) "wifly.csv";
 	char *file_name2 = (char *) "wifly2.csv";
 	char *bearing_file_name = (char *) "bearing_calc_cc.csv";
@@ -83,17 +83,17 @@ void *wifly_thread(void *param) {
 	// char *port = (char *) "/dev/ttyUSB0";
 
 	// connect to the first wifly
-	WiflySerial wifly1(false, wifly_port1);
-	if (wifly1.fd < 0) {
+	WiflySerial* wifly1 = new WiflySerial(verbose, wifly_port1);
+	if (wifly1->fd < 0) {
 		printf("Error opening wifly connection\n");
 		return NULL;
 	}
 
 	// connect to the second wifly
-	WiflySerial wifly2(false);
+	WiflySerial* wifly2 = nullptr;
 	if (dual_wifly) {
-		wifly2.open_serial(wifly_port2);
-		if (wifly2.fd < 0) {
+		wifly2 = new WiflySerial(verbose, wifly_port2);
+		if (wifly2->fd < 0) {
 			printf("Error opening wifly connection\n");
 			return NULL;
 		}
@@ -101,9 +101,9 @@ void *wifly_thread(void *param) {
 
 	
 	/* Go into command mode */
-	wifly1.enter_commandmode();
+	wifly1->enter_commandmode();
 	if (dual_wifly) {
-		wifly2.enter_commandmode();
+		wifly2->enter_commandmode();
 	}
 
 
@@ -219,11 +219,11 @@ void *wifly_thread(void *param) {
 
 			printf("rotating\n");
 			angles.push_back((double) uavData->vfr_hud.heading);
-			dir_rssi = wifly1.scanrssi(ssid);
+			dir_rssi = wifly1->scanrssi(ssid);
 			gains.push_back(dir_rssi);
 
 			if (dual_wifly) {
-				omni_rssi = wifly2.scanrssi(ssid);
+				omni_rssi = wifly2->scanrssi(ssid);
 				omni_gains.push_back(omni_rssi);
 
 				// calculate the normalized gains
@@ -280,13 +280,15 @@ void *wifly_thread(void *param) {
 
 			printf("making measurement for writing to file\n");
 
+			std::cout << "wifly1 fd " << wifly1->fd << "\n";
+
 			/* Scan values to this file */
 			/* Add degree at which you measure first */
 			fprintf(wifly_file, "%llu,%u,%i,%i,%i,%f,",
 				uavData->sys_time_us.time_unix_usec, uavData->custom_mode, uavData->vfr_hud.heading,
 				uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
 
-			dir_rssi = wifly1.scanrssi_f(ssid, wifly_file, num_samples);
+			dir_rssi = wifly1->scanrssi_f(ssid, wifly_file, num_samples);
 			cout << uavData->vfr_hud.heading << ": wifly1: " << dir_rssi << "\n";
 
 			if (dual_wifly) {
@@ -295,7 +297,7 @@ void *wifly_thread(void *param) {
 					uavData->sys_time_us.time_unix_usec, uavData->custom_mode, uavData->vfr_hud.heading,
 					uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
 
-				omni_rssi = wifly2.scanrssi_f(ssid, wifly_file2, num_samples);
+				omni_rssi = wifly2->scanrssi_f(ssid, wifly_file2, num_samples);
 				cout << uavData->vfr_hud.heading << ": wifly2: " << omni_rssi << "\n";
 			}
 
@@ -318,12 +320,12 @@ void *wifly_thread(void *param) {
 	/* Be sure to close the output file and connection */
 	fclose(wifly_file);
 	fclose(bearing_file);
-	wifly1.end_serial();
+	wifly1->end_serial();
 
 	if (dual_wifly) {
 		fclose(wifly_file2);
 		fclose(bearing_file_mle);
-		wifly2.end_serial();
+		wifly2->end_serial();
 	}
 
 	return NULL;

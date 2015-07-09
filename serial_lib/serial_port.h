@@ -22,6 +22,7 @@ public:
 	/* constructor */
 	SerialPort();
 	SerialPort(bool verbose);
+	SerialPort(bool verbose, char* &uart_name);
 	SerialPort(bool verbose, char* &uart_name, const int &baudrate);
 	//SerialPort(bool verbose, int num_connections);
 
