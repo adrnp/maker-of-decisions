@@ -1,6 +1,7 @@
 CC=g++
-CFLAGS=-c -Wall -std=c++11
-INC=-I ~/git-uav/maker-of-decisions/mavlink
+CFLAGS=-c
+CFLAGS2=-Wall -std=c++11
+INC=-I ~/GitDocs/maker-of-decisions/mavlink
 THREAD=-pthread
 
 SOURCES = mod.cpp read_thread.cpp commander.cpp wifly_thread.cpp dirk_thread.cpp \
@@ -15,19 +16,19 @@ all: $(EXEC) cleano
 
 
 $(EXEC): $(OBJECTS)
-	$(CC) -Wall -std=c++11 $(INC) $^ -o $@ $(THREAD)
+	$(CC) $(CFLAGS2) $(INC) $^ -o $@ $(THREAD)
 
-%.o: %.cpp
-	$(CC) $(CFLAGS) $(INC) $< -o $@
+%.o:%.cpp
+	$(CC) $(CFLAGS) $(CFLAGS2) $(INC) $< -o $@
 
 serial_lib/%.o: serial_lib/%.cpp serial_lib/serial_port.h
-	$(CC) $(CFLAGS) $(INC) $< -o $@
+	$(CC) $(CFLAGS) $(CFLAGS2) $(INC) $< -o $@
 
 bearing_lib/%.o: bearing_lib/%.cpp bearing_lib/bearing.h
-	$(CC) $(CFLAGS) $(INC) %< -o $@
+	$(CC) $(CFLAGS) $(CFLAGS2) $(INC) %< -o $@
 
 clean:
 	\rm mod
 
 cleano:
-	\rm *.o serial_lib/*.o
+	\rm *.o serial_lib/*.o bearing_lib/*.o
