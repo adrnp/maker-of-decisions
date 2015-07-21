@@ -237,14 +237,14 @@ void send_finish_command() {
 
 void send_bearing_message(double &bearing, int32_t &lat, int32_t &lon, float &alt) {
 
-	mavlink_bearing_t bear;
+	mavlink_bearing_cc_t bear;
 	bear.bearing = bearing;
 	bear.lat = lat;
 	bear.lon = lon;
 	bear.alt = alt;
 
 	mavlink_message_t message;
-	mavlink_msg_bearing_encode(sysid, compid, &message, &bear);
+	mavlink_msg_bearing_cc_encode(sysid, compid, &message, &bear);
 
 	int len = pixhawk->write_serial(message);
 	printf("sending bearing message\n");
@@ -257,6 +257,7 @@ void send_bearing_message(double &bearing, int32_t &lat, int32_t &lon, float &al
 void send_rssi_message(int &rssi, int16_t &heading, int32_t &lat, int32_t &lon, float &alt) {
 	mavlink_rssi_t rssi_msg;
 	rssi_msg.rssi_value = rssi;
+	rssi_msg.rssi_value2 = 0;
 	rssi_msg.heading = (float) heading;
 	rssi_msg.lat = 0; //lat;
 	rssi_msg.lon = 0; //lon;
