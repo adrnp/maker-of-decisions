@@ -74,6 +74,7 @@ int WiflySerial::scanrssi(char *ssid) {
 	char buf[1000];
 	write(fd, "scan 50\r", 8);
 	usleep(1000000);
+	if (_verbose) printf("reading from wifly...\n");
 	read(fd, buf, sizeof(buf));
 
 	return getrssi(buf, ssid);
@@ -85,6 +86,7 @@ int WiflySerial::scanrssi(char *ssid) {
  */
 int WiflySerial::scanrssi_f(char *ssid, FILE *f, int numtimes)
 {
+	if (_verbose) printf("scanning to write to file...\n");
 	int rssi_value, i;
 	for (i = 1; i <= (numtimes-1); i++)
 	{
@@ -114,10 +116,13 @@ int WiflySerial::scanrssi_f(char *ssid, FILE *f, int numtimes)
  */
 int WiflySerial::getrssi(char *buf, char *ssid)
 {
+	if (_verbose) printf("getting rssi from message...\n");
+
 	char *delim = (char *) "\n";
 	char *token = strtok(buf, delim);
 	int rssi_value = INT_MAX;
 
+	if (_verbose) printf("starting get while loop...\n");
 	while (token)
 	{
 		if (strstr(token, ssid) != NULL)
