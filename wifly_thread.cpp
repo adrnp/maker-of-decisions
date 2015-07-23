@@ -74,7 +74,6 @@ void *wifly_thread(void *param) {
 	struct MAVInfo *uavData = (struct MAVInfo *)param;
 	
 	// some constants that all need to become parameters
-	int num_samples = 1;
 	char *ssid = (char *) "ADL"; // "JAMMER01";
 	char *file_name = (char *) "wifly.csv";
 	char *file_name2 = (char *) "wifly2.csv";
@@ -196,15 +195,39 @@ void *wifly_thread(void *param) {
 			prev_hunt_state = uavData->tracking_status.hunt_mode_state;
 			printf("Prev State changed to: %u\n", prev_hunt_state);
 		}
-	
-		// make measurements (depending on the current state)
+
+		//-----------------------------------------------//
+		// make measurement, and get start and end angle (for during the measurement)
+		//-----------------------------------------------//
+
+		// TODO: potentially capture all measurements at the same time as 
+		// making the rssi measurement (i.e. lat, lon, alt)
+		// not sure what the variability is from here to later on
+
 		int dir_rssi = INT_MAX;
 		int omni_rssi = INT_MAX;
+
+		if (verbose) printf("scanning wifly 1...\n");
+		int16_t heading_dir_pre = uavData->vfr_hud.heading;
+		dir_rssi = wifly1->scanrssi(ssid);
+		int16_t heading_dir_post = uavData->vfr_hud.heading;
+
+		int16_t heading_omni_pre = uavData->vfr_hud.heading;
+		if (dual_wifly) {
+			if (verbose) printf("scanning wifly 2...\n");
+			omni_rssi = wifly2->scanrssi(ssid);
+		}
+		int16_t heading_omni_post = uavData->vfr_hud.heading;
+
+
+		//-----------------------------------------------//
+		// Rotation specific calculations
+		//-----------------------------------------------//
 
 		/* check if we are in an official rotation */
 		if (rotating) {
 			if (!in_rotation) {
-				printf("rotation started\n");
+				if (verbose) printf("rotation started\n");
 				// set our logic to mark we are now running the rotation logic
 				in_rotation = true;
 
@@ -215,24 +238,25 @@ void *wifly_thread(void *param) {
 				norm_gains.clear();
 			}
 
-			printf("rotating\n");
-			angles.push_back((double) uavData->vfr_hud.heading);
-			
-			if (verbose) printf("scanning wifly 1...\n");
-			dir_rssi = wifly1->scanrssi(ssid);
+			if (verbose) printf("rotating\n");
+
+			// add heading and rssi to the correct arrays
+			angles.push_back((double) heading_dir_pre);
 			gains.push_back(dir_rssi);
 
 			if (dual_wifly) {
-				if (verbose) printf("scanning wifly 2...\n");
-				omni_rssi = wifly2->scanrssi(ssid);
+				
+				// add omni rssi to the correct array
 				omni_gains.push_back(omni_rssi);
 
 				// calculate the normalized gains
 				norm_gains.push_back(gains2normgain(dir_rssi, omni_rssi));
 
 				// do constant calculation of bearing
-				printf("calculating bearing mle\n");
+				if (verbose) printf("calculating bearing mle\n");
 				double curr_bearing_est = get_bearing_mle(angles, norm_gains);
+
+				// save the calculated mle bearing
 				fprintf(bearing_file_mle, "%llu,%i,%i,%f,%f\n", uavData->sys_time_us.time_unix_usec,
 					uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, curr_bearing_est);
 
@@ -243,15 +267,15 @@ void *wifly_thread(void *param) {
 
 		/* catch the end of a rotation in order to do the cc gain measurement */
 		if (!rotating && in_rotation) {
-			printf("ended rotation\n");
+			if (verbose) printf("ended rotation\n");
 			in_rotation = false;
 
-			printf("calculating cc bearing\n");
+			if (verbose) printf("calculating cc bearing\n");
 			// do bearing calculation at this point
-			// double bearing = get_bearing_cc(angles, gains);
-			double bearing = 32.0;
+			double bearing = get_bearing_cc(angles, gains);
+			// double bearing = 32.0; // NOT SURE WHAT THIS IS DOING HERE....
 
-			// write the lat, lon, alt and bearing to file
+			// save bearing cc to file (with important information)
 			fprintf(bearing_file, "%llu,%i,%i,%f,%f\n", uavData->sys_time_us.time_unix_usec,
 				uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, bearing);
 
@@ -262,60 +286,26 @@ void *wifly_thread(void *param) {
 			// send_finish_command();
 		}
 
-		/* no need to make another measurement to write to the file if we already made one */
-		if (rotating) {
-			printf("writing directly to file\n");
-			/* write the directional measurement information */
-			fprintf(wifly_file, "%llu,%u,%i,%i,%i,%f,%i\n",
-				uavData->sys_time_us.time_unix_usec, uavData->custom_mode, uavData->vfr_hud.heading,
+		//-----------------------------------------------//
+		// save the measured data information to file
+		//-----------------------------------------------//
+
+
+		/* write the directional atenna information */
+		fprintf(wifly_file, "%llu,%u,%i,%i,%i,%i,%f,%i\n",
+				uavData->sys_time_us.time_unix_usec, uavData->custom_mode, heading_dir_pre, heading_dir_post,
 				uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, dir_rssi);
 
-			/* write the omni measurement as needed */
-			if (dual_wifly) {
-				fprintf(wifly_file2, "%llu,%u,%i,%i,%i,%f,%i\n",
-					uavData->sys_time_us.time_unix_usec, uavData->custom_mode, uavData->vfr_hud.heading,
-					uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, omni_rssi);
-			}
-		
-		} else { /* need to make a measurement to save to the file */
-
-			printf("making measurement for writing to file\n");
-
-			std::cout << "wifly1 fd " << wifly1->fd << "\n";
-
-			/* Scan values to this file */
-			/* Add degree at which you measure first */
-			fprintf(wifly_file, "%llu,%u,%i,%i,%i,%f,",
-				uavData->sys_time_us.time_unix_usec, uavData->custom_mode, uavData->vfr_hud.heading,
-				uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
-
-			if (verbose) printf("calling scan to file\n");
-			dir_rssi = wifly1->scanrssi_f(ssid, wifly_file, num_samples);
-			cout << uavData->vfr_hud.heading << ": wifly1: " << dir_rssi << "\n";
-
-			if (dual_wifly) {
-
-				fprintf(wifly_file2, "%llu,%u,%i,%i,%i,%f,",
-					uavData->sys_time_us.time_unix_usec, uavData->custom_mode, uavData->vfr_hud.heading,
-					uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
-
-				omni_rssi = wifly2->scanrssi_f(ssid, wifly_file2, num_samples);
-				cout << uavData->vfr_hud.heading << ": wifly2: " << omni_rssi << "\n";
-			}
-
+		/* write the omni measurement as needed */
+		if (dual_wifly) {
+			fprintf(wifly_file2, "%llu,%u,%i,%i,%i,%i,%f,%i\n",
+				uavData->sys_time_us.time_unix_usec, uavData->custom_mode, heading_omni_pre, heading_omni_post,
+				uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, omni_rssi);
 		}
 
+
 		// send a mavlink message with the current rssi
-		send_rssi_message(dir_rssi, uavData->vfr_hud.heading, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
-
-		// TODO: send mavlink message of calculated rssi...
-
-		// send a message with a rotate command for testing purposes at the moment
-		// sendRotateCommand(-1.0);
-		
-		/* sleep for some time before making another measurement (30 ms for now) */
-		// usleep(30000);
-		
+		send_rssi_message(dir_rssi, heading_dir_pre, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
 	}
 	
 	
