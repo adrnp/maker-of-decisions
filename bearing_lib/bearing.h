@@ -27,4 +27,4 @@ double get_bearing_mle(vector<double>& theta_v, vector<int>& gains);
 
 double get_bearing_bayes(vector<double>& theta_v, vector<int>& gains, vector<vector<double> >& obs_matrix);
 
-double get_bearing_cc(vector<double> angles, vector<double> gains);
+double get_bearing_cc(vector<double> &angles, vector<double> &gains);
