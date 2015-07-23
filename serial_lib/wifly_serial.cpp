@@ -96,7 +96,6 @@ int WiflySerial::scanrssi2(char *ssid) {
 	read(fd, buf, sizeof(buf));
 	if (_verbose) printf("%s\n", buf);
 	
-	int rssi = INT_MAX;
 	/*
 	while (read(fd, buf, sizeof(buf)) > 0) {
 		if (_verbose) printf("%s\n", buf);
