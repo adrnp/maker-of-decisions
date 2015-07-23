@@ -163,11 +163,12 @@ void *wifly_thread(void *param) {
 
 	struct timeval tv;
 
-
+	int i = 0;
 
 	// main loop that should be constantly taking measurements
 	// until the main program is stopped
-	while (RUNNING_FLAG) {
+	while (i == 0) { //(RUNNING_FLAG) {
+		i++;
 
 		// only want to execute this at most ever 30 ms
 		// basically does a dynamic sleep in the sense that if there is a lot of processing time for doing the bearing
@@ -219,10 +220,13 @@ void *wifly_thread(void *param) {
 
 			printf("rotating\n");
 			angles.push_back((double) uavData->vfr_hud.heading);
+			
+			if (verbose) printf("scanning wifly 1...\n");
 			dir_rssi = wifly1->scanrssi(ssid);
 			gains.push_back(dir_rssi);
 
 			if (dual_wifly) {
+				if (verbose) printf("scanning wifly 2...\n");
 				omni_rssi = wifly2->scanrssi(ssid);
 				omni_gains.push_back(omni_rssi);
 
@@ -288,6 +292,7 @@ void *wifly_thread(void *param) {
 				uavData->sys_time_us.time_unix_usec, uavData->custom_mode, uavData->vfr_hud.heading,
 				uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
 
+			if (verbose) printf("calling scan to file\n");
 			dir_rssi = wifly1->scanrssi_f(ssid, wifly_file, num_samples);
 			cout << uavData->vfr_hud.heading << ": wifly1: " << dir_rssi << "\n";
 

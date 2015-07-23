@@ -71,13 +71,25 @@ void WiflySerial::enter_commandmode() {
  */
 int WiflySerial::scanrssi(char *ssid) {
 	if (_verbose) printf("scanning...\n");
-	char buf[1000];
-	write(fd, "scan 50\r", 8);
+	char buf[10000];
+	write(fd, "scan 10\r", 8);
 	usleep(1000000);
 	if (_verbose) printf("reading from wifly...\n");
+	
 	read(fd, buf, sizeof(buf));
-
+	if (_verbose) printf("%s\n", buf);
+	
+	int rssi = INT_MAX;
+	/*
+	while (read(fd, buf, sizeof(buf)) > 0) {
+		if (_verbose) printf("%s\n", buf);
+		//if (rssi == INT_MAX) {
+		//	rssi = getrssi(buf, ssid);
+		//}
+	}
+	*/
 	return getrssi(buf, ssid);
+	//return rssi;
 }
 
 
@@ -86,6 +98,7 @@ int WiflySerial::scanrssi(char *ssid) {
  */
 int WiflySerial::scanrssi_f(char *ssid, FILE *f, int numtimes)
 {
+	numtimes = 1;
 	if (_verbose) printf("scanning to write to file...\n");
 	int rssi_value, i;
 	for (i = 1; i <= (numtimes-1); i++)
@@ -116,15 +129,19 @@ int WiflySerial::scanrssi_f(char *ssid, FILE *f, int numtimes)
  */
 int WiflySerial::getrssi(char *buf, char *ssid)
 {
-	if (_verbose) printf("getting rssi from message...\n");
+	//if (_verbose) printf("getting rssi from message...\n");
 
 	char *delim = (char *) "\n";
 	char *token = strtok(buf, delim);
 	int rssi_value = INT_MAX;
 
-	if (_verbose) printf("starting get while loop...\n");
+	//if (_verbose) printf("%s\n", buf);
+
+	//if (_verbose) printf("starting get while loop...\n");
 	while (token)
 	{
+		if (_verbose) printf("%s\n", token);
+		
 		if (strstr(token, ssid) != NULL)
 		{
 			char *comma_delim = (char *)  ",";
