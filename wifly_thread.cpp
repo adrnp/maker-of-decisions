@@ -163,12 +163,9 @@ void *wifly_thread(void *param) {
 
 	struct timeval tv;
 
-	int i = 0;
-
 	// main loop that should be constantly taking measurements
 	// until the main program is stopped
-	while (i == 0) { //(RUNNING_FLAG) {
-		i++;
+	while (RUNNING_FLAG) {
 
 		// only want to execute this at most ever 30 ms
 		// basically does a dynamic sleep in the sense that if there is a lot of processing time for doing the bearing
