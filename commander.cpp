@@ -235,7 +235,7 @@ void send_finish_command() {
 }
 
 
-void send_bearing_message(double &bearing, int32_t &lat, int32_t &lon, float &alt) {
+void send_bearing_cc_message(double &bearing, int32_t &lat, int32_t &lon, float &alt) {
 
 	mavlink_bearing_cc_t bear;
 	bear.bearing = bearing;
@@ -247,7 +247,25 @@ void send_bearing_message(double &bearing, int32_t &lat, int32_t &lon, float &al
 	mavlink_msg_bearing_cc_encode(sysid, compid, &message, &bear);
 
 	//int len = pixhawk->write_serial(message);
-	printf("sending bearing message\n");
+	printf("sending bearing cc message\n");
+	// printf("Sent buffer of length %i\n",len);
+
+	return;
+}
+
+void send_bearing_mle_message(double &bearing, int32_t &lat, int32_t &lon, float &alt) {
+
+	mavlink_bearing_mle_t bear;
+	bear.bearing = bearing;
+	bear.lat = lat;
+	bear.lon = lon;
+	bear.alt = alt;
+
+	mavlink_message_t message;
+	mavlink_msg_bearing_mle_encode(sysid, compid, &message, &bear);
+
+	//int len = pixhawk->write_serial(message);
+	printf("sending bearing mle message\n");
 	// printf("Sent buffer of length %i\n",len);
 
 	return;

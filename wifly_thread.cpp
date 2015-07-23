@@ -260,7 +260,8 @@ void *wifly_thread(void *param) {
 				fprintf(bearing_file_mle, "%llu,%i,%i,%f,%f\n", uavData->sys_time_us.time_unix_usec,
 					uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, curr_bearing_est);
 
-				// TODO: send mle bearing message here!
+				// send a mavlink message of the calculated mle bearing
+				send_bearing_mle_message(curr_bearing_est, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
 
 			}
 		}
@@ -280,7 +281,7 @@ void *wifly_thread(void *param) {
 				uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, bearing);
 
 			// send a mavlink message of the calculated bearing
-			send_bearing_message(bearing, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
+			send_bearing_cc_message(bearing, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
 
 			// tell pixhawk we are finished with the rotation
 			// send_finish_command();
