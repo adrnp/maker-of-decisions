@@ -1,7 +1,8 @@
 CC=g++
 CFLAGS=-c
 CFLAGS2=-Wall -std=c++11
-INC=-I ~/GitDocs/maker-of-decisions/mavlink
+#INC=-I ~/GitDocs/maker-of-decisions/mavlink
+INC=-I ~/git-uav/maker-of-decisions/mavlink
 THREAD=-pthread
 
 SOURCES = mod.cpp read_thread.cpp commander.cpp wifly_thread.cpp dirk_thread.cpp \
