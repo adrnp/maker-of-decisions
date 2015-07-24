@@ -9,6 +9,7 @@
 #include <sys/time.h>
 #include <limits.h>
 
+
 // Serial includes
 #include <stdio.h>   /* Standard input/output definitions */
 #include <string.h>  /* String function definitions */
@@ -65,6 +66,22 @@ void update_state(uint8_t &new_state) {
 		// starting = true;
 		break;
 	}
+}
+
+
+int get_max_rssi(vector<double> rssi_values) {
+
+	double max_rssi = INT_MIN;
+	
+	int len = rssi_values.size();
+	for (int i = 0; i < len; i++) {
+		if (rssi_values[i] > max_rssi && rssi_values[i] < 0) {
+			max_rssi = rssi_values[i];
+		}
+	}
+
+	// return the negative because need it to be a positive value for later
+	return (int) -max_rssi;
 }
 
 
@@ -281,7 +298,7 @@ void *wifly_thread(void *param) {
 			// double bearing = 32.0; // NOT SURE WHAT THIS IS DOING HERE....
 
 			// get what the max value was for the rssi
-			max_rssi = std:min_element(-gains, gains.length());
+			max_rssi = get_max_rssi(gains);
 
 			// save bearing cc to file (with important information)
 			fprintf(bearing_file, "%llu,%i,%i,%f,%f\n", uavData->sys_time_us.time_unix_usec,

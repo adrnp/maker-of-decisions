@@ -7,11 +7,14 @@
 #ifndef COMMANDER_H_
 #define COMMANDER_H_
 
+#include <vector>
+
+
 /* load in a set of move commands from a file */
 bool load_move_commands();
 
 /* handles the overall decision of which command to actually send */
-void send_next_command(uint8_t &prev_state, uint8_t &new_state, double &bearing, double &rssi);
+void send_next_command(uint8_t &prev_state, uint8_t &new_state, double &bearing, int &rssi);
 
 /* send the next tracking command */
 void sendTrackingCommand(float &north, float &east);
@@ -38,7 +41,7 @@ void send_bearing_mle_message(double &bearing, int32_t &lat, int32_t &lon, float
 void send_rssi_message(int &rssi, int16_t &heading, int32_t &lat, int32_t &lon, float &alt);
 
 /* calculate the next tracking command */
-vector<float> calc_next_command(double &bearing, double &rssi);
+std::vector<float> calc_next_command(double &bearing, int &rssi);
 
 
 

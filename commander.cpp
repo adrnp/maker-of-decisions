@@ -82,7 +82,7 @@ void send_next_command(uint8_t &prev_state, uint8_t &new_state, double &bearing,
 			if (execute_tracking) {
 				if (verbose) printf("sending a tracking command\n");
 
-				vector<float> commands = get_tracking_command(bearing, rssi);
+				vector<float> commands = calc_next_command(bearing, rssi);
 				sendTrackingCommand(commands[0], commands[1]);
 				
 			} else {	
@@ -292,7 +292,7 @@ void send_rssi_message(int &rssi, int16_t &heading, int32_t &lat, int32_t &lon, 
 
 
 
-vector<float> calc_next_command(double &bearing, double &rssi) {
+vector<float> calc_next_command(double &bearing, int &rssi) {
 	// bearing is degrees from 0 to 359
 	
 	// commands are a vector of [north, south]
@@ -300,10 +300,11 @@ vector<float> calc_next_command(double &bearing, double &rssi) {
 
 	float k = 0.5; // units: m / dB
 
-	float north = k*rssi*cos(bearing * PI/180.0);
-	float east = k*rssi*sin(bearing * PI/180.0);
+	float north = k * (double) rssi * cos(bearing * M_PI/180.0);
+	float east = k * ( double) rssi * sin(bearing * M_PI/180.0);
 
 	commands.push_back(north);
 	commands.push_back(east);
 
+	return commands;
 }
