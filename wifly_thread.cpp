@@ -162,6 +162,11 @@ void *wifly_thread(void *param) {
 
 	struct timeval tv;
 
+	double bearing_cc;
+	int max_rssi;
+
+	bool send_next = false;
+
 	// main loop that should be constantly taking measurements
 	// until the main program is stopped
 	while (RUNNING_FLAG) {
@@ -183,8 +188,7 @@ void *wifly_thread(void *param) {
 			printf("State changed from %u to %u\n", prev_hunt_state, uavData->tracking_status.hunt_mode_state);
 
 			if (uavData->tracking_status.hunt_mode_state == TRACKING_HUNT_STATE_WAIT) {
-				send_next_command(prev_hunt_state, uavData->tracking_status.hunt_mode_state);
-				
+				send_next = true;
 				// TODO: maybe want to update the state immediately here...
 			} else {
 				update_state(uavData->tracking_status.hunt_mode_state);
@@ -273,15 +277,18 @@ void *wifly_thread(void *param) {
 
 			if (verbose) printf("calculating cc bearing\n");
 			// do bearing calculation at this point
-			double bearing = get_bearing_cc(angles, gains);
+			bearing_cc = get_bearing_cc(angles, gains);
 			// double bearing = 32.0; // NOT SURE WHAT THIS IS DOING HERE....
+
+			// get what the max value was for the rssi
+			max_rssi = std:min_element(-gains, gains.length());
 
 			// save bearing cc to file (with important information)
 			fprintf(bearing_file, "%llu,%i,%i,%f,%f\n", uavData->sys_time_us.time_unix_usec,
-				uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, bearing);
+				uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, bearing_cc);
 
 			// send a mavlink message of the calculated bearing
-			send_bearing_cc_message(bearing, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
+			send_bearing_cc_message(bearing_cc, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
 
 			// tell pixhawk we are finished with the rotation
 			// send_finish_command();
@@ -307,7 +314,16 @@ void *wifly_thread(void *param) {
 
 		// send a mavlink message with the current rssi
 		send_rssi_message(dir_rssi, heading_dir_pre, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
-	}
+
+
+		if (send_next) {
+			send_next_command(prev_hunt_state, uavData->tracking_status.hunt_mode_state, bearing_cc, max_rssi);
+			send_next = false;
+		}
+
+
+
+	} // end of while running
 	
 	
 	/* Be sure to close the output file and connection */

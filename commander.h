@@ -11,7 +11,7 @@
 bool load_move_commands();
 
 /* handles the overall decision of which command to actually send */
-void send_next_command(uint8_t &prev_state, uint8_t &new_state);
+void send_next_command(uint8_t &prev_state, uint8_t &new_state, double &bearing, double &rssi);
 
 /* send the next tracking command */
 void sendTrackingCommand(float &north, float &east);
@@ -36,6 +36,9 @@ void send_bearing_mle_message(double &bearing, int32_t &lat, int32_t &lon, float
 
 /* send the rssi message */
 void send_rssi_message(int &rssi, int16_t &heading, int32_t &lat, int32_t &lon, float &alt);
+
+/* calculate the next tracking command */
+vector<float> calc_next_command(double &bearing, double &rssi);
 
 
 

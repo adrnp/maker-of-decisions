@@ -119,7 +119,7 @@ void read_arguments(int argc, char **argv, char **uart_name, int *baudrate, char
 		}
 
 		/* whether or not executing a tracking mission */
-		if (strcmp(argv[i], "-pp") == 0 || strcmp(argv[i], "--planning") == 0) {
+		if (strcmp(argv[i], "-t") == 0 || strcmp(argv[i], "--track") == 0) {
 			execute_tracking = true;
 		}
 	}
