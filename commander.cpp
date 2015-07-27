@@ -135,8 +135,10 @@ void sendTrackingCommand(float &north, float &east) {
 	mavlink_msg_tracking_cmd_encode(sysid, compid, &message, &tracking_cmd);
 
 	/* printing stuff for debug purposes */
-	printf("sending next move command\n");
-	// int len = write_to_serial(message);
+	int len = pixhawk->write_serial(message);
+	if (len > 0 && verbose) {
+		printf("sending next tracking command\n");
+	}
 	// printf("Sent buffer of length %i\n",len);
 
 	return;
@@ -177,8 +179,10 @@ void sendMoveCommand() {
 	mavlink_message_t message;
 	mavlink_msg_tracking_cmd_encode(sysid, compid, &message, &tracking_cmd);
 
-	//int len = pixhawk->write_serial(message);
-	printf("sending next move command\n");
+	int len = pixhawk->write_serial(message);
+	if (len > 0 && verbose) {
+		printf("sending next move command\n");
+	}
 	// printf("Sent buffer of length %i\n",len);
 
 	return;
@@ -202,8 +206,10 @@ void sendRotateCommand(float direction) {
 	mavlink_message_t message;
 	mavlink_msg_tracking_cmd_encode(sysid, compid, &message, &tracking_cmd);
 
-	//int len = pixhawk->write_serial(message);
-	printf("sending next rotate command\n");
+	int len = pixhawk->write_serial(message);
+	if (len > 0 && verbose) {
+		printf("sending next rotate command\n");
+	}
 	// printf("Sent buffer of length %i\n",len);
 
 	return;
@@ -227,8 +233,10 @@ void send_finish_command() {
 	mavlink_message_t message;
 	mavlink_msg_tracking_cmd_encode(sysid, compid, &message, &tracking_cmd);
 
-	//int len = pixhawk->write_serial(message);
-	printf("sending finish command\n");
+	int len = pixhawk->write_serial(message);
+	if (len > 0 && verbose) {
+		printf("sending finish command\n");
+	}
 	// printf("Sent buffer of length %i\n",len);
 
 	return;
@@ -246,8 +254,10 @@ void send_bearing_cc_message(double &bearing, int32_t &lat, int32_t &lon, float 
 	mavlink_message_t message;
 	mavlink_msg_bearing_cc_encode(sysid, compid, &message, &bear);
 
-	//int len = pixhawk->write_serial(message);
-	printf("sending bearing cc message\n");
+	int len = pixhawk->write_serial(message);
+	if (len > 0 && verbose) {
+		printf("sending bearing cc message\n");
+	}
 	// printf("Sent buffer of length %i\n",len);
 
 	return;
@@ -264,8 +274,10 @@ void send_bearing_mle_message(double &bearing, int32_t &lat, int32_t &lon, float
 	mavlink_message_t message;
 	mavlink_msg_bearing_mle_encode(sysid, compid, &message, &bear);
 
-	//int len = pixhawk->write_serial(message);
-	printf("sending bearing mle message\n");
+	int len = pixhawk->write_serial(message);
+	if (len > 0 && verbose) {
+		printf("sending bearing mle message\n");
+	}
 	// printf("Sent buffer of length %i\n",len);
 
 	return;
@@ -284,8 +296,10 @@ void send_rssi_message(int &rssi, int16_t &heading, int32_t &lat, int32_t &lon, 
 	mavlink_message_t message;
 	mavlink_msg_rssi_encode(sysid, compid, &message, &rssi_msg);
 
-	//int len = pixhawk->write_serial(message);
-	printf("sending rssi message\n");
+	int len = pixhawk->write_serial(message);
+	if (len > 0 && verbose) {
+		printf("sending rssi message\n");
+	}
 	// printf("Sent buffer of length %i\n", len);
 	return;
 }
