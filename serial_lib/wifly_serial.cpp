@@ -74,7 +74,7 @@ void WiflySerial::enter_commandmode() {
 int WiflySerial::scanrssi(char *ssid) {
 	if (_verbose) printf("scanning...\n");
 	char buf[2048];
-	write(fd, "scan 10\r", 8);
+	write(fd, "scan 50\r", 8);
 	usleep(1000000);
 	if (_verbose) printf("reading from wifly...\n");
 	
@@ -225,8 +225,11 @@ int WiflySerial::parserssi(char* buf, char* ssid) {
 			if (jam_token != NULL) {
 				rssi_value = (int) strtol(jam_token, &pEnd, 10);
 
+				printf("rssi value parsed: %i\n", rssi_value);
+
 				// check to make sure this was indeed the rssi value
 				if (strstr(pEnd, "\0") == NULL) {
+					printf("rssi not correct value\n");
 					rssi_value = INT_MAX;
 				}
 			}

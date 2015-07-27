@@ -91,7 +91,7 @@ void *wifly_thread(void *param) {
 	struct MAVInfo *uavData = (struct MAVInfo *)param;
 	
 	// some constants that all need to become parameters
-	char *ssid = (char *) "ADL"; // "JAMMER01";
+	char *ssid = (char *)"JAMMER01"; // "ADL"; // "JAMMER01";
 	char *file_name = (char *) "wifly.csv";
 	char *file_name2 = (char *) "wifly2.csv";
 	char *bearing_file_name = (char *) "bearing_calc_cc.csv";
@@ -231,6 +231,9 @@ void *wifly_thread(void *param) {
 		if (verbose) printf("scanning wifly 1...\n");
 		int16_t heading_dir_pre = uavData->vfr_hud.heading;
 		dir_rssi = wifly1->scanrssi(ssid);
+		
+		printf("dir rssi recevied: %i\n", dir_rssi);
+		
 		int16_t heading_dir_post = uavData->vfr_hud.heading;
 
 		int16_t heading_omni_pre = uavData->vfr_hud.heading;
@@ -317,6 +320,7 @@ void *wifly_thread(void *param) {
 
 
 		/* write the directional atenna information */
+		printf("writing dir rssi to file: %i\n", dir_rssi);
 		fprintf(wifly_file, "%llu,%u,%i,%i,%i,%i,%f,%i\n",
 				uavData->sys_time_us.time_unix_usec, uavData->custom_mode, heading_dir_pre, heading_dir_post,
 				uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, dir_rssi);
