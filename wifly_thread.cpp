@@ -91,7 +91,7 @@ void *wifly_thread(void *param) {
 	struct MAVInfo *uavData = (struct MAVInfo *)param;
 	
 	// some constants that all need to become parameters
-	char *ssid = (char *)"JAMMER01"; // "ADL"; // "JAMMER01";
+	char *ssid = (char *) "JAMMER01"; // "ADL"; // "JAMMER01";
 	char *file_name = (char *) "wifly.csv";
 	char *file_name2 = (char *) "wifly2.csv";
 	char *bearing_file_name = (char *) "bearing_calc_cc.csv";
