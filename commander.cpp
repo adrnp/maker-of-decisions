@@ -85,7 +85,8 @@ void send_next_command(uint8_t &prev_state, uint8_t &new_state, double &bearing,
 				vector<float> commands = calc_next_command(bearing, rssi);
 				sendTrackingCommand(commands[0], commands[1]);
 				
-			} else {	
+			} else {
+				if (verbose) printf("sending the next preset move command\n");	
 				// send the next move command
 				sendMoveCommand();
 			}
@@ -126,7 +127,7 @@ void sendTrackingCommand(float &north, float &east) {
 	tracking_cmd.timestamp_usec = 0;
 	tracking_cmd.north = nextNorth;
 	tracking_cmd.east = nextEast;
-	tracking_cmd.yaw_angle = 0.0;
+	tracking_cmd.yaw_angle = 270.0;
 	tracking_cmd.altitude = nextAlt;
 	tracking_cmd.cmd_id = nextCmd;
 	tracking_cmd.cmd_type = TRACKING_CMD_TRAVEL;

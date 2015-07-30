@@ -3,11 +3,11 @@
 # define the necessary variables
 
 # pixhawk information
-PIXHAWK_PORT=/dev/ttyUSB1
+PIXHAWK_PORT=/dev/ttyUSB0
 PIXHAWK_BAUD=115200
 
 # wifly information
-WIFLY1_PORT=/dev/ttyUSB0
+WIFLY1_PORT=/dev/ttyUSB1
 
 WIFLY2_ENABLED=0
 WIFLY2_PORT=/dev/ttyUSB2

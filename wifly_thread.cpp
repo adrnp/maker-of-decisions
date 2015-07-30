@@ -205,8 +205,10 @@ void *wifly_thread(void *param) {
 			printf("State changed from %u to %u\n", prev_hunt_state, uavData->tracking_status.hunt_mode_state);
 
 			if (uavData->tracking_status.hunt_mode_state == TRACKING_HUNT_STATE_WAIT) {
-				send_next = true;
+				// send_next = true;
+				if (verbose) printf("should be sending next command\n");
 				// TODO: maybe want to update the state immediately here...
+				send_next_command(prev_hunt_state, uavData->tracking_status.hunt_mode_state, bearing_cc, max_rssi);
 			} else {
 				update_state(uavData->tracking_status.hunt_mode_state);
 			}
