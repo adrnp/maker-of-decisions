@@ -323,14 +323,14 @@ void *wifly_thread(void *param) {
 
 		/* write the directional atenna information */
 		printf("writing dir rssi to file: %i\n", dir_rssi);
-		fprintf(wifly_file, "%llu,%u,%i,%i,%i,%i,%f,%i\n",
-				uavData->sys_time_us.time_unix_usec, uavData->custom_mode, heading_dir_pre, heading_dir_post,
+		fprintf(wifly_file, "%llu,%u,%i,%i,%i,%i,%i,%f,%i\n",
+				uavData->sys_time_us.time_unix_usec, uavData->custom_mode, rotating, heading_dir_pre, heading_dir_post,
 				uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, dir_rssi);
 
 		/* write the omni measurement as needed */
 		if (dual_wifly) {
-			fprintf(wifly_file2, "%llu,%u,%i,%i,%i,%i,%f,%i\n",
-				uavData->sys_time_us.time_unix_usec, uavData->custom_mode, heading_omni_pre, heading_omni_post,
+			fprintf(wifly_file2, "%llu,%u,%i,%i,%i,%i,%i,%f,%i\n",
+				uavData->sys_time_us.time_unix_usec, uavData->custom_mode, rotating, heading_omni_pre, heading_omni_post,
 				uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, omni_rssi);
 		}
 
