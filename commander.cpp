@@ -7,6 +7,8 @@
 #include <inttypes.h>
 #include <fstream>
 #include <vector>
+#include <sys/time.h>
+
 
 // Serial includes
 #include <stdio.h>   /* Standard input/output definitions */
@@ -299,7 +301,12 @@ void send_rssi_message(int &rssi, int16_t &heading, int32_t &lat, int32_t &lon, 
 
 	int len = pixhawk->write_serial(message);
 	if (len > 0 && verbose) {
-		printf("sending rssi message\n");
+
+		struct timeval tv;
+		gettimeofday(&tv, NULL);
+		unsigned long current_time = 1000000 * tv.tv_sec + tv.tv_usec;
+
+		printf("%lu: sending rssi message\n", current_time);
 	}
 	// printf("Sent buffer of length %i\n", len);
 	return;
