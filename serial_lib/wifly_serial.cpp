@@ -75,11 +75,9 @@ int WiflySerial::scanrssi(char *ssid) {
 	if (_verbose) printf("scanning...\n");
 	char buf[2048];
 	write(fd, "scan 10\r", 8);
-	usleep(250000);
+	usleep(300000);
 	if (_verbose) printf("reading from wifly...\n");
-	
-	int iMode = 0;
-	ioctl(fd, FIONBIO, &iMode);  
+	  
 	read(fd, buf, sizeof(buf));
 	if (_verbose) printf("%s\n", buf);
 	
