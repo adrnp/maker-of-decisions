@@ -75,7 +75,7 @@ int WiflySerial::scanrssi(char *ssid) {
 	if (_verbose) printf("scanning...\n");
 	char buf[2048];
 	write(fd, "scan 10\r", 8);
-	usleep(1000000);
+	usleep(500000);
 	if (_verbose) printf("reading from wifly...\n");
 	
 	read(fd, buf, sizeof(buf));
@@ -83,98 +83,10 @@ int WiflySerial::scanrssi(char *ssid) {
 	
 	return parserssi(buf, ssid);
 }
-
-
-// temporary function TO BE DELTED
-int WiflySerial::scanrssi2(char *ssid) {
-	if (_verbose) printf("scanning in 2...\n");
-	char buf[20480];
-	write(fd, "scan 10\r", 8);
-	usleep(1000000);
-	if (_verbose) printf("reading from wifly...\n");
-	
-	read(fd, buf, sizeof(buf));
-	if (_verbose) printf("%s\n", buf);
-	
-	/*
-	while (read(fd, buf, sizeof(buf)) > 0) {
-		if (_verbose) printf("%s\n", buf);
-		//if (rssi == INT_MAX) {
-		//	rssi = getrssi(buf, ssid);
-		//}
-	}
-	*/
-	return parserssi(buf, ssid);
-	//return rssi;
-}
-
-
-/**
- * Scans numtimes times and prints rssi values to a line in a file
- */
-int WiflySerial::scanrssi_f(char *ssid, FILE *f, int numtimes)
-{
-	numtimes = 1;
-	if (_verbose) printf("scanning to write to file...\n");
-	int rssi_value, i;
-	for (i = 1; i <= (numtimes-1); i++)
-	{
-		rssi_value = scanrssi(ssid);
-		fprintf(f, "%i,", rssi_value);
-		//printf("rssi_value = %i\n", rssi_value);
-	}
-
-	/* Don't include comma for last one */
-	rssi_value = scanrssi(ssid);
-	fprintf(f, "%i\n", rssi_value);
-	//printf("rssi_value = %i\n", rssi_value);
-
-	return rssi_value;
-}
-
 
 
 
 // private functions
-
-
-/**
- * Parses output from scan command.
- * Searches for SSID provided.
- * Returns the RSSI value of that SSID, as an int.
- */
-int WiflySerial::getrssi(char *buf, char *ssid)
-{
-	if (_verbose) printf("getting rssi from message...\n");
-
-	char *delim = (char *) "\n";
-	char *token = strtok(buf, delim);
-	int rssi_value = INT_MAX;
-
-	//if (_verbose) printf("%s\n", buf);
-
-	if (_verbose) printf("starting get while loop...\n");
-	while (token)
-	{
-		if (_verbose) printf("%s\n", token);
-		
-		if (strstr(token, ssid) != NULL)
-		{
-			char *comma_delim = (char *)  ",";
-			char *jam_token = strtok(token, comma_delim);
-			jam_token =	strtok(0, comma_delim);
-			jam_token =	strtok(0, comma_delim);
-			rssi_value = atoi(jam_token);
-			token = NULL;
-		}
-		else
-		{
-			token = strtok(0, delim);
-		}
-	}
-
-	return rssi_value;
-}
 
 
 /*
