@@ -305,6 +305,8 @@ void *wifly_thread(void *param) {
 			// get what the max value was for the rssi
 			max_rssi = get_max_rssi(gains);
 
+			if (verbose) printf("max rssi value: %i\n", max_rssi);
+
 			// save bearing cc to file (with important information)
 			fprintf(bearing_file, "%llu,%i,%i,%f,%f\n", uavData->sys_time_us.time_unix_usec,
 				uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, bearing_cc);
