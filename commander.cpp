@@ -318,7 +318,7 @@ vector<float> calc_next_command(double &bearing, int &rssi) {
 	// bearing is degrees from 0 to 359
 
 	if (verbose) {
-		printf("calculating the next command with input (%d, %i)\n", bearing, rssi);
+		printf("calculating the next command with input (%f, %i)\n", bearing, rssi);
 	}
 	
 	// for debug purposes, force a specific bearing and rssi
