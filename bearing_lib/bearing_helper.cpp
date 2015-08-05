@@ -133,3 +133,64 @@ vector<vector<double> > make_obs_matrix()
 {
 	return make_obs_matrix("obs_model.csv");
 }
+
+/**
+ * Now flexible to different sizes (not just 36). Should work
+ * Don't add invalid gains
+ * TODO: rename get_valid_gains
+ */
+pair<vector<double>, vector<double> > get_gains(string filename)
+{
+	/* Create a file object named infile */
+	std::ifstream infile(filename.c_str());
+
+	double angle;
+	vector<double> angles;
+	double gain;
+	vector<double> gains;
+	char comma;
+
+	while (infile >> angle >> comma >> gain)
+	{
+		if (validgain(gain))
+		{
+			angles.push_back(angle);
+			gains.push_back(gain);
+		}
+	}
+
+	return pair<vector<double>, vector<double> >(angles, gains);
+}
+
+bool validgain(double gain)
+{
+	double _nullobs = 2147483647;
+	if (gain == _nullobs)
+		return false;
+	else
+		return true;
+}
+
+/*
+pair<vector<double>, vector<double> > get_gains(string filename)
+{
+	// Create a file object named infile
+	std::ifstream infile(filename.c_str());
+
+	double angle;
+	vector<double> angles(36);
+	double gain;
+	vector<double> gains(36);
+	char comma;
+
+	int i = 0;
+	while (infile >> angle >> comma >> gain)
+	{
+		angles[i] = angle;
+		gains[i] = gain;
+		i++;
+	}
+
+	return pair<vector<double>, vector<double> >(angles, gains);
+}
+*/
