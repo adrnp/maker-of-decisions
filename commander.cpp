@@ -316,14 +316,25 @@ void send_rssi_message(int &rssi, int16_t &heading, int32_t &lat, int32_t &lon, 
 
 vector<float> calc_next_command(double &bearing, int &rssi) {
 	// bearing is degrees from 0 to 359
+
+	if (verbose) {
+		printf("calculating the next command with input (%d, %i)\n", bearing, rssi);
+	}
 	
+	// for debug purposes, force a specific bearing and rssi
+	double bear = 90.0;
+	int rs = 20;
+
 	// commands are a vector of [north, south]
 	vector<float> commands;
 
 	float k = 0.5; // units: m / dB
 
-	float north = k * (double) rssi * cos(bearing * M_PI/180.0);
-	float east = k * ( double) rssi * sin(bearing * M_PI/180.0);
+	//float north = k * (double) rssi * cos(bearing * M_PI/180.0);
+	//float east = k * ( double) rssi * sin(bearing * M_PI/180.0);
+
+	float north = k * (double) rs * cos(bear * M_PI/180.0);
+	float east = k * ( double) rs * sin(bear * M_PI/180.0);
 
 	commands.push_back(north);
 	commands.push_back(east);
