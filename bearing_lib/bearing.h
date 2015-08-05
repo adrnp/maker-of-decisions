@@ -1,7 +1,10 @@
 #include <vector>
 #include <cmath>
+#include <string>
 
 using std::vector;
+using std::pair;
+using std::string;
 
 /* converts vector of gains to corresponding column indices in obs matrix */
 vector<int> gains2indices(vector<int>& gains);
@@ -28,3 +31,7 @@ double get_bearing_mle(vector<double>& theta_v, vector<int>& gains);
 double get_bearing_bayes(vector<double>& theta_v, vector<int>& gains, vector<vector<double> >& obs_matrix);
 
 double get_bearing_cc(vector<double> &angles, vector<double> &gains);
+
+pair<vector<double>, vector<double> > get_gains(string filename);
+
+bool validgain(double gain);

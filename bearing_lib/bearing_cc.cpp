@@ -21,7 +21,8 @@ double interp_gain(double angle, double shift, vector<double> & ref_angles, vect
 
 double get_bearing_cc(vector<double> & angles, vector<double> & gains)
 {
-	pair<vector<double>, vector<double> > angles_gains = get_gains("norm.csv");
+	//pair<vector<double>, vector<double> > angles_gains = get_gains("norm.csv");
+	pair<vector<double>, vector<double> > angles_gains = get_gains("mean_cc.csv");
 	vector<double> ref_angles = angles_gains.first;
 	vector<double> ref_gains = angles_gains.second;
 
@@ -38,9 +39,10 @@ double get_bearing_cc(vector<double> & angles, vector<double> & gains)
  * angles contains the angles of the normalized gains.
  * gains contains gain values.
  */
+/*
 pair<vector<double>, vector<double> > get_gains(string filename)
 {
-	/* Create a file object named infile */
+	// Create a file object named infile 
 	std::ifstream infile(filename.c_str());
 
 	double angle;
@@ -59,6 +61,7 @@ pair<vector<double>, vector<double> > get_gains(string filename)
 
 	return pair<vector<double>, vector<double> >(angles, gains);
 }
+*/
 
 pair<vector<double>, vector<int> > get_norm_gains(string filename)
 {
