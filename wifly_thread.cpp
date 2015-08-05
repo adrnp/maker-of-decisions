@@ -302,6 +302,8 @@ void *wifly_thread(void *param) {
 			bearing_cc = get_bearing_cc(angles, gains);
 			// double bearing = 32.0; // NOT SURE WHAT THIS IS DOING HERE....
 
+			if (verbose) printf("calculated bearing: %f\n", bearing_cc);
+
 			// get what the max value was for the rssi
 			max_rssi = get_max_rssi(gains);
 
