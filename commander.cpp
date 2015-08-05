@@ -85,6 +85,8 @@ void send_next_command(uint8_t &prev_state, uint8_t &new_state, double &bearing,
 				if (verbose) printf("sending a tracking command\n");
 
 				vector<float> commands = calc_next_command(bearing, rssi);
+				
+				if (verbose) printf("following tracking command (%f, %f)\n", commands[0], commands[1]);
 				sendTrackingCommand(commands[0], commands[1]);
 				
 			} else {
@@ -118,7 +120,7 @@ void sendTrackingCommand(float &north, float &east) {
 	// extract the next north and east commands
 	float nextNorth = north;
 	float nextEast = east;
-	float nextAlt = flight_alt;
+	float nextAlt = 30.0; //flight_alt;
 
 	printf("sending command %i: N %f\tE %f\tA %f\n", cmd_index, nextNorth, nextEast, nextAlt);
 
