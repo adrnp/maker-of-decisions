@@ -37,18 +37,32 @@ double get_bearing_max(vector<double> &angles, vector<double> &gains) {
 	}
 
 	// calculate the bearing given the max information
-	double angle_max = angle_max1;
-	if (angle_max2 != INT_MAX) {
-
-		// this won't wrap around 360!!!!
-		angle_max = (angle_max1 + angle_max2)/2;
-	}
-
-	return angle_max;
-
+	return calc_max_angle(angle_max1, angle_max2);;
 }
 
 
 double calc_max_angle(double &angle1, double &angle2) {
-	
+	double angle_max = angle1;
+
+	// check to see if only 1 max was founds
+	if (angle2 == INT_MAX) {
+		return angle_max;
+	}
+
+	// need to check if wrapping around 360
+	if (angle1 > 270.0 && angle2 < 90.0) {
+		angle1 -= 360.0;
+		angle_max = (angle1 + angle2) / 2.0;
+
+		// bring it back to within [0, 360)
+		if (angle_max < 0) {
+			angle_max += 360.0;
+		}
+
+	} else {
+		angle_max = (angle1 + angle2) / 2.0;
+	}
+
+
+	return angle_max;
 }

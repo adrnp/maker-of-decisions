@@ -94,7 +94,7 @@ void *wifly_thread(void *param) {
 	char *ssid = (char *) "JAMMER01"; // "ADL"; // "JAMMER01";
 	char *file_name = (char *) "wifly.csv";
 	char *file_name2 = (char *) "wifly2.csv";
-	char *bearing_file_name = (char *) "bearing_calc_cc.csv";
+	char *bearing_file_name = (char *) "bearing_calc_eor.csv";
 	char *bearing_mle_file_name = (char *) "bearing_calc_mle.csv";
 	// char *port = (char *) "/dev/ttyUSB0";
 
@@ -180,6 +180,7 @@ void *wifly_thread(void *param) {
 	struct timeval tv;
 
 	double bearing_cc;
+	double bearing_max;
 	int max_rssi;
 
 	bool send_next = false;
@@ -297,12 +298,15 @@ void *wifly_thread(void *param) {
 			if (verbose) printf("ended rotation\n");
 			in_rotation = false;
 
-			if (verbose) printf("calculating cc bearing\n");
+			if (verbose) printf("calculating end of rotation bearing...\n");
+
 			// do bearing calculation at this point
 			bearing_cc = get_bearing_cc(angles, gains);
-			// double bearing = 32.0; // NOT SURE WHAT THIS IS DOING HERE....
+			if (verbose) printf("calculated cc bearing: %f\n", bearing_cc);
 
-			if (verbose) printf("calculated bearing: %f\n", bearing_cc);
+			// also do max bearing calculation
+			bearing_max = get_bearing_max(angles, gains);
+			if (verbose) printf("calculated max bearing: %f\n", bearing_max);
 
 			// get what the max value was for the rssi
 			max_rssi = get_max_rssi(gains);
@@ -310,8 +314,8 @@ void *wifly_thread(void *param) {
 			if (verbose) printf("max rssi value: %i\n", max_rssi);
 
 			// save bearing cc to file (with important information)
-			fprintf(bearing_file, "%llu,%i,%i,%f,%f\n", uavData->sys_time_us.time_unix_usec,
-				uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, bearing_cc);
+			fprintf(bearing_file, "%llu,%i,%i,%f,%f,%f\n", uavData->sys_time_us.time_unix_usec,
+				uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, bearing_cc, bearing_max);
 
 			// send a mavlink message of the calculated bearing
 			send_bearing_cc_message(bearing_cc, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
