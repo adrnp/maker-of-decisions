@@ -37,8 +37,9 @@ using namespace std;
 /* this is to help with some of the rotation logic */
 bool in_rotation = false;
 
-/* keep track of the previous hunt state, as hunt state is sent periodically, not just on updates */
-uint8_t prev_hunt_state = 10;
+/* keep track of the current previous hunt state, as hunt state is sent periodically, not just on updates */
+uint8_t current_hunt_state = 10;
+uint8_t prev_hunt_state = 0;
 
 /* whether or not we are currently rotating */
 bool rotating = false;
@@ -53,12 +54,25 @@ unsigned long prev_loop_timestamp = 0;
 void update_state(uint8_t &new_state) {
 
 	switch (new_state) {
+	case TRACKING_HUNT_STATE_WAIT:
+
+		// mark that the rotation or moving has ended
+		rotationg = false;
+		moving = false;
+		break;
+
 	case TRACKING_HUNT_STATE_ROTATE:
+
+		// mark as now rotating
 		rotating = true;
 		break;
+
 	case TRACKING_HUNT_STATE_MOVE:
+
+		// mark as now moving
 		moving = true;
 		break;
+
 	case TRACKING_HUNT_STATE_OFF:
 		// finished = true;
 		break;
@@ -208,23 +222,29 @@ void *wifly_thread(void *param) {
 		prev_loop_timestamp = current_loop_time;
 
 		// handle hunt state changes required (sending of commands)
-		if (uavData->tracking_status.hunt_mode_state != prev_hunt_state) {
+		if (uavData->tracking_status.hunt_mode_state != current_hunt_state) {
 			
-			printf("State changed from %u to %u\n", prev_hunt_state, uavData->tracking_status.hunt_mode_state);
+			printf("State changed from %u to %u\n", current_hunt_state, uavData->tracking_status.hunt_mode_state);
 
-			if (uavData->tracking_status.hunt_mode_state == TRACKING_HUNT_STATE_WAIT) {
-				// send_next = true;
-				if (verbose) printf("should be sending next command\n");
+			// update the prev hunt state to be the "current" state and update the current state to be the new current state
+			prev_hunt_state = current_hunt_state;
+			current_hunt_state = uavData->tracking_status.hunt_mode_state;
+			if (verbose) printf("Prev State changed to: %u\n", prev_hunt_state);
+
+			// update state information
+			update_state(current_hunt_state);
+
+			// check to see if need to flag the next command to be sent
+			// NOTE: want to send to the command at the end of this iteration to use the calculated data
+			if (current_hunt_state == TRACKING_HUNT_STATE_WAIT) {
+				if (verbose) printf("flagging next command to be sent\n");
+				send_next = true;
+
 				// TODO: maybe want to update the state immediately here...
-				send_next_command(prev_hunt_state, uavData->tracking_status.hunt_mode_state, bearing_cc, max_rssi);
-			} else {
-				update_state(uavData->tracking_status.hunt_mode_state);
+				// send_next_command(prev_hunt_state, uavData->tracking_status.hunt_mode_state, bearing_cc, max_rssi);
 			}
+
 			
-			
-			// update the prev hunt state to be this new state
-			prev_hunt_state = uavData->tracking_status.hunt_mode_state;
-			printf("Prev State changed to: %u\n", prev_hunt_state);
 		}
 
 		//-----------------------------------------------//
@@ -348,12 +368,18 @@ void *wifly_thread(void *param) {
 				uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, omni_rssi);
 		}
 
-
 		// send a mavlink message with the current rssi
 		send_rssi_message(dir_rssi, heading_dir_pre, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
 
 
+
+		//-----------------------------------------------//
+		// execute next command as needed
+		//-----------------------------------------------//
+
+		// if sending the next command has been flagged, send the next command, using the calculated data
 		if (send_next) {
+			if (verbose) printf("calling to send the next command...\n");
 			send_next_command(prev_hunt_state, uavData->tracking_status.hunt_mode_state, bearing_cc, max_rssi);
 			send_next = false;
 		}

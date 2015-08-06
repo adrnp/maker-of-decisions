@@ -73,12 +73,14 @@ bool load_move_commands() {
 
 
 void send_next_command(uint8_t &prev_state, uint8_t &new_state, double &bearing, int &rssi) {
+
+	if (verbose) printf("the previous state was: %i\n", prev_state);
 	
 	switch (prev_state) {
 		case TRACKING_HUNT_STATE_OFF:
 		case TRACKING_HUNT_STATE_START:
 		case TRACKING_HUNT_STATE_ROTATE:
-			rotating = false;
+			// rotating = false;	// NO LONGER NEEDED
 
 			/* send next command depending on flight mode */
 			if (execute_tracking) {
@@ -96,7 +98,7 @@ void send_next_command(uint8_t &prev_state, uint8_t &new_state, double &bearing,
 			}
 			break;
 		case TRACKING_HUNT_STATE_MOVE:
-			moving = false;
+			// moving = false;		// NO LONGER NEEDED
 		
 			// send a rotate command
 			sendRotateCommand(-1.0);
