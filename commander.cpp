@@ -30,6 +30,9 @@ using std::string;
 using std::vector;
 using namespace std;
 
+/* needed for emily antenna logic */
+bool second_rotation_required = true;
+
 vector<float> cmd_north;
 vector<float> cmd_east;
 vector<float> cmd_alt;
@@ -82,6 +85,13 @@ void send_next_command(uint8_t &prev_state, uint8_t &new_state, double &bearing,
 		case TRACKING_HUNT_STATE_ROTATE:
 			// rotating = false;	// NO LONGER NEEDED
 
+			// if running emily config, will need to rotate twice
+			if (emily && second_rotation_required) {
+				sendRotateCommand(-1.0);
+				second_rotation_required = false;
+				break;
+			}
+
 			/* send next command depending on flight mode */
 			if (execute_tracking) {
 				if (verbose) printf("sending a tracking command\n");
@@ -102,6 +112,9 @@ void send_next_command(uint8_t &prev_state, uint8_t &new_state, double &bearing,
 		
 			// send a rotate command
 			sendRotateCommand(-1.0);
+
+			// management for emily config
+			second_rotation_required = true;
 			break;
 		
 	}

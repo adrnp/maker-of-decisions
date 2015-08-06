@@ -57,7 +57,7 @@ void update_state(uint8_t &new_state) {
 	case TRACKING_HUNT_STATE_WAIT:
 
 		// mark that the rotation or moving has ended
-		rotationg = false;
+		rotating = false;
 		moving = false;
 		break;
 

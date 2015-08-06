@@ -23,6 +23,7 @@ bool nowifly = false;	// default to wanting wifly
 bool get_commands = false;	// default for whether or not we want to read the command file
 bool dual_wifly = false;	// default to only have one wifly active
 bool phased_array = false;	// default to not using a phased array antenna
+bool emily = false;			// default to not running the emily antenna configuration
 
 bool execute_tracking = false;	// default to not executing a tracking mission
 float flight_alt = 380;			// default flight is AMSL
@@ -121,6 +122,11 @@ void read_arguments(int argc, char **argv, char **uart_name, int *baudrate, char
 		/* whether or not executing a tracking mission */
 		if (strcmp(argv[i], "-t") == 0 || strcmp(argv[i], "--track") == 0) {
 			execute_tracking = true;
+		}
+
+		/* whether or not using the emily configuration */
+		if (strcmp(argv[i], "-e") == 0 || strcmp(argv[i], "--emily") == 0) {
+			emily = true;
 		}
 	}
 }

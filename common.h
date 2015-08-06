@@ -50,5 +50,7 @@ extern bool dual_wifly;
 extern bool execute_tracking;
 extern float flight_alt;
 
+/* stuff needed for emily antenna */
+extern bool emily;
 
 #endif /* COMMON_H_ */
