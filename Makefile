@@ -7,6 +7,7 @@ THREAD=-pthread
 
 SOURCES = mod.cpp read_thread.cpp commander.cpp wifly_thread.cpp dirk_thread.cpp \
 bearing_lib/bearing_cc.cpp bearing_lib/bearing_helper.cpp bearing_lib/bearing_mle.cpp \
+bearing_lib/bearing_max.cpp \
 serial_lib/serial_port.cpp serial_lib/wifly_serial.cpp serial_lib/mavlink_serial.cpp
 
 OBJECTS = $(SOURCES:.cpp=.o)

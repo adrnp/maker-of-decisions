@@ -1,5 +1,5 @@
 #include "bearing.h"
-#include <inttypes.h>
+#include <limits.h>
 
 
 // helper function
