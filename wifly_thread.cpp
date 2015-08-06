@@ -71,17 +71,24 @@ void update_state(uint8_t &new_state) {
 
 int get_max_rssi(vector<double> rssi_values) {
 
-	double max_rssi = INT_MIN;
+	double max_rssi = -100;
 	
 	int len = rssi_values.size();
 	for (int i = 0; i < len; i++) {
-		if (rssi_values[i] > max_rssi && rssi_values[i] < 0) {
+		
+		// ignore any invalid measurement
+		if (rssi_values[i] == INT_MAX) {
+			continue;
+		}
+
+		// update max value
+		if (rssi_values[i] > max_rssi) {
 			max_rssi = rssi_values[i];
 		}
 	}
 
-	// return the negative because need it to be a positive value for later
-	return (int) -max_rssi;
+	// return the true max value
+	return (int) max_rssi;
 }
 
 
@@ -310,12 +317,11 @@ void *wifly_thread(void *param) {
 
 			// get what the max value was for the rssi
 			max_rssi = get_max_rssi(gains);
-
 			if (verbose) printf("max rssi value: %i\n", max_rssi);
 
 			// save bearing cc to file (with important information)
-			fprintf(bearing_file, "%llu,%i,%i,%f,%f,%f\n", uavData->sys_time_us.time_unix_usec,
-				uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, bearing_cc, bearing_max);
+			fprintf(bearing_file, "%llu,%i,%i,%f,%f,%f,%i\n", uavData->sys_time_us.time_unix_usec,
+				uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, bearing_cc, bearing_max, max_rssi);
 
 			// send a mavlink message of the calculated bearing
 			send_bearing_cc_message(bearing_cc, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
