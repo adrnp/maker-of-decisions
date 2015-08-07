@@ -74,7 +74,7 @@ void WiflySerial::enter_commandmode() {
 int WiflySerial::scanrssi(char *ssid) {
 	if (_verbose) printf("scanning...\n");
 	char buf[2048];
-	write(fd, "scan 10\r", 8);
+	write(fd, "scan 20\r", 8);
 	usleep(500000);
 	if (_verbose) printf("reading from wifly...\n");
 	  
