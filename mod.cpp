@@ -31,7 +31,7 @@ float flight_alt = 380;			// default flight is AMSL
 MAVInfo uav;			// object to hold all the state information on the UAV
 
 MavlinkSerial* pixhawk = nullptr;	// serial connection to the pixhawk
-SerialPort* df_arduino = nullprt;	// serial connection to the df arduino
+SerialPort* df_arduino = nullptr;	// serial connection to the df arduino
 
 int RUNNING_FLAG = 1;	// default the read and write threads to be running
 
@@ -163,6 +163,9 @@ int main(int argc, char **argv) {
 	wifly_port1 = (char*) "/dev/ttyUSB0";
 	wifly_port2 = (char*) "/dev/ttyUSB2";
 
+
+	char* df_uart_name = (char*) "/dev/ttyACM0";
+
 	int baudrate = 115200;
 
 	cout << "reading arguments\n";
@@ -179,7 +182,7 @@ int main(int argc, char **argv) {
 
 	// also create connection to df arduino if needed here
 	if (emily) {
-		df_arduino = new SerialPort(verbose, (char*) "/dev/ttyACM0", 115200);
+		df_arduino = new SerialPort(verbose, df_uart_name, baudrate);
 	}
 
 	// setup termination using CRT-C

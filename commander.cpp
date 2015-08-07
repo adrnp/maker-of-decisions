@@ -369,8 +369,8 @@ vector<float> calc_next_command(double &bearing, int &rssi) {
 void send_df_mode(int mode) {
 
 	if (mode == 1) {
-		write(df_arduino.fd, "1", 1);
+		write(df_arduino->fd, "1", 1);
 	} else {
-		write(df_arduino.fd, "0", 1);
+		write(df_arduino->fd, "0", 1);
 	}
 }
