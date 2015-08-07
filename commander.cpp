@@ -310,10 +310,10 @@ void send_bearing_mle_message(double &bearing, int32_t &lat, int32_t &lon, float
 }
 
 
-void send_rssi_message(int &rssi, int16_t &heading, int32_t &lat, int32_t &lon, float &alt) {
+void send_rssi_message(int &rssi, int &rssi2, int16_t &heading, int32_t &lat, int32_t &lon, float &alt) {
 	mavlink_rssi_t rssi_msg;
 	rssi_msg.rssi_value = rssi;
-	rssi_msg.rssi_value2 = 0;
+	rssi_msg.rssi_value2 = rssi2;
 	rssi_msg.heading = (float) heading;
 	rssi_msg.lat = 0; //lat;
 	rssi_msg.lon = 0; //lon;

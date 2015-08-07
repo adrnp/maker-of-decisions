@@ -38,7 +38,7 @@ void send_bearing_cc_message(double &bearing, int32_t &lat, int32_t &lon, float 
 void send_bearing_mle_message(double &bearing, int32_t &lat, int32_t &lon, float &alt);
 
 /* send the rssi message */
-void send_rssi_message(int &rssi, int16_t &heading, int32_t &lat, int32_t &lon, float &alt);
+void send_rssi_message(int &rssi, int &rssi2, int16_t &heading, int32_t &lat, int32_t &lon, float &alt);
 
 /* calculate the next tracking command */
 std::vector<float> calc_next_command(double &bearing, int &rssi);

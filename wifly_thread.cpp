@@ -372,7 +372,7 @@ void *wifly_thread(void *param) {
 		}
 
 		// send a mavlink message with the current rssi
-		send_rssi_message(dir_rssi, heading_dir_pre, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
+		send_rssi_message(dir_rssi, omni_rssi, heading_dir_pre, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
 
 
 
