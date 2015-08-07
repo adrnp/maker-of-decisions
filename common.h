@@ -34,6 +34,9 @@ extern int RUNNING_FLAG;
 /** the connection to the pixhawk */
 extern MavlinkSerial* pixhawk;
 
+/** the connection to the DF arduino */
+extern SerialPort* df_arduino;
+
 /** boolean stating whether or not we are currently in a rotating mode */
 extern bool rotating;
 

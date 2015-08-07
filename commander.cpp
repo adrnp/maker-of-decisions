@@ -87,6 +87,7 @@ void send_next_command(uint8_t &prev_state, uint8_t &new_state, double &bearing,
 
 			// if running emily config, will need to rotate twice
 			if (emily && second_rotation_required) {
+				send_df_mode(1);
 				sendRotateCommand(-1.0);
 				second_rotation_required = false;
 				break;
@@ -109,6 +110,11 @@ void send_next_command(uint8_t &prev_state, uint8_t &new_state, double &bearing,
 			break;
 		case TRACKING_HUNT_STATE_MOVE:
 			// moving = false;		// NO LONGER NEEDED
+
+			if (emily) {
+				// make sure in "normal" mode of operation
+				send_df_mode(0);
+			}
 		
 			// send a rotate command
 			sendRotateCommand(-1.0);
@@ -357,4 +363,14 @@ vector<float> calc_next_command(double &bearing, int &rssi) {
 	commands.push_back(east);
 
 	return commands;
+}
+
+
+void send_df_mode(int mode) {
+
+	if (mode == 1) {
+		write(df_arduino.fd, "1", 1);
+	} else {
+		write(df_arduino.fd, "0", 1);
+	}
 }
