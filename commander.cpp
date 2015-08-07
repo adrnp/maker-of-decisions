@@ -77,7 +77,7 @@ bool load_move_commands() {
 
 void send_next_command(uint8_t &prev_state, uint8_t &new_state, double &bearing, int &rssi) {
 
-	if (verbose) printf("the previous state was: %i\n", prev_state);
+	 printf("the previous state was: %i\n", prev_state);
 	
 	switch (prev_state) {
 		case TRACKING_HUNT_STATE_OFF:
@@ -94,7 +94,7 @@ void send_next_command(uint8_t &prev_state, uint8_t &new_state, double &bearing,
 
 			/* send next command depending on flight mode */
 			if (execute_tracking) {
-				if (verbose) printf("sending a tracking command\n");
+				 printf("sending a tracking command\n");
 
 				vector<float> commands = calc_next_command(bearing, rssi);
 				

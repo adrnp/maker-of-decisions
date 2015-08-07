@@ -38,7 +38,7 @@ using namespace std;
 bool in_rotation = false;
 
 /* keep track of the current previous hunt state, as hunt state is sent periodically, not just on updates */
-uint8_t current_hunt_state = 10;
+uint8_t current_hunt_state = 0;
 uint8_t prev_hunt_state = 0;
 
 /* whether or not we are currently rotating */
@@ -229,7 +229,7 @@ void *wifly_thread(void *param) {
 			// update the prev hunt state to be the "current" state and update the current state to be the new current state
 			prev_hunt_state = current_hunt_state;
 			current_hunt_state = uavData->tracking_status.hunt_mode_state;
-			if (verbose) printf("Prev State changed to: %u\n", prev_hunt_state);
+			printf("Prev State changed to: %u\n", prev_hunt_state);
 
 			// update state information
 			update_state(current_hunt_state);
@@ -237,7 +237,7 @@ void *wifly_thread(void *param) {
 			// check to see if need to flag the next command to be sent
 			// NOTE: want to send to the command at the end of this iteration to use the calculated data
 			if (current_hunt_state == TRACKING_HUNT_STATE_WAIT) {
-				if (verbose) printf("flagging next command to be sent\n");
+				printf("flagging next command to be sent\n");
 				send_next = true;
 
 				// TODO: maybe want to update the state immediately here...
@@ -262,7 +262,7 @@ void *wifly_thread(void *param) {
 		int16_t heading_dir_pre = uavData->vfr_hud.heading;
 		dir_rssi = wifly1->scanrssi(ssid);
 		
-		printf("dir rssi recevied: %i\n", dir_rssi);
+		if (verbose) printf("dir rssi recevied: %i\n", dir_rssi);
 		
 		int16_t heading_dir_post = uavData->vfr_hud.heading;
 
@@ -346,6 +346,9 @@ void *wifly_thread(void *param) {
 			// send a mavlink message of the calculated bearing
 			send_bearing_cc_message(bearing_cc, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
 
+			// send a mavlink message of the max bearing over the mle message for now
+			send_bearing_mle_message(bearing_max, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
+
 			// tell pixhawk we are finished with the rotation
 			// send_finish_command();
 		}
@@ -379,7 +382,7 @@ void *wifly_thread(void *param) {
 
 		// if sending the next command has been flagged, send the next command, using the calculated data
 		if (send_next) {
-			if (verbose) printf("calling to send the next command...\n");
+			printf("calling to send the next command...\n");
 			send_next_command(prev_hunt_state, uavData->tracking_status.hunt_mode_state, bearing_cc, max_rssi);
 			send_next = false;
 		}
