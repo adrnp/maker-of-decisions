@@ -383,7 +383,7 @@ void *wifly_thread(void *param) {
 		// if sending the next command has been flagged, send the next command, using the calculated data
 		if (send_next) {
 			printf("calling to send the next command...\n");
-			send_next_command(prev_hunt_state, uavData->tracking_status.hunt_mode_state, bearing_cc, max_rssi);
+			send_next_command(prev_hunt_state, uavData->tracking_status.hunt_mode_state, bearing_max, max_rssi);
 			send_next = false;
 		}
 
