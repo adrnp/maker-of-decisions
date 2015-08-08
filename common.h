@@ -15,6 +15,9 @@
  #include "mav_struct.h"
  #include "serial_lib/mavlink_serial.h"
 
+// some constants to determine tracking method
+#define TRACK_NAIVE 1
+#define TRACK_POMDP 2
 
 /** boolean to determine whether or not to show all outputs */
 extern bool verbose;
@@ -51,6 +54,8 @@ extern bool dual_wifly;
 
 /* stuff needed for the tracking command */
 extern bool execute_tracking;
+extern int tracking_method;
+
 extern float flight_alt;
 
 /* stuff needed for emily antenna */

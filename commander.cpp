@@ -81,7 +81,9 @@ bool load_move_commands() {
 void send_next_command(uint8_t &prev_state, uint8_t &new_state, double &bearing, int &rssi) {
 
 	 printf("the previous state was: %i\n", prev_state);
-	
+
+	vector<float> commands;
+	std::pair<float, float> commands_pair;	
 	switch (prev_state) {
 		case TRACKING_HUNT_STATE_OFF:
 		case TRACKING_HUNT_STATE_START:
@@ -100,10 +102,26 @@ void send_next_command(uint8_t &prev_state, uint8_t &new_state, double &bearing,
 			if (execute_tracking) {
 				 printf("sending a tracking command\n");
 
-				vector<float> commands = calc_next_command(bearing, rssi);
-				
-				if (verbose) printf("following tracking command (%f, %f)\n", commands[0], commands[1]);
-				sendTrackingCommand(commands[0], commands[1]);
+				 // get the next command, which depends on the tracking method desired
+				 float d_north = 0.0;
+				 float d_east = 0.0;
+				 switch (tracking_method) {
+					 case TRACK_NAIVE:
+						if (verbose) printf("naive tracking command being made...\n");
+					 	commands = calc_next_command(bearing, rssi);
+						d_north = commands[0];
+						d_east = commands[1];
+						break;
+					 case TRACK_POMDP:
+						if (verbose) printf("pomdp tracking command being made...\n");
+						commands_pair = get_next_pomdp_action(bearing, rssi);
+						d_north = commands_pair.first;
+						d_east = commands_pair.second;
+						break;
+				 }
+			 	 
+				if (verbose) printf("following tracking command (%f, %f)\n", d_north, d_east);
+				sendTrackingCommand(d_north, d_east);
 				
 			} else {
 				if (verbose) printf("sending the next preset move command\n");	

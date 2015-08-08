@@ -22,6 +22,8 @@
 #include <sys/ioctl.h>
 #endif
 
+#include "planner_commander.h"
+
 using std::string;
 using std::vector;
 using std::pair;
@@ -41,7 +43,7 @@ vector<pair<int, int>> cells_visited;			// vector of pairs defining which grid c
 vector<double> observed_bearings;				// vector of bearing observations from each location visited
 vector<int> observed_rssi;						// vector of max rssi observations from each location visited
 
-par<int, int> prev_commanded_grid_cell;			// the index of the previously commanded grid cell
+pair<int, int> prev_commanded_grid_cell;			// the index of the previously commanded grid cell
 pair<int, int> commanded_grid_cell;				// the index of the commanded grid cell
 
 
@@ -59,7 +61,7 @@ pair<float, float> get_next_pomdp_action(double &bearing, int &rssi) {
 	float d_east = (float)(commanded_grid_cell.second - prev_commanded_grid_cell.second) * CELL_WIDTH;		// cols increase EAST
 
 	// return the pair that contains the delta information
-	return pair<float, float>(-d_south, delta_east);
+	return pair<float, float>(-d_south, d_east);
 }
 
 

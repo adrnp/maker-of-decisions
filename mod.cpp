@@ -26,6 +26,8 @@ bool phased_array = false;	// default to not using a phased array antenna
 bool emily = false;			// default to not running the emily antenna configuration
 
 bool execute_tracking = false;	// default to not executing a tracking mission
+int tracking_method = TRACK_NAIVE;	// default to using the naive tracker
+
 float flight_alt = 380;			// default flight is AMSL
 
 MAVInfo uav;			// object to hold all the state information on the UAV
@@ -122,7 +124,15 @@ void read_arguments(int argc, char **argv, char **uart_name, int *baudrate, char
 
 		/* whether or not executing a tracking mission */
 		if (strcmp(argv[i], "-t") == 0 || strcmp(argv[i], "--track") == 0) {
+			// mark that we will want to execute a tracking mission
 			execute_tracking = true;
+
+			// check to see if a specific tracking algorithm was selected
+			if (argc > i + 1) {
+			   if (strcmp(argv[i+1], "pomdp") == 0) {
+					tracking_method = TRACK_POMDP;
+			   }
+			}
 		}
 
 		/* whether or not using the emily configuration */
