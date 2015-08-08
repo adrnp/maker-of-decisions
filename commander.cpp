@@ -41,8 +41,8 @@ int num_cmds = 0;
 int cmd_index = 0;
 
 bool load_move_commands() {
-
-	ifstream cmd_file ("commands/" + command_file);
+	string file_name(command_file);
+	ifstream cmd_file ("commands/" + file_name + ".csv");
 
 	if (!cmd_file.is_open()) {
 		// means there is an error in loading the file
