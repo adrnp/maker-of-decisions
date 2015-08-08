@@ -39,6 +39,8 @@ char* wifly_port1;
 char* wifly_port2;
 char* pa_port;
 
+std:string command_file = "commands.csv";
+
 /**
  * read in the passed arguments to the function on start
  *
@@ -102,6 +104,10 @@ void read_arguments(int argc, char **argv, char **uart_name, int *baudrate, char
 		/* command file state */
 		if (strcmp(argv[i], "-c") == 0 || strcmp(argv[i], "--commands") == 0) {
 			get_commands = true;
+
+			if (argc > i + 1) {
+				command_file = argv[i];
+			}
 		}
 
 		/* wifly 1 port */

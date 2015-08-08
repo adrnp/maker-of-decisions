@@ -24,6 +24,7 @@ extern bool debug;
 
 /** use command file */
 extern bool get_commands;
+extern std::string command_file;
 
 /** MAVInfo object containing the current state information of the uav */
 extern MAVInfo uav;
