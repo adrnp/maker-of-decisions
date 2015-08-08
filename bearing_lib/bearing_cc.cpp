@@ -9,7 +9,6 @@ using std::pair;
 using std::string;
 
 /* helper functions */
-pair<vector<double>, vector<double> > get_gains(string filename);
 pair<vector<double>, vector<int> > get_norm_gains(string filename);
 double mean(vector<double>& vec);
 double std_dev(vector<double>& vec, double mean);
@@ -21,7 +20,6 @@ double interp_gain(double angle, double shift, vector<double> & ref_angles, vect
 
 double get_bearing_cc(vector<double> & angles, vector<double> & gains)
 {
-	//pair<vector<double>, vector<double> > angles_gains = get_gains("norm.csv");
 	pair<vector<double>, vector<double> > angles_gains = get_gains("mean_cc.csv");
 	vector<double> ref_angles = angles_gains.first;
 	vector<double> ref_gains = angles_gains.second;
@@ -33,35 +31,6 @@ double get_bearing_cc(vector<double> & angles, vector<double> & gains)
 	return cross_correlate(angles, norm_gains, ref_angles, ref_gains);
 }
 
-/**
- * Looks at the file of mean normalized gains.
- * Returns two vectors.
- * angles contains the angles of the normalized gains.
- * gains contains gain values.
- */
-/*
-pair<vector<double>, vector<double> > get_gains(string filename)
-{
-	// Create a file object named infile 
-	std::ifstream infile(filename.c_str());
-
-	double angle;
-	vector<double> angles(36);
-	double gain;
-	vector<double> gains(36);
-	char comma;
-
-	int i = 0;
-	while (infile >> angle >> comma >> gain)
-	{
-		angles[i] = angle;
-		gains[i] = gain;
-		i++;
-	}
-
-	return pair<vector<double>, vector<double> >(angles, gains);
-}
-*/
 
 pair<vector<double>, vector<int> > get_norm_gains(string filename)
 {
@@ -121,15 +90,29 @@ double std_dev(vector<double>& gains, double mean)
  */
 vector<double> normalize(vector<double>& gains)
 {
-	int len = gains.size();
-	double mg = mean(gains);
-	double sd = std_dev(gains, mg);
+	// need to get the mean and std from a copy of gains with no invalid gains
+	vector<double> temp_gains;
+	temp_gains.clear();
 
+	int len = gains.size();
+	for (int i =0; i < len; i++) {
+		if (validgain(gains[i])) {
+			temp_gains.push_back(gains[i]);
+		}
+	}
+		
+	double mg = mean(temp_gains);
+	double sd = std_dev(temp_gains, mg);
+	
 	vector<double> normvec(len);
 	int i = 0;
 	for (i = 0; i < len; i++)
 	{
-		normvec[i] = ((gains[i] - mg) / sd);
+		if (validgain(gains[i])) {
+			normvec[i] = ((gains[i] - mg) / sd);
+		} else {
+			normvec[i] = gains[i];
+		}
 	}
 
 	return normvec;
@@ -146,11 +129,11 @@ double cc_helper(vector<double> & angles, vector<double> & gains, vector<double>
 	int len = angles.size();
 	int i = 0;
 
-	int len2 = gains.size();
-
 	for (i = 0; i < len; i++)
 	{
-		c += gains[i] * interp_gain(angles[i], shift, ref_angles, ref_gains);
+		if (validgain(gains[i])) {
+			c += gains[i] * interp_gain(angles[i], shift, ref_angles, ref_gains);
+		}
 	}
 
 	return c;
