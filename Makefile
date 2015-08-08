@@ -27,7 +27,7 @@ serial_lib/%.o: serial_lib/%.cpp serial_lib/serial_port.h
 	$(CC) $(CFLAGS) $(CFLAGS2) $(INC) $< -o $@
 
 bearing_lib/%.o: bearing_lib/%.cpp bearing_lib/bearing.h
-	$(CC) $(CFLAGS) $(CFLAGS2) $(INC) %< -o $@
+	$(CC) $(CFLAGS) $(CFLAGS2) $(INC) $< -o $@
 
 clean:
 	\rm mod
