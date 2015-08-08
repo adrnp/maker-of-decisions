@@ -46,6 +46,7 @@ vector<int> observed_rssi;						// vector of max rssi observations from each loc
 pair<int, int> prev_commanded_grid_cell;			// the index of the previously commanded grid cell
 pair<int, int> commanded_grid_cell;				// the index of the commanded grid cell
 
+// TODO: put additional global variables here needed to keep track of any styate information desired
 
 
 pair<float, float> get_next_pomdp_action(double &bearing, int &rssi) {
@@ -66,6 +67,8 @@ pair<float, float> get_next_pomdp_action(double &bearing, int &rssi) {
 
 
 void update_observations(double &bearing, int &rssi) {
+
+	// TODO: add any additional update information that would be required
 
 	// note that we have just visited the commanded grid cell
 	cells_visited.push_back(commanded_grid_cell);
