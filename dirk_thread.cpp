@@ -85,6 +85,39 @@ float get_arduino_line(int &afd) {
 	return atof(buf);
 }
 
+void parse_message(char *buf) {
+
+	// for simplicity convert the line from char array to string
+	string line(buf);
+
+	// extract the "flag" that defines what the next set of data is
+	string flag = line.substr(0,4);
+
+	if (strcmp(flag, "RSSI") == 0) {
+		// need to get the angle and the rssi from the message
+
+		size_t loc = line.find(",");
+
+		string angleString = line.substr(6, loc);
+		string rssiString = line.substr(loc, string::npos);
+
+		printf("[DIRK] parsed RSSI with angle %s and rssi %s\n", angleString, rssiString);
+
+	} else if (strcmp(flag, "BEAR") == 0) {
+		// simply need to get the bearing from the message
+		string bearingString = line.substr(6, string::npos);
+
+		printf("[DIRK] parsed BEAR with bearing %s\n", bearingString);
+
+	} else {
+		// this is an unknown line
+		printf("[DIRK] invalid message from arduino received\n");
+	}
+
+
+
+}
+
 
 void *dirk_thread(void *param) {
 	
@@ -176,7 +209,9 @@ void *dirk_thread(void *param) {
 					buf[i-1] = 0;
 					
 					// extract the bearing
-					double bearing = atof(buf);
+					//double bearing = atof(buf);
+					double bearing = 0.0;
+					parse_message(buf);
 
 					printf("Current bearing: %f\n", bearing);
 					
