@@ -1,17 +1,15 @@
 #include <iostream>
-
+#include <stdio.h>
 #include "pomdp.h"
+
+// My write to file stuff...
+#include <iostream>
+#include <fstream>
+
+using std::ofstream;
 
 using std::cout;
 using std::endl;
-
-
-int test_pomdp()
-{
-	POMDP a;
-	cout << "grid_size = " << a.grid_size << endl;
-	cout << "num_actions = " << a.num_actions << endl;
-}
 
 
 /**
@@ -65,64 +63,23 @@ int test_obs_probs()
  *
  * Has passed all the tests that I've given, it, but I am weary
  */
+
 int test_O()
 {
-	POMDP m;
+	initialize_pomdp();
 
-	int a, o;
-	vector<int> sp(4);
 	double prob;
-	sp[2] = 10;
-	sp[3] = 10;
+	vector<int> sp (4);
+	sp[0] = 4;
+	sp[1] = 4;
+	sp[2] = 8;
+	sp[3] = 5;
 
-	/* First trial: Do we get null obs over the jammer, even if we spin? */
-	/* Trial successfully passed */
-	a = ACTION_ROTATE;
-	o = NULL_OBS;
-	sp[0] = 10;
-	sp[1] = 10;
-	prob = O(a, sp, o, m.stored_alphas, m.obs_probs);
-	cout << "a = " << a;
-	cout << "; sp = [" << sp[0] << "," << sp[1] << "," << sp[2] << "," << sp[3] << "]";
-	cout << "; o = " << o << " => ";
-	cout << "prob = " << prob << endl;
-
-	/* Second trial: */
-	cout << "\nTEST 2" << endl;
-	a = ACTION_ROTATE;
-	sp[0] = 0;
-	sp[1] = 0;
-	for (o = 0; o < 9; o++) 
+	int o;
+	for (o = 0; o < 36; o++)
 	{
-		prob = O(a, sp, o, m.stored_alphas, m.obs_probs);
-		cout << "a = " << a << "; ";
-		cout << "sp = [" << sp[0] << "," << sp[1] << "," << sp[2] << "," << sp[3] << "]; ";
-		cout << "o = " << o << " => ";
-		cout << "prob = " << prob << endl;
-	}
-
-	/* Third test: */
-	/* What happens at the boundary? */
-	/* Works, but I'm not convinced */
-	cout << "\nTEST 3" << endl;
-	a = ACTION_ROTATE;
-	sp[0] = 0;
-	sp[1] = 10;
-	for (o = 32; o < 36; o++) 
-	{
-		prob = O(a, sp, o, m.stored_alphas, m.obs_probs);
-		cout << "a = " << a << "; ";
-		cout << "sp = [" << sp[0] << "," << sp[1] << "," << sp[2] << "," << sp[3] << "]; ";
-		cout << "o = " << o << " => ";
-		cout << "prob = " << prob << endl;
-	}
-	for (o = 0; o < 5; o++) 
-	{
-		prob = O(a, sp, o, m.stored_alphas, m.obs_probs);
-		cout << "a = " << a << "; ";
-		cout << "sp = [" << sp[0] << "," << sp[1] << "," << sp[2] << "," << sp[3] << "]; ";
-		cout << "o = " << o << " => ";
-		cout << "prob = " << prob << endl;
+		prob = O(sp, o);
+		cout << "o = " << o << ", prob is " << prob << endl; 
 	}
 }
 
@@ -169,14 +126,88 @@ int test_state2ind()
 	cout << "test_ind, ind = " << test_ind << ", " << ind << endl;
 }
 
+int test_bupdate()
+{
+
+}
+
+/**
+ * Draws 2d belief matrices
+ */
+void printmat(vector<vector<double> >& mat)
+{
+	int x, y;
+	int numrows = mat.size();
+	int numcols = mat[0].size();
+
+	for (y = numcols; y >=0 ; y--)
+	{
+		for (x = 0; x < numrows-1; x++)
+		{
+			printf("%.3f,",mat[x][y]);
+		}
+		printf("%.4f\n",mat[numrows-1][y]);
+	}
+}
+
+int test_naiive()
+{
+	int rssi = 32.0; // test that shit
+	double bearing;
+	vector<vector<double> > b2mat;
+	pair<float, float> naxy;
+
+	bearing = 212.0;
+	naxy = get_next_pomdp_action(bearing, rssi);
+	printf("North = %.1f, East = %.1f\n", naxy.first,naxy.second);
+	b2mat = getb2mat();
+	printmat(b2mat);
+
+	bearing = 257.0;
+	naxy = get_next_pomdp_action(bearing, rssi);
+	printf("North = %.1f, East = %.1f\n", naxy.first,naxy.second);
+	b2mat = getb2mat();
+	printmat(b2mat);
+}
+
+
+int testy(double &bearing)
+{
+	cout << "bearing = " << bearing << endl;
+}
+
+int test_out_file()
+{
+	ofstream myfile;
+	myfile.open("rar.txt");
+}
+
 
 int main()
 {
 	//test_pomdp();
 	//test_stored_alphas();
 	//test_obs_probs();
-	test_O();
+	//test_O();
 	//test_ind2state();
 	//test_state2ind();
+	//cout << obs_probs[2] << endl;
 
+	test_naiive();
+	
+
+	/*
+	int rar;
+	rar = reverse_obs(45);
+	cout << "rar = " << rar << endl;
+	rar = reverse_obs(135);
+	cout << "rar = " << rar << endl;
+	rar = reverse_obs(225);
+	cout << "rar = " << rar << endl;
+	rar = reverse_obs(315);
+	cout << "rar = " << rar << endl;
+	*/
+	//initialize_belief();
+	
+	//test_O();
 }

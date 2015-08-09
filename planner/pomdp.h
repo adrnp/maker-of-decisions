@@ -1,9 +1,17 @@
 #ifndef pomdp_h
 #define pomdp_h
 
+/* Specific to grid size */
+#define GRID_SIZE 9			//size of one side of a cell
+#define NUM_STATES 6561
+#define CENTER_CELL 4
+#define CELL_METERS 11.0		// Size of an individual cell
+
 #define NUM_OBS 37
 #define NULL_OBS 36
 #define OBS_BINS 3
+
+#define NULL_PROB 0.000001
 
 /* action macros */
 /*
@@ -32,6 +40,7 @@
 /* vector is often used */
 #include <vector>
 using std::vector;
+using std::pair;
 
 /* math is often used */
 #include <cmath>
@@ -53,12 +62,24 @@ class POMDP
 ***************************************************************************/
 int make_alphas(vector<vector<int> >& stored_alphas);
 int make_obs_probs(vector<double>& obs_probs);
+void initialize_pomdp();
 
 /***************************************************************************
  * POMDP Workings
 ***************************************************************************/
-double T(vector<int>& s_state, int a, vector<int>& sp_state);
-double O(int a, vector<int>& sp, int o, vector<vector<int> >& stored_alphas, vector<double>& obsProbs);
+double O(vector<int>& sp, int o);
+
+/***************************************************************************
+ * Belief Stuff
+***************************************************************************/
+int update_position(int new_x, int new_y);
+int update_belief(int o);
+int initialize_belief();
+void compress_belief();
+pair<int, int> vehicle_xy();
+vector<vector<double> > getb2mat();
+int write_belief(double bearing);
+int write_action(int x, int y, double dnorth, double deast);
 
 /***************************************************************************
  * MATH
@@ -66,5 +87,13 @@ double O(int a, vector<int>& sp, int o, vector<vector<int> >& stored_alphas, vec
 int ind2state(vector<int>& state, int ind);
 vector<int> ind2state(int ind);
 int state2ind(vector<int>& state);
+int sanitize_obs(double obs);
+int reverse_obs(int obs);
+
+/***************************************************************************
+ * Action Selection
+***************************************************************************/
+pair<float, float> get_next_pomdp_action(double &bearing, int &rssi);
+pair<int, int> next_action_naiive();
 
 #endif
