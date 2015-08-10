@@ -90,24 +90,35 @@ void parse_message(char *buf) {
 	// for simplicity convert the line from char array to string
 	string line(buf);
 
+	printf("[DIRK] received line (true): %s\n", buf);
+	printf("[DIRK] received line: %s\n", line.c_str());
+
 	// extract the "flag" that defines what the next set of data is
 	string flag = line.substr(0,4);
 
-	if (strcmp(flag, "RSSI") == 0) {
+	if (flag == "RSSI") {
 		// need to get the angle and the rssi from the message
 
 		size_t loc = line.find(",");
 
-		string angleString = line.substr(6, loc);
-		string rssiString = line.substr(loc, string::npos);
+		if (loc == string::npos) {
+			printf("[DIRK] well there is your problem\n");
+		} else {
+			printf("the location is %i\n", loc);
+		}
 
-		printf("[DIRK] parsed RSSI with angle %s and rssi %s\n", angleString, rssiString);
+		printf("current line is %s\n", line.c_str());
+		string angleString = line.substr(5, loc-5);
+		printf("angle string is %s\n", angleString.c_str());
+		string rssiString = line.substr(loc+1, string::npos);
 
-	} else if (strcmp(flag, "BEAR") == 0) {
+		printf("[DIRK] parsed RSSI with angle %s and rssi %s\n", angleString.c_str(),rssiString.c_str());
+
+	} else if (flag == "BEAR") {
 		// simply need to get the bearing from the message
 		string bearingString = line.substr(6, string::npos);
 
-		printf("[DIRK] parsed BEAR with bearing %s\n", bearingString);
+		printf("[DIRK] parsed BEAR with bearing %s\n", bearingString.c_str());
 
 	} else {
 		// this is an unknown line
@@ -131,7 +142,7 @@ void *dirk_thread(void *param) {
 	char *dirk_uart = (char *) "/dev/ttyACM0";
 
 	// connect to the arduino
-	SerialPort arduino(false);
+	SerialPort arduino(true);
 	arduino.begin_serial(dirk_uart, baudrate);
 
 	/* Open a file to write bearing calcs to */
