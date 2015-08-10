@@ -27,7 +27,7 @@
 #include "commander.h"
 
 // include what is needed ofr  the POMDP commands
-#include "planner/planner_commander.h"
+#include "planner/pomdp.h"
 
 using std::string;
 using std::vector;
