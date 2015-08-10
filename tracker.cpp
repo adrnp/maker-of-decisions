@@ -23,8 +23,11 @@
 #endif
 
 #include "common.h"
-#include "system_ids.h"
 #include "tracker.h"
+
+using std::vector;
+using namespace std;
+
 
 // variable step size calculation params
 #define BEARING_TOL 10.0			// desired tolerance in degrees for 2 bearing measurements to be considered the same
@@ -44,7 +47,7 @@ void update_observations(double &bearing, int &rssi) {
 
 	// simply add to the list of observations for these
 	observedBearing.push_back(bearing);
-	observedRssi.push_back(observedRssi);
+	observedRssi.push_back(rssi);
 
 }
 
@@ -108,7 +111,7 @@ vector<float> calc_next_command(double &bearing, int &rssi) {
 
 
 
-vector<float> calc_next_command_variable(double &bearing, int &rssi); {
+vector<float> calc_next_command_variable(double &bearing, int &rssi) {
 	// update the observation information
 	update_observations(bearing, rssi);
 
