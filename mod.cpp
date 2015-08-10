@@ -189,7 +189,7 @@ int main(int argc, char **argv) {
 
 	// also create connection to df arduino if needed here
 	if (emily) {
-	//	df_arduino = new SerialPort(verbose, df_uart_name, baudrate);
+		df_arduino = new SerialPort(verbose, df_uart_name, baudrate);
 	}
 
 	// setup termination using CRT-C
