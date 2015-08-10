@@ -47,6 +47,15 @@ unsigned long d_prev_loop_timestamp = 0;
 
 
 
+// some constants that all need to become parameters
+char *bearing_file_name = (char *) "bearing_pa.csv";
+char *rssi_file_name = (char *) "rssi_pa.csv";
+
+// the file handles
+File* bearing_file = NULL;
+File* rssi_file = NULL;
+
+
 void d_update_state(uint8_t &new_state) {
 
 	switch (new_state) {
@@ -90,35 +99,48 @@ void parse_message(char *buf) {
 	// for simplicity convert the line from char array to string
 	string line(buf);
 
-	printf("[DIRK] received line (true): %s\n", buf);
-	printf("[DIRK] received line: %s\n", line.c_str());
-
 	// extract the "flag" that defines what the next set of data is
 	string flag = line.substr(0,4);
 
+	size_t loc = line.find(",");
 	if (flag == "RSSI") {
 		// need to get the angle and the rssi from the message
-
-		size_t loc = line.find(",");
-
-		if (loc == string::npos) {
-			printf("[DIRK] well there is your problem\n");
-		} else {
-			printf("the location is %i\n", loc);
-		}
-
-		printf("current line is %s\n", line.c_str());
 		string angleString = line.substr(5, loc-5);
-		printf("angle string is %s\n", angleString.c_str());
 		string rssiString = line.substr(loc+1, string::npos);
 
-		printf("[DIRK] parsed RSSI with angle %s and rssi %s\n", angleString.c_str(),rssiString.c_str());
+		float angle = stof(angleString);
+		int rssi = stoi(rssiString);
+
+		printf("[DIRK] parsed RSSI with angle %f and rssi %f\n", angle, rssi);
+
+		// write the rssi to a file
+		fprintf(rssi_file, "%llu, %i,%i,%f,%f, %i\n", uavData->sys_time_us.time_unix_usec, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt,
+			angle, rssi);
+
+
+		// send the rssi message to the ground
+		int rssi2 = 0;
+		send_rssi_message( rssi, rssi2, angle, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
+
 
 	} else if (flag == "BEAR") {
-		// simply need to get the bearing from the message
-		string bearingString = line.substr(6, string::npos);
+		// need to get the bearing and max snr from the message
+		string bearingString = line.substr(5, loc-5);
+		string snrMaxString = line.substr(loc+1, string::npos);
 
-		printf("[DIRK] parsed BEAR with bearing %s\n", bearingString.c_str());
+		float bearing = stof(bearingString);
+		int snrMax = stoi(snrMaxString);
+
+		printf("[DIRK] parsed BEAR with bearing %f and max snr %i\n", bearing, snrMax);
+
+
+		// write the bearing to a file
+		fprintf(bearing_file, "%llu, %i,%i,%f,%f,%i\n", uavData->sys_time_us.time_unix_usec, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt,
+			bearing, snrMax);
+
+		// send the bearing message to the ground
+		send_bearing_cc_message( bearing, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
+
 
 	} else {
 		// this is an unknown line
@@ -135,9 +157,6 @@ void *dirk_thread(void *param) {
 	// retrieve the MAVInfo struct that is sent to this function as a parameter
 	struct MAVInfo *uavData = (struct MAVInfo *)param;
 	
-	// some constants that all need to become parameters
-	char *bearing_file_name = (char *) "bearing_pa.csv";
-	
 	const int baudrate = 115200;
 	char *dirk_uart = (char *) "/dev/ttyACM0";
 
@@ -146,13 +165,24 @@ void *dirk_thread(void *param) {
 	arduino.begin_serial(dirk_uart, baudrate);
 
 	/* Open a file to write bearing calcs to */
-	FILE *bearing_file = fopen(bearing_file_name, "a");
+	bearing_file = fopen(bearing_file_name, "a");
 	if (bearing_file == NULL)
 	{
 		// TODO: figure out what we do want to return when there is an error
 		printf("Error opening bearing output file\n");
 		return NULL;
 	}
+
+
+	/* Open a file to write rssi calcs to */
+	rssi_file = fopen(rssi_file_name, "a");
+	if (rssi_file == NULL)
+	{
+		// TODO: figure out what we do want to return when there is an error
+		printf("Error opening rssi output file\n");
+		return NULL;
+	}
+
 
 	if (get_commands) {
 		bool loaded = load_move_commands();
@@ -221,16 +251,7 @@ void *dirk_thread(void *param) {
 					
 					// extract the bearing
 					//double bearing = atof(buf);
-					double bearing = 0.0;
 					parse_message(buf);
-
-					printf("Current bearing: %f\n", bearing);
-					
-					// write the bearing to a file
-					fprintf(bearing_file, "%llu, %i,%i,%f,%f\n", uavData->sys_time_us.time_unix_usec, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, bearing);
-
-					// send the bearing message to the ground
-					// send_bearing_message( bearing, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
 
 					// just some additional handling for wanting to send move commands
 					/*
