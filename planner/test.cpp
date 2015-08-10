@@ -150,7 +150,11 @@ void printmat(vector<vector<double> >& mat)
 	}
 }
 
-int test_naiive()
+
+/**
+ * Version of POMDP depends on call action_<method> in get_next_pomdp_action
+ */
+int test_pomdp()
 {
 	int rssi = 32.0; // test that shit
 	double bearing;
@@ -163,7 +167,15 @@ int test_naiive()
 	b2mat = getb2mat();
 	printmat(b2mat);
 
-	bearing = 257.0;
+	//bearing = 257.0; // for naiive
+	bearing = 260.0;
+	naxy = get_next_pomdp_action(bearing, rssi);
+	printf("North = %.1f, East = %.1f\n", naxy.first,naxy.second);
+	b2mat = getb2mat();
+	printmat(b2mat);
+
+	// just ignore for naiive
+	bearing = 240.0;
 	naxy = get_next_pomdp_action(bearing, rssi);
 	printf("North = %.1f, East = %.1f\n", naxy.first,naxy.second);
 	b2mat = getb2mat();
@@ -171,17 +183,28 @@ int test_naiive()
 }
 
 
-int testy(double &bearing)
-{
-	cout << "bearing = " << bearing << endl;
-}
 
-int test_out_file()
+/**
+ * Test that alpha vectors generated here match julia
+ * Test passed
+ */
+int test_make_alpha_vectors()
 {
-	ofstream myfile;
-	myfile.open("rar.txt");
-}
+	vector<vector<double> > rar;
+	make_alpha_vectors(rar);
 
+	cout << rar[0][0] << endl;
+	cout << rar[0][1] << endl;
+	cout << rar[0][2] << endl;
+
+	cout << endl << rar[8][0] << endl;
+	cout << rar[8][1] << endl;
+	cout << rar[8][2] << endl;
+
+	cout << rar[9][0] << endl;
+	cout << rar[9][1] << endl;
+	cout << rar[9][2] << endl;
+}
 
 int main()
 {
@@ -193,9 +216,25 @@ int main()
 	//test_state2ind();
 	//cout << obs_probs[2] << endl;
 
-	test_naiive();
+	//test_naiive();
+	test_pomdp();
 	
 
+	/*
+	initialize_pomdp();
+	int o;
+	vector<int> sp (4);
+	sp[0] = 2;
+	sp[1] = 1;
+	sp[2] = 0;
+	sp[3] = 0;
+	double prob;
+	for (o = 0; o < 37; o++)
+	{
+		prob = O(sp, o);
+		cout << "o = " << o << ", prob = " << prob << endl;
+	}
+	*/
 	/*
 	int rar;
 	rar = reverse_obs(45);

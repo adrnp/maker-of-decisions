@@ -1,4 +1,5 @@
 #ifndef pomdp_h
+
 #define pomdp_h
 
 /* Specific to grid size */
@@ -26,6 +27,7 @@
  * 8 - p
  * 9 - r
  */
+#define NUM_ACTIONS 10
 #define ACTION_N 0
 #define ACTION_W 1
 #define ACTION_S 2
@@ -34,7 +36,7 @@
 #define ACTION_SW 5
 #define ACTION_NE 6
 #define ACTION_SE 7
-#define ACTION_STOP = 8
+#define ACTION_STOP 8
 #define ACTION_ROTATE 9
 
 /* vector is often used */
@@ -62,6 +64,7 @@ class POMDP
 ***************************************************************************/
 int make_alphas(vector<vector<int> >& stored_alphas);
 int make_obs_probs(vector<double>& obs_probs);
+int make_alpha_vectors(vector<vector<double> >& alpha_vectors);
 void initialize_pomdp();
 
 /***************************************************************************
@@ -75,11 +78,13 @@ double O(vector<int>& sp, int o);
 int update_position(int new_x, int new_y);
 int update_belief(int o);
 int initialize_belief();
-void compress_belief();
+double compress_belief();
 pair<int, int> vehicle_xy();
 vector<vector<double> > getb2mat();
-int write_belief(double bearing);
+int write_belief();
+int write_bearing(double bearing);
 int write_action(int x, int y, double dnorth, double deast);
+pair<int, int> action2diff(int a);
 
 /***************************************************************************
  * MATH
@@ -94,6 +99,7 @@ int reverse_obs(int obs);
  * Action Selection
 ***************************************************************************/
 pair<float, float> get_next_pomdp_action(double &bearing, int &rssi);
-pair<int, int> next_action_naiive();
+pair<float, float> action_naiive();
+pair<float, float> action_qmdp();
 
 #endif

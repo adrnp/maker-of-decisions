@@ -6,10 +6,12 @@
 
 #include "pomdp.h"
 
+
 /* For writing to file */
 #include <iostream>
 #include <iomanip>
 #include <fstream>
+using std::cout;
 using std::endl;
 //using std::ofstream;
 std::ofstream pomdpfile;
@@ -18,10 +20,12 @@ std::ofstream pomdpfile;
 vector<double> obs_probs;
 vector< vector<int> > stored_alphas;
 
-vector<double> b (NUM_STATES);		// belief vector (4d)
-vector<double> btemp (NUM_STATES);	// temporary belief vector (4d)
-vector<vector<double> > b2mat;		// jammer belief array (2d)
-bool start = true;					// do we need to start?
+vector<double> b (NUM_STATES);			// belief vector (4d)
+vector<double> btemp (NUM_STATES);		// temporary belief vector (4d)
+vector<vector<double> > b2mat;			// jammer belief array (2d)
+bool start = true;						// do we need to start?
+bool success = false;					// have we found it? max(b) > .9
+vector<vector<double> > alpha_vectors;	// alpha vectors
 
 int vehicular_x;	// vehicle's east-west grid cell
 int vehicular_y;	// vehicle's north-south grid cell
@@ -54,7 +58,8 @@ int update_position(int new_x, int new_y)
 			si = state2ind(s);
 			sni = state2ind(snew);
 			b[sni] = b[si];
-			b[si] = 0.0;
+			if (si != sni)
+				b[si] = 0.0;
 		}
 	}
 	vehicular_x = new_x;
@@ -97,7 +102,11 @@ int update_belief(int o)
 			b[sp_index] = btemp[sp_index] / outer_sum;
 		}
 	}
-	compress_belief();
+	double maxb = compress_belief();
+	if (maxb > 0.9)
+	{
+		success = true;
+	}
 	return belief_crash;
 }
 
@@ -162,7 +171,7 @@ pair<int, int> vehicle_xy()
  * Convert 4-d to 2-d
  * basically asks, where do we think jammer could be?
  */
-void compress_belief()
+double compress_belief()
 {
 	// basically need to sum across the 3rd and 4th cols
 	int i, xj, yj;
@@ -187,6 +196,18 @@ void compress_belief()
 		// for all xj, yj, add the stuff up
 		b2mat[xj][yj] += b[i];
 	}
+
+	/* Determine the largest one... */
+	double max_b2mat = 0.0;
+	for (xj = 0; xj < GRID_SIZE; xj++)
+	{
+		for (yj = 0; yj < GRID_SIZE; yj++)
+		{
+			if (b2mat[xj][yj] > max_b2mat)
+				max_b2mat = b2mat[xj][yj];
+		}
+	}
+	return max_b2mat;
 }
 
 void initialize_pomdp()
@@ -195,6 +216,7 @@ void initialize_pomdp()
 	initialize_belief();
 	make_obs_probs(obs_probs);
 	make_alphas(stored_alphas);
+	make_alpha_vectors(alpha_vectors);
 	
 	// initialize where we think we are (center of grid)
 	vehicular_x = CENTER_CELL;
@@ -216,7 +238,7 @@ void initialize_pomdp()
  */
 pair<float, float> get_next_pomdp_action(double &bearing, int &rssi)
 {
-	pair<int, int> xy_pair;
+	pair<int, int> d_pair;
 	float delta_north, delta_east;
 	int belief_crash;
 
@@ -225,37 +247,39 @@ pair<float, float> get_next_pomdp_action(double &bearing, int &rssi)
 
 	/* Sanitize observation, update belief */
 	int obs = sanitize_obs(bearing); 
+	write_bearing(bearing);
 	belief_crash = update_belief(obs);
 	if (belief_crash == 1)
 	{
 		pomdpfile << "BELIEF CRASH" << endl;
 		return pair<float,float>(1000.0,1000.0);
 	}
-	write_belief(bearing);
+	write_belief();
+	if (success)
+	{
+		pomdpfile << "JAMMER FOUND" << endl;
+		return pair<float,float>(1000.0,1000.0);
+	}
 
-	// Then, determine x, y to go to
-	xy_pair = next_action_naiive();
-	
-	// Determine delta values to get there
-	delta_north = CELL_METERS * (xy_pair.second - vehicular_y);
-	delta_east = CELL_METERS * (xy_pair.first - vehicular_x);
-	write_action(xy_pair.first, xy_pair.second, delta_north, delta_east);
+	//d_pair = action_naiive();
+	d_pair = action_qmdp();
 
-	// Assume we go there and update to reflect this
-	update_position(xy_pair.first, xy_pair.second);
-
-	return pair<float, float>(delta_north, delta_east);
+	return d_pair;
 }
 
 
-int write_belief(double bearing)
+int write_bearing(double bearing)
 {
 	int obs = sanitize_obs(bearing);
-	int x, y;
-
 	pomdpfile << std::fixed;
 	pomdpfile << std::setprecision(0);
 	pomdpfile << "bearing = " << bearing <<  ", o = " << obs << endl;
+	return 0;
+}
+
+int write_belief()
+{
+	int x, y;
 	pomdpfile << std::setprecision(3);
 	for (y = GRID_SIZE; y >= 0; y--)
 	{
@@ -280,13 +304,14 @@ int write_action(int x, int y, double dnorth, double deast)
 /**
  * Returns the <x,y> cell you should move to
  */
-pair<int, int> next_action_naiive()
+pair<float, float> action_naiive()
 {
 	// pick the max x,y from b2mat
 	double max_belief, temp;
 	int x, y;
 	int max_x = CENTER_CELL;
 	int max_y = CENTER_CELL;
+	double delta_north, delta_east;
 	for (x = 0; x < GRID_SIZE; x++)
 	{
 		for (y = 0; y < GRID_SIZE; y++)
@@ -300,7 +325,67 @@ pair<int, int> next_action_naiive()
 			}
 		}
 	}
-	return pair<int,int>(max_x, max_y);
+
+	// ok, handle this shit
+	delta_north = CELL_METERS * (max_y - vehicular_y);
+	delta_east = CELL_METERS * (max_x - vehicular_x);
+	write_action(max_x, max_y, delta_north, delta_east);
+
+	// Assume we go there and update to reflect this
+	update_position(max_x, max_y);
+	return pair<float, float>(delta_north, delta_east);
+}
+
+
+/**
+ * returns cell to travel to
+ */
+pair<float, float> action_qmdp()
+{
+	// multiply belief by each alpha_vector
+	int a, s, best_a, dx, dy;
+	double utility, max_utility;
+	pair<int, int> diff_xy;
+	best_a = 0;
+	dx = 0;
+	dy = 0;
+
+	while ( (best_a != ACTION_ROTATE) && (best_a != ACTION_STOP) )
+	{
+		max_utility = -99999999;
+		best_a = 0;
+		for (a = 0; a < NUM_ACTIONS; a++)
+		{
+			utility = 0.0;
+			for (s = 0; s < NUM_STATES; s++)
+			{
+				utility += b[s] * alpha_vectors[a][s];
+			}
+			if (utility > max_utility)
+			{
+				max_utility = utility;
+				best_a = a;
+			}
+		}
+
+		// convert this to a distance we must travel
+		diff_xy = action2diff(best_a);
+		update_position(diff_xy.first + vehicular_x, diff_xy.second + vehicular_y);
+		dx += diff_xy.first;
+		dy += diff_xy.second;
+	}
+	double delta_north = CELL_METERS * dy;
+	double delta_east = CELL_METERS * dx;
+
+	write_action(vehicular_x, vehicular_y, delta_north, delta_east);
+
+	// TODO: If it is stop, end
+	if (best_a == ACTION_STOP)
+	{
+		//let adrien know...
+	}
+
+	return pair<float, float>(delta_north, delta_east);
 }
 
 
@@ -375,3 +460,5 @@ double O(vector<int>& sp, int o)
 		return obs_probs[obsDifference];
 	}
 }
+
+
