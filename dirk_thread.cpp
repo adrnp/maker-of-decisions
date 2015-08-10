@@ -52,9 +52,10 @@ char *bearing_file_name = (char *) "bearing_pa.csv";
 char *rssi_file_name = (char *) "rssi_pa.csv";
 
 // the file handles
-File* bearing_file = NULL;
-File* rssi_file = NULL;
+FILE* bearing_file = NULL;
+FILE* rssi_file = NULL;
 
+struct MAVInfo* uavData;
 
 void d_update_state(uint8_t &new_state) {
 
@@ -108,19 +109,20 @@ void parse_message(char *buf) {
 		string angleString = line.substr(5, loc-5);
 		string rssiString = line.substr(loc+1, string::npos);
 
-		float angle = stof(angleString);
+		double angle = stod(angleString);
 		int rssi = stoi(rssiString);
 
-		printf("[DIRK] parsed RSSI with angle %f and rssi %f\n", angle, rssi);
+		printf("[DIRK] parsed RSSI with angle %f and rssi %i\n", angle, rssi);
 
 		// write the rssi to a file
-		fprintf(rssi_file, "%llu, %i,%i,%f,%f, %i\n", uavData->sys_time_us.time_unix_usec, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt,
+		fprintf(rssi_file, "%llu,%i,%i,%f,%f,%i\n", uavData->sys_time_us.time_unix_usec, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt,
 			angle, rssi);
 
 
 		// send the rssi message to the ground
 		int rssi2 = 0;
-		send_rssi_message( rssi, rssi2, angle, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
+		int16_t heading = (int16_t) angle;
+		send_rssi_message( rssi, rssi2, heading, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
 
 
 	} else if (flag == "BEAR") {
@@ -128,14 +130,14 @@ void parse_message(char *buf) {
 		string bearingString = line.substr(5, loc-5);
 		string snrMaxString = line.substr(loc+1, string::npos);
 
-		float bearing = stof(bearingString);
+		double bearing = stod(bearingString);
 		int snrMax = stoi(snrMaxString);
 
 		printf("[DIRK] parsed BEAR with bearing %f and max snr %i\n", bearing, snrMax);
 
 
 		// write the bearing to a file
-		fprintf(bearing_file, "%llu, %i,%i,%f,%f,%i\n", uavData->sys_time_us.time_unix_usec, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt,
+		fprintf(bearing_file, "%llu,%i,%i,%f,%f,%i\n", uavData->sys_time_us.time_unix_usec, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt,
 			bearing, snrMax);
 
 		// send the bearing message to the ground
@@ -155,7 +157,7 @@ void parse_message(char *buf) {
 void *dirk_thread(void *param) {
 	
 	// retrieve the MAVInfo struct that is sent to this function as a parameter
-	struct MAVInfo *uavData = (struct MAVInfo *)param;
+	uavData = (struct MAVInfo *)param;
 	
 	const int baudrate = 115200;
 	char *dirk_uart = (char *) "/dev/ttyACM0";
