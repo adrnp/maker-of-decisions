@@ -119,7 +119,7 @@ vector<float> calc_next_command_variable(double &bearing, int &rssi) {
 	// update the observation information
 	update_observations(bearing, rssi);
 
-	float step = STEP_SMALL;
+	float step = STEP_LARGE;
 	if (firstStep) {
 		firstStep = false;
 		//step = false;
