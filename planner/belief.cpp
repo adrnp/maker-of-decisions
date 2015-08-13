@@ -103,7 +103,7 @@ int update_belief(int o)
 		}
 	}
 	double maxb = compress_belief();
-	if (maxb > 0.9)
+	if (maxb > 0.5)
 	{
 		success = true;
 	}
@@ -388,6 +388,11 @@ pair<float, float> action_qmdp()
 		//let adrien know...
 	}
 
+	if ((delta_north == 0.0) && (delta_east == 0.0))
+	{
+		delta_east = 1.0;
+	}
+
 	return pair<float, float>(delta_north, delta_east);
 }
 
@@ -409,13 +414,19 @@ double O(vector<int>& sp, int o)
 	int yr = sp[3] - sp[1];
 
 	/* handle blind spot stuff */
+	/*
 	if (xr == 0 && yr == 0)
 	{
-		/* means we should get no observations */
+		// means we should get no observations
 		if (o == NULL_OBS)
 			return 1.0;
 		else
 			return NULL_PROB;
+	}
+	*/
+	if ((xr*xr + yr*yr) < 2.25)
+	{
+		return 1.0/36.0;
 	}
 
 	/* If we get here, we have rotated and are not in a blind spot */

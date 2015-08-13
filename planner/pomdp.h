@@ -3,9 +3,18 @@
 #define pomdp_h
 
 /* Specific to grid size */
+// size 9
+/*
 #define GRID_SIZE 9			//size of one side of a cell
 #define NUM_STATES 6561
 #define CENTER_CELL 4
+#define CELL_METERS 11.0		// Size of an individual cell
+*/
+
+// size 21
+#define GRID_SIZE 21		//size of one side of a cell
+#define NUM_STATES 194481
+#define CENTER_CELL 10
 #define CELL_METERS 11.0		// Size of an individual cell
 
 #define NUM_OBS 37
