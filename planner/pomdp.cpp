@@ -8,59 +8,8 @@ POMDP::POMDP()
 	grid_size = 21;
 	num_states = 21^4;
 	num_actions = 8;
-
-	/* create stored_alphas */
-	make_alphas(stored_alphas);
-
-	/* create obs_probs */
-	make_obs_probs(obs_probs);
 }
 
-
-/**
- * Stores angles for every state to avoid expensive atan2 calls
- */
-int make_alphas(vector<vector<int> >& stored_alphas)
-{
-
-	/* Resize stored_alphas */
-	int i;
-	int max_rel = GRID_SIZE - 1;
-	int mat_size = 2*max_rel + 1;
-	stored_alphas.resize(mat_size);
-	for (i = 0; i < mat_size; i++)
-		stored_alphas[i].resize(mat_size);
-
-	/* Compute the angles */
-	int xr, yr, alpha;
-	double temp;
-	for (xr = -max_rel; xr <= max_rel; xr++)
-	{
-		for (yr = -max_rel; yr <= max_rel; yr++)
-		{
-			/* Calculate alpha */
-			temp = std::atan2(yr, xr) * (180.0 / M_PI);
-			if (temp < 0)
-				temp += 360.0;
-			temp = std::fmod(temp, 360.0);
-			alpha = ((int)temp) / 10; // m.unitAngle = 10
-			
-			/* Store alpha */
-			stored_alphas[xr + max_rel][yr + max_rel] = alpha;
-		}
-	}
-	return 0;
-}
-
-int make_obs_probs(vector<double>& obs_probs)
-{
-	obs_probs.resize(4);
-	obs_probs[0] = 0.383103;
-	obs_probs[1] = 0.241843;
-	obs_probs[2] = 0.0606257;
-	obs_probs[3] = 0.00597982;
-	return 0;
-}
 
 int make_alpha_vectors(vector<vector<double> >& alpha_vectors)
 {
@@ -113,4 +62,41 @@ pair<int, int> action2diff(int a)
 		x = 1;
 	}
 	return pair<int, int>(x, y);
+}
+
+int make_bin_probs(vector<vector<vector<double> > >& bin_probs)
+{
+	/* Resize bin_probs */
+	int i;
+	int j;
+	int k;
+	int mat_size = 2*GRID_SIZE - 1;
+	bin_probs.resize(mat_size);
+	for (i = 0; i < mat_size; i++)
+	{
+		bin_probs[i].resize(mat_size);
+		for (j = 0; j < mat_size; j++)
+		{
+			bin_probs[i][j].resize(37);
+		}
+	}
+
+	/* Now read in the file we want: */
+	double val;
+	std::ifstream myfile;
+	myfile.open("bin_probs_21.bin");
+
+	for (i = 0; i < mat_size; i++)
+	{
+		for (j = 0; j < mat_size; j++)
+		{
+			for (k = 0; k < 37; k++)
+			{
+				myfile.read(reinterpret_cast<char*>(&val), sizeof(double));
+				bin_probs[i][j][k] = val;
+			}
+		}
+	}
+
+	return 0;
 }

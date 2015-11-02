@@ -4,18 +4,24 @@
 
 /* Specific to grid size */
 // size 9
-/*
-#define GRID_SIZE 9			//size of one side of a cell
-#define NUM_STATES 6561
-#define CENTER_CELL 4
-#define CELL_METERS 11.0		// Size of an individual cell
-*/
+//#define GRID_SIZE 9			//size of one side of a cell
+//#define NUM_STATES 6561
+//#define CENTER_CELL 4
+//#define CELL_METERS 11.0		// Size of an individual cell
 
 // size 21
 #define GRID_SIZE 21		//size of one side of a cell
 #define NUM_STATES 194481
 #define CENTER_CELL 10
 #define CELL_METERS 11.0		// Size of an individual cell
+
+// size 31
+/*
+#define GRID_SIZE 31		//size of one side of a cell
+#define NUM_STATES 923521
+#define CENTER_CELL 15
+#define CELL_METERS 11.0		// Size of an individual cell
+*/
 
 #define NUM_OBS 37
 #define NULL_OBS 36
@@ -62,8 +68,6 @@ class POMDP
 		int grid_size;	//size of one side of grid
 		int num_states;
 		int num_actions;
-		vector<vector<int> > stored_alphas;	//(36, vector<int>(39));
-		vector<double> obs_probs;
 		POMDP();
 };
 
@@ -71,9 +75,8 @@ class POMDP
 /***************************************************************************
  * POMDP SETUP
 ***************************************************************************/
-int make_alphas(vector<vector<int> >& stored_alphas);
-int make_obs_probs(vector<double>& obs_probs);
 int make_alpha_vectors(vector<vector<double> >& alpha_vectors);
+int make_bin_probs(vector<vector<vector<double> > >& bin_probs);
 void initialize_pomdp();
 
 /***************************************************************************
@@ -94,6 +97,8 @@ int write_belief();
 int write_bearing(double bearing);
 int write_action(int x, int y, double dnorth, double deast);
 pair<int, int> action2diff(int a);
+double p_obs(vector<int>& sp, int xvp, int yvp, int o);
+double cond_obs_update(vector<int>& sp, int xvp, int yvp, int o);
 
 /***************************************************************************
  * MATH
@@ -110,5 +115,6 @@ int reverse_obs(int obs);
 pair<float, float> get_next_pomdp_action(double &bearing, int &rssi);
 pair<float, float> action_naiive();
 pair<float, float> action_qmdp();
+pair<float, float> action_info_theoretic();
 
 #endif

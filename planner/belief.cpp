@@ -17,8 +17,7 @@ using std::endl;
 std::ofstream pomdpfile;
 
 /* Required for observation function */
-vector<double> obs_probs;
-vector< vector<int> > stored_alphas;
+vector< vector<vector<double> > > bin_probs;
 
 vector<double> b (NUM_STATES);			// belief vector (4d)
 vector<double> btemp (NUM_STATES);		// temporary belief vector (4d)
@@ -214,8 +213,7 @@ void initialize_pomdp()
 {
 	//initialize belief vectors
 	initialize_belief();
-	make_obs_probs(obs_probs);
-	make_alphas(stored_alphas);
+	make_bin_probs(bin_probs);
 	make_alpha_vectors(alpha_vectors);
 	
 	// initialize where we think we are (center of grid)
@@ -264,7 +262,8 @@ pair<float, float> get_next_pomdp_action(double &bearing, int &rssi)
 
 	//d_pair = action_naiive();
 	pomdpfile << "before action select" << endl;
-	d_pair = action_qmdp();
+	//d_pair = action_qmdp();
+	d_pair = action_info_theoretic();
 	pomdpfile << "after action select" << endl;
 
 	return d_pair;
@@ -284,7 +283,7 @@ int write_belief()
 {
 	int x, y;
 	pomdpfile << std::setprecision(3);
-	for (y = GRID_SIZE; y >= 0; y--)
+	for (y = (GRID_SIZE-1); y >= 0; y--)
 	{
 		for (x = 0; x < (GRID_SIZE-1); x++)
 		{
@@ -342,6 +341,7 @@ pair<float, float> action_naiive()
 
 /**
  * returns cell to travel to
+ * TODO: need to break if it just keeps wandering forever
  */
 pair<float, float> action_qmdp()
 {
@@ -396,6 +396,46 @@ pair<float, float> action_qmdp()
 	return pair<float, float>(delta_north, delta_east);
 }
 
+pair<float, float> action_info_theoretic()
+{
+	int xvp, yvp, o, best_x, best_y;
+	double obs_entropy, cond_obs_entropy, p_o, temp_val;
+	double best_val = -9999999;
+	vector<int> sp(4);
+	double delta_north, delta_east;
+	for (xvp = 0; xvp < GRID_SIZE; xvp++)
+	{
+		for (yvp = 0; yvp < GRID_SIZE; yvp++)
+		{
+			obs_entropy = 0.0;
+			cond_obs_entropy = 0.0;
+			for (o = 0; o < NUM_OBS; o++)
+			{
+				p_o = p_obs(sp, xvp, yvp, o);
+				if (p_o > 0.0)
+					obs_entropy -= p_o * log(p_o);
+				cond_obs_entropy -= cond_obs_update(sp, xvp, yvp, o);
+			}
+			temp_val = obs_entropy - cond_obs_entropy;
+			if (temp_val > best_val)
+			{
+				best_val = temp_val;
+				best_x = xvp;
+				best_y = yvp;
+			}
+		}
+
+	}
+	delta_north = CELL_METERS * (best_y - vehicular_y);
+	delta_east = CELL_METERS * (best_x - vehicular_x);
+	write_action(best_x, best_y, delta_north, delta_east);
+
+	// Assume we go there and update to reflect this
+	update_position(best_x, best_y);
+
+	return pair<float, float>(delta_north, delta_east);
+}
+
 
 vector<vector<double> > getb2mat()
 {
@@ -406,73 +446,58 @@ vector<vector<double> > getb2mat()
 /**
  * Only called if we've rotated
  * 37 total observations, numbered 0 to 36 (36 is null obs)
- * TODO: should we include bling spot stuff?
+ * TODO: should we include blind spot stuff?
  */
 double O(vector<int>& sp, int o)
 {
+	/* We expect no blind spots here. */
+	if (o == NULL_OBS)
+		return 0.0;
+
+	// Here, we've rotated and have not received the null observation
+	// Determine xr, yr of jammer relative to you
 	int xr = sp[2] - sp[0];
 	int yr = sp[3] - sp[1];
 
-	/* handle blind spot stuff */
-	/*
-	if (xr == 0 && yr == 0)
-	{
-		// means we should get no observations
-		if (o == NULL_OBS)
-			return 1.0;
-		else
-			return NULL_PROB;
-	}
-	*/
-	if ((xr*xr + yr*yr) < 2.25)
-	{
-		return 1.0/36.0;
-	}
-
-	/* If we get here, we have rotated and are not in a blind spot */
-	/* If obs is that we get no bearing, return 0 */
-	if (o == NULL_OBS)
-		return NULL_PROB;
-
-	/* If we get here, we have rotated and are not in the blind spot */
-	/* We have also received some angle measurement */
-	int alpha = stored_alphas[xr + GRID_SIZE-1][yr + GRID_SIZE-1];
-	int obsDifference = std::abs(alpha - o);
-	int min_val, max_val;
-
-	if (obsDifference > (NUM_OBS - 2 - OBS_BINS))
-	{
-		/*
-		 * This is the case that the difference in angles is not very large,
-		 *  but seems like it because o is 0 and alpha is 71
-		 * With 72 observations, it seems like the obsDifference is 71
-		 * But really, it is 1.
-		 * This is related to cycle difference.
-		*/
-		if (o < alpha)
-		{
-			min_val = o;
-			max_val = alpha;
-		}
-		else
-		{
-			min_val = alpha;
-			max_val = o;
-		}
-		return obs_probs[NUM_OBS - obsDifference - 1];
-	}
-	else if (obsDifference > OBS_BINS)
-	{
-		/* If difference in angles is greater than a few std deviations, */
-		/*  we can assume this has zero probability */
-		return NULL_PROB;
-	}
-	else
-	{
-		/* This is the case that there is some probability for this obs */
-		/* This meas our observation difference is small */
-		return obs_probs[obsDifference];
-	}
+	return bin_probs[xr+GRID_SIZE-1][yr+GRID_SIZE-1][o];
 }
 
 
+double p_obs(vector<int>& sp, int xvp, int yvp, int o)
+{
+	double prob = 0.0;
+	sp[0] = xvp;
+	sp[1] = yvp;
+	int xj, yj;
+	for (xj = 0; xj < GRID_SIZE; xj ++)
+	{
+		for (yj = 0; yj < GRID_SIZE; yj++)
+		{
+			sp[2] = xj;
+			sp[3] = yj;
+			prob += b2mat[xj][yj] * O(sp, o);
+		}
+	}
+	return prob;
+}
+
+double cond_obs_update(vector<int>& sp, int xvp, int yvp, int o)
+{
+	double temp = 0.0;
+	double pobs;
+	int xj, yj;
+	sp[0] = xvp;
+	sp[1] = yvp;
+	for (xj = 0; xj < GRID_SIZE; xj++)
+	{
+		for (yj = 0; yj < GRID_SIZE; yj++)
+		{
+			sp[2] = xj;
+			sp[3] = yj;
+			pobs = O(sp, o);
+			if (pobs > 0.0)
+				temp += b2mat[xj][yj] * pobs * log(pobs);
+		}
+	}
+	return temp;
+}

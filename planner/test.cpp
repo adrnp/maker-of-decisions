@@ -13,50 +13,6 @@ using std::endl;
 
 
 /**
- * Test that the stored alphas match what we have in the julia
- * Test has been passed.
- */
-int test_stored_alphas()
-{
-	POMDP a;
-
-	int i, j;
-	for (i = 0; i < 41; i++)
-	{
-		for (j = 0; j < 41; j++)
-		{
-			if (a.stored_alphas[i][j] >= 10)
-				cout << a.stored_alphas[i][j] << ",";
-			else
-				cout << " " << a.stored_alphas[i][j] << ",";
-		}
-		cout << endl;
-	}
-}
-
-
-/**
- * Good. Matches julia
- * Sums to 1
- */
-int test_obs_probs()
-{
-	POMDP a;
-	int i;
-	double sum = 0.0;
-	for (i = 0; i < 4; i++)
-	{
-		cout << "obs_probs[" << i << "] = " << a.obs_probs[i] << endl;
-		if (i > 0)
-			sum += 2 * a.obs_probs[i];
-		else
-			sum += a.obs_probs[i];
-	}
-	cout << "sum = " << sum << endl;
-}
-
-
-/**
  * Tests the observation function.
  * Cases are compared with the julia implementation
  * (See ~/research/GridPOMDP/test_O.jl)
@@ -100,10 +56,18 @@ int test_ind2state()
 	state[2] = 0;
 	state[3] = 0;
 
-	ind2state(state, 42);
 
-	cout << "state is:\n";
-	cout << "[" << state[0] << ", " << state[1] << ", " << state[2] << ", " << state[3] << "]\n";
+	//ind2state(state, 0);
+	//cout << "state is:\n";
+	//cout << "[" << state[0] << ", " << state[1] << ", " << state[2] << ", " << state[3] << "]\n";
+
+	int i;
+	for (i = 0; i < 10; i++)
+	{
+		ind2state(state, i);
+		cout << "state for ind " << i << " is:\n";
+		cout << "[" << state[0] << ", " << state[1] << ", " << state[2] << ", " << state[3] << "]\n";
+	}
 }
 
 
@@ -140,7 +104,7 @@ void printmat(vector<vector<double> >& mat)
 	int numrows = mat.size();
 	int numcols = mat[0].size();
 
-	for (y = numcols; y >=0 ; y--)
+	for (y = numcols-1; y >=0 ; y--)
 	{
 		for (x = 0; x < numrows-1; x++)
 		{
@@ -188,7 +152,7 @@ int test_pomdp2()
 	vector<vector<double> > b2mat;
 	pair<float, float> naxy;
 
-	bearing = 0.0;
+	bearing = 45.0;
 	naxy = get_next_pomdp_action(bearing, rssi);
 	printf("North = %.1f, East = %.1f\n", naxy.first,naxy.second);
 	b2mat = getb2mat();
@@ -212,6 +176,25 @@ int test_pomdp2()
 }
 
 
+int test_info()
+{
+	int rssi = 32.0; // test that shit
+	double bearing;
+	vector<vector<double> > b2mat;
+	pair<float, float> naxy;
+
+	bearing = 45.0;
+	naxy = get_next_pomdp_action(bearing, rssi);
+	printf("North = %.1f, East = %.1f\n", naxy.first,naxy.second);
+	b2mat = getb2mat();
+	printmat(b2mat);
+
+	bearing = 62.0;
+	naxy = get_next_pomdp_action(bearing, rssi);
+	printf("North = %.1f, East = %.1f\n", naxy.first,naxy.second);
+	b2mat = getb2mat();
+	printmat(b2mat);
+}
 
 /**
  * Test that alpha vectors generated here match julia
@@ -238,15 +221,28 @@ int test_make_alpha_vectors()
 int main()
 {
 	//test_pomdp();
-	//test_stored_alphas();
-	//test_obs_probs();
 	//test_O();
 	//test_ind2state();
 	//test_state2ind();
-	//cout << obs_probs[2] << endl;
 
 	//test_naiive();
-	test_pomdp2();
+	int rar1 = sanitize_obs(42);
+	cout << "42 => " << rar1 << endl;
+	rar1 = sanitize_obs(45);
+	cout << "45 => " << rar1 << endl;
+	rar1 = sanitize_obs(45.1);
+	cout << "45.1 => " << rar1 << endl;
+	test_info();
+
+	/*
+	vector<vector<double> > b2mat;
+	initialize_belief();
+
+	b2mat = getb2mat();
+	printmat(b2mat);
+	*/
+
+	//ind2state(s, i);
 	
 
 	/*

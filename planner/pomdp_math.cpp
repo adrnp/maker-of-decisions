@@ -54,16 +54,21 @@ int state2ind(vector<int>& state)
 }
 
 /* make obs between 0 and 35 */
-/* We've reversed it (see below) */
-/* I'm not sure this truncates/rounds the right way*/
 /* close enough ? */
 int sanitize_obs(double obs)
 {
+	int ret_obs = round(obs / 10.0);
+	if (ret_obs == 36)
+		ret_obs = 35;
+	return ret_obs;
+
+	/*
 	int ret_obs = reverse_obs((int)obs);
 	ret_obs = (int) (ret_obs / 10.0);
 	if (ret_obs == 36)
 		ret_obs = 35;
 	return ret_obs;
+	*/
 }
 
 
