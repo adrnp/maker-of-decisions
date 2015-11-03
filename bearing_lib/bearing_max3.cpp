@@ -3,7 +3,7 @@
 
 
 // helper function
-double calc_max_angle(double &angle1, double &angle2);
+double calc_max_angle2(double &angle1, double &angle2);
 
 
 
@@ -57,7 +57,7 @@ double get_bearing_max3(vector<double> &angles, vector<double> &gains) {
 }
 
 
-double calc_max_angle(double &angle1, double &angle2) {
+double calc_max_angle2(double &angle1, double &angle2) {
 	double angle_max = angle1;
 
 	// check to see if only 1 max was founds
