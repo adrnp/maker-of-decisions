@@ -174,6 +174,7 @@ void *wifly_thread(void *param) {
 
 	double bearing_cc;
 	double bearing_max;
+	double bearing_max3;
 	int max_rssi;
 
 	bool send_next = false;
