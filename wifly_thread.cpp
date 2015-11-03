@@ -298,13 +298,17 @@ void *wifly_thread(void *param) {
 			bearing_max = get_bearing_max(angles, gains);
 			if (verbose) printf("[WIFLY] calculated max bearing: %f\n", bearing_max);
 
+			// also do max3 bearing calculation
+			bearing_max3 = get_bearing_max3(angles, gains);
+			if (verbose) printf("[WIFLY] calculated max3 bearing: %f\n", bearing_max3);
+
 			// get what the max value was for the rssi
 			max_rssi = get_max_rssi(gains);
 			if (verbose) printf("[WIFLY] max rssi value: %i\n", max_rssi);
 
 			// save bearing cc to file (with important information)
-			fprintf(bearing_file, "%llu,%i,%i,%f,%f,%f,%i\n", uavData->sys_time_us.time_unix_usec,
-				uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, bearing_cc, bearing_max, max_rssi);
+			fprintf(bearing_file, "%llu,%i,%i,%f,%f,%f,%i,%f\n", uavData->sys_time_us.time_unix_usec,
+				uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, bearing_cc, bearing_max, max_rssi, bearing_max3);
 
 			// send a mavlink message of the calculated bearing
 			send_bearing_cc_message(bearing_cc, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
@@ -339,7 +343,7 @@ void *wifly_thread(void *param) {
 		// if sending the next command has been flagged, send the next command, using the calculated data
 		if (send_next) {
 			printf("[WIFLY][CMD] calling to send the next command...\n");
-			send_next_command(prev_hunt_state, uavData->tracking_status.hunt_mode_state, bearing_max, max_rssi);
+			send_next_command(prev_hunt_state, uavData->tracking_status.hunt_mode_state, bearing_cc, max_rssi);
 			send_next = false;
 		}
 
