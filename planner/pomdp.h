@@ -7,20 +7,20 @@
 //#define GRID_SIZE 9			//size of one side of a cell
 //#define NUM_STATES 6561
 //#define CENTER_CELL 4
-//#define CELL_METERS 11.0		// Size of an individual cell
+//#define CELL_METERS 10.0		// Size of an individual cell
 
 // size 21
 #define GRID_SIZE 21		//size of one side of a cell
 #define NUM_STATES 194481
 #define CENTER_CELL 10
-#define CELL_METERS 11.0		// Size of an individual cell
+#define CELL_METERS 10.0		// Size of an individual cell
 
 // size 31
 /*
 #define GRID_SIZE 31		//size of one side of a cell
 #define NUM_STATES 923521
 #define CENTER_CELL 15
-#define CELL_METERS 11.0		// Size of an individual cell
+#define CELL_METERS 10.0		// Size of an individual cell
 */
 
 #define NUM_OBS 37
@@ -44,15 +44,15 @@
  */
 #define NUM_ACTIONS 10
 #define ACTION_N 0
-#define ACTION_W 1
-#define ACTION_S 2
-#define ACTION_E 3
-#define ACTION_NW 4
+#define ACTION_NE 1
+#define ACTION_E 2
+#define ACTION_SE 3
+#define ACTION_S 4
 #define ACTION_SW 5
-#define ACTION_NE 6
-#define ACTION_SE 7
-#define ACTION_STOP 8
-#define ACTION_ROTATE 9
+#define ACTION_W 6
+#define ACTION_NW 7
+#define ACTION_ROTATE 8
+#define ACTION_STOP 9
 
 /* vector is often used */
 #include <vector>
