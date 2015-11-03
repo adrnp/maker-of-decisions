@@ -34,6 +34,7 @@ double get_bearing_bayes(vector<double>& theta_v, vector<int>& gains, vector<vec
 double get_bearing_cc(vector<double> &angles, vector<double> &gains);
 
 double get_bearing_max(vector<double> &angles, vector<double> &gains);
+double get_bearing_max3(vector<double> &angles, vector<double> &gains);
 
 pair<vector<double>, vector<double> > get_gains(string filename);
 
