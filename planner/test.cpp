@@ -145,7 +145,7 @@ int test_pomdp()
 	b2mat = getb2mat();
 	printmat(b2mat);
 }
-int test_pomdp2()
+int test_qmdp()
 {
 	int rssi = 32.0; // test that shit
 	double bearing;
@@ -153,26 +153,34 @@ int test_pomdp2()
 	pair<float, float> naxy;
 
 	bearing = 45.0;
+	int rar = sanitize_obs(62.0);
+	cout << "rar = " << rar << endl;
 	naxy = get_next_pomdp_action(bearing, rssi);
 	printf("North = %.1f, East = %.1f\n", naxy.first,naxy.second);
 	b2mat = getb2mat();
 	printmat(b2mat);
 
-	//bearing = 257.0; // for naiive
-	/*
-	bearing = 260.0;
+
+	// Obs 4
+	bearing = 42.0;
 	naxy = get_next_pomdp_action(bearing, rssi);
 	printf("North = %.1f, East = %.1f\n", naxy.first,naxy.second);
 	b2mat = getb2mat();
 	printmat(b2mat);
 
-	// just ignore for naiive
-	bearing = 240.0;
+	// Obs 6
+	bearing = 62.0;
 	naxy = get_next_pomdp_action(bearing, rssi);
 	printf("North = %.1f, East = %.1f\n", naxy.first,naxy.second);
 	b2mat = getb2mat();
 	printmat(b2mat);
-	*/
+
+	// Obs 4
+	bearing = 42.0;
+	naxy = get_next_pomdp_action(bearing, rssi);
+	printf("North = %.1f, East = %.1f\n", naxy.first,naxy.second);
+	b2mat = getb2mat();
+	printmat(b2mat);
 }
 
 
@@ -226,13 +234,8 @@ int main()
 	//test_state2ind();
 
 	//test_naiive();
-	int rar1 = sanitize_obs(42);
-	cout << "42 => " << rar1 << endl;
-	rar1 = sanitize_obs(45);
-	cout << "45 => " << rar1 << endl;
-	rar1 = sanitize_obs(45.1);
-	cout << "45.1 => " << rar1 << endl;
-	test_info();
+	test_qmdp();
+	//test_info();
 
 	/*
 	vector<vector<double> > b2mat;
