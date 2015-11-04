@@ -174,7 +174,7 @@ void sendTrackingCommand(float &north, float &east) {
 	// extract the next north and east commands
 	float nextNorth = north;
 	float nextEast = east;
-	float nextAlt = 360.0; //flight_alt;
+	float nextAlt = 280.0; //360.0; //flight_alt;
 
 	printf("sending command %i: N %f\tE %f\tA %f\n", cmd_index, nextNorth, nextEast, nextAlt);
 
