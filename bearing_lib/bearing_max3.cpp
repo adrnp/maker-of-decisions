@@ -53,7 +53,7 @@ double get_bearing_max3(vector<double> &angles, vector<double> &gains) {
 
 
 	// calculate the bearing given the max information
-	return calc_max_angle(angle_max1, angle_max2);
+	return calc_max_angle2(angle_max1, angle_max2);
 }
 
 
