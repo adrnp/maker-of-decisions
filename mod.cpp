@@ -29,7 +29,7 @@ bool emily = false;			// default to not running the emily antenna configuration
 bool execute_tracking = false;	// default to not executing a tracking mission
 int tracking_method = TRACK_NAIVE;	// default to using the naive tracker
 
-float flight_alt = 360;			// default flight is AMSL
+float flight_alt = 355;			// default flight is AMSL
 
 MAVInfo uav;			// object to hold all the state information on the UAV
 

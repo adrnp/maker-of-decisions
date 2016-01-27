@@ -234,8 +234,8 @@ int main()
 	//test_state2ind();
 
 	//test_naiive();
-	test_qmdp();
-	//test_info();
+	//test_qmdp();
+	test_info();
 
 	/*
 	vector<vector<double> > b2mat;

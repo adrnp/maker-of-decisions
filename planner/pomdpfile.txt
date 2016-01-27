@@ -23,7 +23,7 @@ update complete
 0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000
 before action select
 New grid cell commanded <x,y> = 17,16
-Commanded movement <dnorth, deast>(meters) = 66,77
+Commanded movement <dnorth, deast>(meters) = 60,70
 
 after action select
 bearing = 62, o = 6
@@ -51,6 +51,6 @@ update complete
 0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000
 before action select
 New grid cell commanded <x,y> = 18,19
-Commanded movement <dnorth, deast>(meters) = 33,11
+Commanded movement <dnorth, deast>(meters) = 30,10
 
 after action select

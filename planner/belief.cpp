@@ -262,8 +262,8 @@ pair<float, float> get_next_pomdp_action(double &bearing, int &rssi)
 
 	//d_pair = action_naiive();
 	pomdpfile << "before action select" << endl;
-	d_pair = action_qmdp();
-	//d_pair = action_info_theoretic();
+	//d_pair = action_qmdp();
+	d_pair = action_info_theoretic();
 	pomdpfile << "after action select" << endl;
 
 	return d_pair;
