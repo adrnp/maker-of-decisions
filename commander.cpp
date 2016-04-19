@@ -89,7 +89,7 @@ void send_next_command(uint8_t &prev_state, uint8_t &new_state, double &bearing,
 			// if running emily config, will need to rotate twice
 			if (emily && second_rotation_required) {
 				send_df_mode(1);
-				sendRotateCommand(-1.0);
+				send_rotate_command(-1.0);
 				second_rotation_required = false;
 				break;
 			}
