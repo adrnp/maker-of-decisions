@@ -1,3 +1,12 @@
+/**
+ * wifly_thread.cpp
+ *
+ * TODO: this file needs some renaming!!!
+ *
+ * this handles all of the main work of the maker of decision.
+ * reads from the wifly modules and triggers commands to be sent accordingly
+ * 
+ */
 // Standard includes
 #include <iostream>
 #include <cstdlib>
@@ -22,13 +31,14 @@
 #include <sys/ioctl.h>
 #endif
 
-//#include "serialwifly.h" 	// this is from Louis' wifly code, which will be a library
-#include "serial_lib/wifly_serial.h" // include the new class for handling a wifly
-#include "common.h"
-#include "wifly_thread.h"
-// #include "test.h" 			// for bearing calculation
-#include "commander.h"
+#include "serial_lib/wifly_serial.h" 	// include the new class for handling a wifly
 #include "bearing_lib/bearing.h"		// this should be all the functions required for bearing calculations
+#include "udp_lib/udp.h"				// udp communication
+#include "common.h"
+#include "commander.h"
+#include "wifly_thread.h"
+
+
 
 using std::string;
 using std::vector;
@@ -144,6 +154,7 @@ void *wifly_thread(void *param) {
 	{
 		// TODO: figure out what we do want to return when there is an error
 		printf("[WIFLY] Error opening bearing output file\n");
+		fclose(wifly_file);
 		return NULL;
 	}
 
@@ -152,15 +163,25 @@ void *wifly_thread(void *param) {
 		bearing_file_mle = fopen(bearing_mle_file_name, "a");
 		if (bearing_file_mle == NULL) {
 			printf("[WIFLY] Error opening bearing mle output file\n");
+			fclose(wifly_file);
+			fclose(bearing_file);
 			return NULL;
 		}
 	}
+
+	/* open a UDP connection to send data down to the ground station */
+	UDP* udp = new UDP();
 
 
 	if (get_commands) {
 		bool loaded = load_move_commands();
 		if (!loaded) {
 			printf("[WIFLY] Error loading move commands\n");
+			fclose(wifly_file);
+			fclose(bearing_file);
+			if (dual_wifly) {
+				fclose(bearing_file_mle);
+			}
 			return NULL;
 		}
 	}
@@ -280,6 +301,8 @@ void *wifly_thread(void *param) {
 				// send a mavlink message of the calculated mle bearing
 				send_bearing_mle_message(curr_bearing_est, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
 
+				// send the udp message (directly to ground)
+				udp->send_bearing_message(TYPE_BEARING_MLE, bearing_cc, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
 			}
 		}
 
@@ -309,6 +332,9 @@ void *wifly_thread(void *param) {
 			// send a mavlink message of the calculated bearing
 			send_bearing_cc_message(bearing_cc, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
 
+			// send the udp message (directly to ground)
+			udp->send_bearing_message(TYPE_BEARING_CC, bearing_cc, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
+
 			// send a mavlink message of the max bearing over the mle message for now
 			// send_bearing_mle_message(bearing_max, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
 
@@ -330,6 +356,8 @@ void *wifly_thread(void *param) {
 		// send a mavlink message with the current rssi
 		send_rssi_message(dir_rssi, omni_rssi, heading_dir_pre, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
 
+		// send the udp message (directly to ground)
+		udp->send_rssi_message(dir_rssi, omni_rssi, heading_dir_pre, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
 
 
 		//-----------------------------------------------//
@@ -352,6 +380,9 @@ void *wifly_thread(void *param) {
 	fclose(wifly_file);
 	fclose(bearing_file);
 	wifly1->end_serial();
+
+	delete &udp;
+
 
 	if (dual_wifly) {
 		fclose(bearing_file_mle);
