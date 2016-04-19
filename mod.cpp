@@ -1,5 +1,9 @@
 /*
  * mod.cpp
+ * 
+ * This is the core running functions.
+ * Reads the command line arguments (TODO: put these into a config file)
+ * Starts all the necessary threads
  *
  *  Created on: August, 2014
  *      Author: Adrien Perkins

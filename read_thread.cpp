@@ -1,3 +1,15 @@
+/**
+ * read_thread.cpp
+ *
+ * This file contains the code running on one of the core threads started by mod.
+ *
+ * Reads data from the pixhawk over mavlink, parsing the incoming messages
+ * and updating the shared MAVInfo object about JAGER.
+ *
+ * Currently only handles a small subset of the messages from JAGER.
+ * (only the ones needed)
+ */
+
 
 // Standard includes
 #include <iostream>

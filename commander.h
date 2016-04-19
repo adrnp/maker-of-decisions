@@ -17,15 +17,15 @@ bool load_move_commands();
 void send_next_command(uint8_t &prev_state, uint8_t &new_state, double &bearing, int &rssi);
 
 /* send the next tracking command */
-void sendTrackingCommand(float &north, float &east);
+void send_tracking_command(float &north, float &east);
 
 /* send the next command for testing movement */
-void sendMoveCommand();
+void send_move_command();
 
 /* send a command to rotate the vehicle
  * direction: -1 is CCW and 1 is CW
  */
-void sendRotateCommand(float direction);
+void send_rotate_command(float direction);
 
 /* send a command to go into off mode */
 void send_finish_command();

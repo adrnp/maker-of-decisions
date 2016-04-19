@@ -1,3 +1,11 @@
+/**
+ * tracker.cpp
+ *
+ * This is the naive variable step size tracker implementation.
+ *
+ * @author Adrien Perkins <adrienp@stanford.edu>
+ */
+
 // Standard includes
 #include <iostream>
 #include <cstdlib>

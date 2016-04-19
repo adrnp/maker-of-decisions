@@ -101,12 +101,12 @@ void send_next_command(uint8_t &prev_state, uint8_t &new_state, double &bearing,
 				vector<float> commands = calc_next_command_variable(bearing, rssi);
 				
 				if (verbose) printf("following tracking command (%f, %f)\n", commands[0], commands[1]);
-				sendTrackingCommand(commands[0], commands[1]);
+				send_tracking_command(commands[0], commands[1]);
 				
 			} else {
 				if (verbose) printf("sending the next preset move command\n");	
 				// send the next move command
-				sendMoveCommand();
+				send_move_command();
 			}
 			break;
 		case TRACKING_HUNT_STATE_MOVE:
@@ -118,7 +118,7 @@ void send_next_command(uint8_t &prev_state, uint8_t &new_state, double &bearing,
 			}
 		
 			// send a rotate command
-			sendRotateCommand(-1.0);
+			send_rotate_command(-1.0);
 
 			// management for emily config
 			second_rotation_required = true;
@@ -129,7 +129,7 @@ void send_next_command(uint8_t &prev_state, uint8_t &new_state, double &bearing,
 	return;
 }
 
-void sendTrackingCommand(float &north, float &east) {
+void send_tracking_command(float &north, float &east) {
 	
 	// retrieve the id of the last finished cmd
 	int nextCmd = uav.last_cmd_finished_id++;
@@ -172,7 +172,7 @@ void sendTrackingCommand(float &north, float &east) {
 }
 
 
-void sendMoveCommand() {
+void send_move_command() {
 
 	// retrieve the id of the last finished cmd
 	int nextCmd = uav.last_cmd_finished_id++;
@@ -216,7 +216,7 @@ void sendMoveCommand() {
 
 }
 
-void sendRotateCommand(float direction) {
+void send_rotate_command(float direction) {
 	// retrieve the id of the last finished cmd
 	int nextCmd = uav.last_cmd_finished_id++;
 
