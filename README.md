@@ -10,9 +10,16 @@ To download and prepare the code:
         git submodule init
         git submodule update
 
-Then you should be ready to make, which can be done simply with:
+Once downloaded, you will need to run `cmake` before being able to make the project.  To do so, run the following commands:
+
+		cd build
+		cmake ..
+
+Then (in the same directory) you should be ready to make, which can be done simply with:
 
         make
+
+Note that with this new file structure, the executible is in the build folder!  This is untested and may cause problems!
 
 ## Branches ##
 There are currently 3 active branches for MOD.

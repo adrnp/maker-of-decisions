@@ -1,4 +1,0 @@
-/home/adrienp/git-uav/maker-of-decisions/build/libs/udp/CMakeFiles/UDPLib.dir
-/home/adrienp/git-uav/maker-of-decisions/build/CMakeFiles/mod.dir
-/home/adrienp/git-uav/maker-of-decisions/build/libs/serial/CMakeFiles/SerialLib.dir
-/home/adrienp/git-uav/maker-of-decisions/build/libs/bearing/CMakeFiles/BearingLib.dir
