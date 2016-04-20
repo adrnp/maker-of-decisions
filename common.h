@@ -12,8 +12,8 @@
 #ifndef COMMON_H_
 #define COMMON_H_
 
- #include "mav_struct.h"
- #include "serial_lib/mavlink_serial.h"
+#include "mav_struct.h"
+#include "libs/serial/mavlink_serial.h"
 
 
 /** boolean to determine whether or not to show all outputs */

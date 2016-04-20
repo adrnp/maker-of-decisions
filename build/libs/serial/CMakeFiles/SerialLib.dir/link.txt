@@ -1,0 +1,2 @@
+/usr/bin/ar cq libSerialLib.a  CMakeFiles/SerialLib.dir/mavlink_serial.cpp.o CMakeFiles/SerialLib.dir/serial_port.cpp.o CMakeFiles/SerialLib.dir/wifly_serial.cpp.o
+/usr/bin/ranlib libSerialLib.a

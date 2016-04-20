@@ -22,7 +22,7 @@
 #include <sys/ioctl.h>
 #endif
 
-#include "serial_lib/mavlink_serial.h"
+#include "libs/serial/mavlink_serial.h"
 #include "common.h"
 #include "commander.h"
 #include "tracker.h"

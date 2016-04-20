@@ -1,0 +1,2 @@
+/usr/bin/ar cq libUDPLib.a  CMakeFiles/UDPLib.dir/udp.cpp.o
+/usr/bin/ranlib libUDPLib.a

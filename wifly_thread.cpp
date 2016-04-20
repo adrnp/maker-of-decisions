@@ -31,9 +31,9 @@
 #include <sys/ioctl.h>
 #endif
 
-#include "serial_lib/wifly_serial.h" 	// include the new class for handling a wifly
-#include "bearing_lib/bearing.h"		// this should be all the functions required for bearing calculations
-#include "udp_lib/udp.h"				// udp communication
+#include "libs/serial/wifly_serial.h" 	// include the new class for handling a wifly
+#include "libs/bearing/bearing.h"		// this should be all the functions required for bearing calculations
+#include "libs/udp/udp.h"				// udp communication
 #include "common.h"
 #include "commander.h"
 #include "wifly_thread.h"

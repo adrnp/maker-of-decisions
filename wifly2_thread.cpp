@@ -23,10 +23,10 @@
 #endif
 
 //#include "serialwifly.h" 	// this is from Louis' wifly code, which will be a library
-#include "serial_lib/wifly_serial.h" // include the new class for handling a wifly
+#include "libs/serial/wifly_serial.h" // include the new class for handling a wifly
 #include "common.h"
 #include "wifly2_thread.h"
-#include "bearing_lib/bearing.h"		// this should be all the functions required for bearing calculations
+#include "libs/bearing/bearing.h"		// this should be all the functions required for bearing calculations
 
 using std::string;
 using std::vector;

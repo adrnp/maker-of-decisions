@@ -1,0 +1,2 @@
+/usr/bin/ar cq libBearingLib.a  CMakeFiles/BearingLib.dir/bearing_cc.cpp.o CMakeFiles/BearingLib.dir/bearing_helper.cpp.o CMakeFiles/BearingLib.dir/bearing_max.cpp.o CMakeFiles/BearingLib.dir/bearing_mle.cpp.o
+/usr/bin/ranlib libBearingLib.a

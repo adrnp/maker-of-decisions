@@ -1,0 +1,40 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/adrienp/git-uav/maker-of-decisions/libs/bearing/bearing.h
+vector
+-
+cmath
+-
+string
+-
+
+/home/adrienp/git-uav/maker-of-decisions/libs/bearing/bearing_cc.cpp
+bearing.h
+/home/adrienp/git-uav/maker-of-decisions/libs/bearing/bearing.h
+fstream
+-
+
+/home/adrienp/git-uav/maker-of-decisions/libs/bearing/bearing_helper.cpp
+fstream
+-
+bearing.h
+/home/adrienp/git-uav/maker-of-decisions/libs/bearing/bearing.h
+
+/home/adrienp/git-uav/maker-of-decisions/libs/bearing/bearing_max.cpp
+bearing.h
+/home/adrienp/git-uav/maker-of-decisions/libs/bearing/bearing.h
+limits.h
+-
+
+/home/adrienp/git-uav/maker-of-decisions/libs/bearing/bearing_mle.cpp
+bearing.h
+/home/adrienp/git-uav/maker-of-decisions/libs/bearing/bearing.h
+iostream
+-
+
