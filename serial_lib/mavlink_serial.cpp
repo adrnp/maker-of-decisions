@@ -6,6 +6,7 @@
 #include <string.h>
 #include <inttypes.h>
 #include <fstream>
+#include <sys/time.h>
 
 // Serial includes
 #include <stdio.h>   /* Standard input/output definitions */
@@ -21,23 +22,34 @@
 
 
 #include "mavlink_serial.h"
+#include "system_ids.h"
 
-MavlinkSerial::MavlinkSerial() : SerialPort() {
+MavlinkSerial::MavlinkSerial() : 
+SerialPort(),
+_command_id(0)
+{
 	printf("default mavlink serial constructor\n");
 }
 
-MavlinkSerial::MavlinkSerial(bool verbose) : SerialPort(verbose) {
+MavlinkSerial::MavlinkSerial(bool verbose) : 
+SerialPort(verbose),
+_command_id(0)
+{
 	// nothing specific to do in this constructor
 	printf("verbose mavlink serial constructor\n");
 }
 
-MavlinkSerial::MavlinkSerial(bool verbose, char* &uart_name,  const int &baudrate) : SerialPort(verbose, uart_name, baudrate) {
+MavlinkSerial::MavlinkSerial(bool verbose, char* &uart_name,  const int &baudrate) : 
+SerialPort(verbose, uart_name, baudrate),
+_command_id(0)
+{
 	printf("complex mavlink serial constructor\n");
 	printf("fd = %i\n", fd);
 }
 
 MavlinkSerial::~MavlinkSerial() {
 	// nothing to do in the destructor
+	// TODO: should probably close the file descriptor...
 }
 
 int MavlinkSerial::get_fd() {
@@ -106,4 +118,166 @@ int MavlinkSerial::write_serial(mavlink_message_t &message) {
 	return len;
 
 
+}
+
+
+
+// the mavlink specific functions
+
+
+
+void MavlinkSerial::send_tracking_command(const float &north, const float &east, const float &alt) {
+
+	// TODO: add altitude as a tracking command input!!! (this is horrible to have it as a default here)
+	
+	// retrieve the id of the last finished cmd
+	int nextCmd = _command_id++;
+
+	// extract the next north and east commands
+	float nextNorth = north;
+	float nextEast = east;
+	float nextAlt = alt;
+	printf("sending command %i: N %f\tE %f\tA %f\n", nextCmd, nextNorth, nextEast, nextAlt);
+
+	// build the mavlink message
+	mavlink_tracking_cmd_t tracking_cmd;
+	tracking_cmd.timestamp_usec = 0;
+	tracking_cmd.north = nextNorth;
+	tracking_cmd.east = nextEast;
+	tracking_cmd.yaw_angle = 270.0;
+	tracking_cmd.altitude = nextAlt;
+	tracking_cmd.cmd_id = nextCmd;
+	tracking_cmd.cmd_type = TRACKING_CMD_TRAVEL;
+
+	mavlink_message_t message;
+	mavlink_msg_tracking_cmd_encode(sysid, compid, &message, &tracking_cmd);
+
+	/* printing stuff for debug purposes */
+	int len = write_serial(message);
+	if (len > 0 && _verbose) {
+		printf("sending next tracking command\n");
+	}
+
+	return;
+}
+
+
+void MavlinkSerial::send_rotate_command(const float direction) {
+	// retrieve the id of the last finished cmd
+	int nextCmd = _command_id++;
+
+	// build the mavlink message
+	mavlink_tracking_cmd_t tracking_cmd;
+	tracking_cmd.timestamp_usec = 0;
+	tracking_cmd.north = 0.0;			// don't travel any distance north
+	tracking_cmd.east = 0.0;			// don't travel any distacne east
+	tracking_cmd.yaw_angle = direction;		// rotate clockwise (NOTE: yaw angle no longer means yaw angle, but rather rotation direction)
+	tracking_cmd.altitude = 0.0;		// will have pixhawk just use current altitude
+	tracking_cmd.cmd_id = nextCmd;
+	tracking_cmd.cmd_type = TRACKING_CMD_ROTATE;
+
+	mavlink_message_t message;
+	mavlink_msg_tracking_cmd_encode(sysid, compid, &message, &tracking_cmd);
+
+	int len = write_serial(message);
+	if (len > 0 && _verbose) {
+		printf("sending next rotate command\n");
+	}
+
+	return;
+}
+
+
+void MavlinkSerial::send_finish_command() {
+
+	// retrieve the id of the last finished cmd
+	int nextCmd = _command_id++;
+
+	// build the mavlink message
+	mavlink_tracking_cmd_t tracking_cmd;
+	tracking_cmd.timestamp_usec = 0;
+	tracking_cmd.north = 0.0;			
+	tracking_cmd.east = 0.0;			
+	tracking_cmd.yaw_angle = 0.0;		
+	tracking_cmd.altitude = 0.0;		
+	tracking_cmd.cmd_id = nextCmd;
+	tracking_cmd.cmd_type = TRACKING_CMD_FINISH;
+
+	mavlink_message_t message;
+	mavlink_msg_tracking_cmd_encode(sysid, compid, &message, &tracking_cmd);
+
+	int len = write_serial(message);
+	if (len > 0 && _verbose) {
+		printf("sending finish command\n");
+	}
+	// printf("Sent buffer of length %i\n",len);
+
+	return;
+}
+
+
+void MavlinkSerial::send_bearing_cc_message(const double &bearing, const int32_t &lat, const int32_t &lon, const float &alt) {
+
+	// build the mavlink message
+	mavlink_bearing_cc_t bear;
+	bear.bearing = bearing;
+	bear.lat = lat;
+	bear.lon = lon;
+	bear.alt = alt;
+
+	mavlink_message_t message;
+	mavlink_msg_bearing_cc_encode(sysid, compid, &message, &bear);
+
+	int len = write_serial(message);
+	if (len > 0 && _verbose) {
+		printf("sending bearing cc message\n");
+	}
+
+	return;
+}
+
+void MavlinkSerial::send_bearing_mle_message(const double &bearing, const int32_t &lat, const int32_t &lon, const float &alt) {
+
+	// build the mavlink message
+	mavlink_bearing_mle_t bear;
+	bear.bearing = bearing;
+	bear.lat = lat;
+	bear.lon = lon;
+	bear.alt = alt;
+
+	mavlink_message_t message;
+	mavlink_msg_bearing_mle_encode(sysid, compid, &message, &bear);
+
+	int len = write_serial(message);
+	if (len > 0 && _verbose) {
+		printf("sending bearing mle message\n");
+	}
+
+	return;
+}
+
+
+void MavlinkSerial::send_rssi_message(const int &rssi, const int &rssi2, const int16_t &heading, const int32_t &lat, const int32_t &lon, const float &alt) {
+	mavlink_rssi_t rssi_msg;
+	rssi_msg.rssi_value = rssi;
+	rssi_msg.rssi_value2 = rssi2;
+	rssi_msg.heading = (float) heading;
+	rssi_msg.lat = lat; //lat;
+	rssi_msg.lon = lon; //lon;
+	rssi_msg.alt = alt; // alt;
+
+	mavlink_message_t message;
+	mavlink_msg_rssi_encode(sysid, compid, &message, &rssi_msg);
+
+	int len = write_serial(message);
+	if (len > 0 && _verbose) {
+
+		struct timeval tv;
+		gettimeofday(&tv, NULL);
+		unsigned long current_time = 1000000 * tv.tv_sec + tv.tv_usec;
+
+		printf("%lu: sending rssi message\n", current_time);
+	}
+	
+	return;
 }

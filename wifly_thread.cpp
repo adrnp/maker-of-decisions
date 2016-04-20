@@ -299,7 +299,7 @@ void *wifly_thread(void *param) {
 					uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, curr_bearing_est);
 
 				// send a mavlink message of the calculated mle bearing
-				send_bearing_mle_message(curr_bearing_est, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
+				pixhawk->send_bearing_mle_message(curr_bearing_est, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
 
 				// send the udp message (directly to ground)
 				udp->send_bearing_message(TYPE_BEARING_MLE, bearing_cc, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
@@ -330,7 +330,7 @@ void *wifly_thread(void *param) {
 				uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, bearing_cc, bearing_max, max_rssi);
 
 			// send a mavlink message of the calculated bearing
-			send_bearing_cc_message(bearing_cc, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
+			pixhawk->send_bearing_cc_message(bearing_cc, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
 
 			// send the udp message (directly to ground)
 			udp->send_bearing_message(TYPE_BEARING_CC, bearing_cc, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
@@ -354,9 +354,10 @@ void *wifly_thread(void *param) {
 				uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, dir_rssi);
 
 		// send a mavlink message with the current rssi
-		send_rssi_message(dir_rssi, omni_rssi, heading_dir_pre, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
+		pixhawk->send_rssi_message(dir_rssi, omni_rssi, heading_dir_pre, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
 
 		// send the udp message (directly to ground)
+		// TODO: potentially only do this if we are in a rotation
 		udp->send_rssi_message(dir_rssi, omni_rssi, heading_dir_pre, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
 
 
