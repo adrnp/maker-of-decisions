@@ -11,6 +11,8 @@ add_subdirectory ("libs/bearing")
 add_subdirectory ("libs/serial")
 add_subdirectory ("libs/udp")
 
+# set the output path for the resulting executable
+set (EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR})
 
 # get all the files that make up mod
 file(GLOB SOURCES "*.cpp")
