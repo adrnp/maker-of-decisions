@@ -159,12 +159,22 @@ void *wifly_thread(void *param) {
 	}
 
 	FILE *bearing_file_mle = NULL;
+	WiflySerial* wifly2 = NULL;
 	if (dual_wifly) {
 		bearing_file_mle = fopen(bearing_mle_file_name, "a");
 		if (bearing_file_mle == NULL) {
 			printf("[WIFLY] Error opening bearing mle output file\n");
 			fclose(wifly_file);
 			fclose(bearing_file);
+			return NULL;
+		}
+
+		wifly2 = new WiflySerial(verbose, wifly_port2);
+		if (wifly1->fd < 0) {
+			printf("[WIFLY] Error opening wifly connection\n");
+			fclose(wifly_file);
+			fclose(bearing_file);
+			fclose(bearing_file_mle);
 			return NULL;
 		}
 	}
@@ -256,6 +266,15 @@ void *wifly_thread(void *param) {
 		
 		int16_t heading_dir_post = uavData->vfr_hud.heading;
 
+		int omni_rssi = INT_MAX;
+		if (dual_wifly) {
+			if (verbose) printf("[WIFLY] scanning wifly 2...\n");
+			omni_rssi = wifly2->scanrssi(ssid);
+			if (verbose) printf("[WIFLY] omni rssi recevied: %i\n", omni_rssi);
+		}
+
+		int16_t heading_omni_post = uavData->vfr_hud.heading;
+
 		//-----------------------------------------------//
 		// Rotation specific calculations
 		//-----------------------------------------------//
@@ -282,7 +301,7 @@ void *wifly_thread(void *param) {
 
 			// if using both wiflies, need to see if there was an omni update
 			// may have a problem with omni value not matching the same location as the dir measurement
-			if (dual_wifly && omni_update_timestamp != prev_omni_update_timestamp) {
+			if (dual_wifly) {
 				
 				// add omni rssi to the correct array
 				omni_gains.push_back(omni_rssi);
@@ -302,7 +321,7 @@ void *wifly_thread(void *param) {
 				pixhawk->send_bearing_mle_message(curr_bearing_est, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
 
 				// send the udp message (directly to ground)
-				udp->send_bearing_message(TYPE_BEARING_MLE, bearing_cc, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
+				udp->send_bearing_message(TYPE_BEARING_MLE, curr_bearing_est, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
 			}
 		}
 
@@ -387,6 +406,7 @@ void *wifly_thread(void *param) {
 
 	if (dual_wifly) {
 		fclose(bearing_file_mle);
+		wifly2->end_serial();
 	}
 
 	return NULL;
