@@ -1,3 +1,4 @@
-add_library(SerialLib mavlink_serial.cpp
-						serial_port.cpp
-						wifly_serial.cpp)
+# get all the files that make up serial lib
+file(GLOB SOURCES "*.cpp")
+
+add_library(SerialLib ${SOURCES})

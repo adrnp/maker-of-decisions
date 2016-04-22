@@ -1,4 +1,4 @@
-add_library(BearingLib bearing_cc.cpp
-						bearing_helper.cpp
-						bearing_max.cpp
-						bearing_mle.cpp)
+# get all the files that make up bearing lib
+file(GLOB SOURCES "*.cpp")
+
+add_library(BearingLib ${SOURCES})
