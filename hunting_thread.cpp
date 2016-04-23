@@ -92,14 +92,14 @@ void Hunter::rotation_completed() {
 	// no longer in a rotation
 	_in_rotation = false;
 
-	if (verbose) printf("[HUNTING] calculating end of rotation bearing...\n");
+	if (_verbose) printf("[HUNTING] calculating end of rotation bearing...\n");
 
 	/* get bearing and values */
 	_bearing_cc = get_bearing_cc(_angles, _gains);		// do bearing calculation at this point
 	_bearing_max = get_bearing_max(_angles, _gains);	// also do max bearing calculation
 	_max_rssi = get_max_rssi(_gains);					// get what the max value was for the rssi
 
-	if (verbose) {
+	if (_verbose) {
 		printf("[HUNTING] calculated cc bearing: %f\n", _bearing_cc);
 		printf("[HUNTING] calculated max bearing: %f\n", _bearing_max);
 		printf("[HUNTING] max rssi value: %i\n", _max_rssi);
@@ -108,7 +108,7 @@ void Hunter::rotation_completed() {
 
 
 void Hunter::get_measurement() {
-	if (verbose) printf("[HUNTING] getting most recent measurement...\n");
+	if (_verbose) printf("[HUNTING] getting most recent measurement...\n");
 
 	// defaults for all the values
 	_dir_rssi = INT_MAX;
@@ -233,7 +233,7 @@ int Hunter::main_loop() {
 
 	// TODO: move this into a class or something
 	/* check if using specific commands */
-	if (get_commands) {
+	if (common::get_commands) {
 		bool loaded = load_move_commands();
 		if (!loaded) {
 			printf("[HUNTING] Error loading move commands\n");
@@ -249,7 +249,7 @@ int Hunter::main_loop() {
 
 	// main loop that should be constantly taking measurements
 	// until the main program is stopped
-	while (RUNNING_FLAG) {
+	while (common::RUNNING_FLAG) {
 
 		// only want to execute this at most ever 30 ms
 		// basically does a dynamic sleep in the sense that if there is a lot of processing time for doing the bearing
@@ -307,7 +307,7 @@ int Hunter::main_loop() {
 				_jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt, _bearing_cc, _bearing_max, _max_rssi);
 
 			// send a mavlink message of the calculated bearing
-			pixhawk->send_bearing_cc_message(_bearing_cc, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);
+			common::pixhawk->send_bearing_cc_message(_bearing_cc, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);
 
 			// send the udp message (directly to ground)
 			udp->send_bearing_message(TYPE_BEARING_CC, _bearing_cc, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);
@@ -325,7 +325,7 @@ int Hunter::main_loop() {
 				_jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt, _dir_rssi, _omni_rssi);
 
 		// send a mavlink message with the current rssi
-		pixhawk->send_rssi_message(_dir_rssi, _omni_rssi, _meas_heading, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);
+		common::pixhawk->send_rssi_message(_dir_rssi, _omni_rssi, _meas_heading, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);
 
 		// send the udp message (directly to ground)
 		// TODO: potentially only do this if we are in a rotation
@@ -361,6 +361,6 @@ int Hunter::main_loop() {
 void *hunting_thread(void *param) {
 
 	// just launch the hunter loop
-	Hunter* hunter = new Hunter((struct MAVInfo *)param, verbose);
+	Hunter* hunter = new Hunter((struct MAVInfo *)param, common::verbose);
 	return (void *) hunter->main_loop();
 }

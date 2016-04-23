@@ -15,46 +15,45 @@
 #include "mav_struct.h"
 #include "libs/serial/mavlink_serial.h"
 
+namespace common {
 
-/** boolean to determine whether or not to show all outputs */
-extern bool verbose;
+	/** boolean to determine whether or not to show all outputs */
+	extern bool verbose;
 
-/** boolean to determine whether or not to show debug outputs */
-extern bool debug;
+	/** boolean to determine whether or not to show debug outputs */
+	extern bool debug;
 
-/** use command file */
-extern bool get_commands;
-extern char* command_file;
+	/** use command file */
+	extern bool get_commands;
+	extern const char* command_file;
 
-/** MAVInfo object containing the current state information of the uav */
-extern MAVInfo uav;
+	/** MAVInfo object containing the current state information of the uav */
+	extern MAVInfo uav;
 
-/** flag to determine whether or not the read and write should be running */
-extern int RUNNING_FLAG;
+	/** flag to determine whether or not the read and write should be running */
+	extern int RUNNING_FLAG;
 
-/** the connection to the pixhawk */
-extern MavlinkSerial* pixhawk;
+	/** the connection to the pixhawk */
+	extern MavlinkSerial* pixhawk;
 
-/** the connection to the DF arduino */
-extern SerialPort* df_arduino;
+	/** the connection to the DF arduino */
+	extern SerialPort* df_arduino;
 
-/** boolean stating whether or not we are currently in a rotating mode */
-extern bool rotating;
+	/** wifly device locations */
+	extern const char *sensor_port;
+	extern const char *omni_wifly_port;
 
-/** boolean stating whether or not we are currently in a moving mode */
-extern bool moving;
+	extern bool dual_wifly;
 
-/** wifly device locations */
-extern const char * wifly_port1;
-extern const char * wifly_port2;
+	/* stuff needed for the tracking command */
+	extern bool execute_tracking;
+	extern float flight_alt;
 
-extern bool dual_wifly;
+	/* stuff needed for emily antenna */
+	extern bool emily;
 
-/* stuff needed for the tracking command */
-extern bool execute_tracking;
-extern float flight_alt;
+}
 
-/* stuff needed for emily antenna */
-extern bool emily;
+
 
 #endif /* COMMON_H_ */

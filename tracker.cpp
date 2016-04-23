@@ -91,9 +91,7 @@ vector<float> calc_next_command(double &bearing, int &rssi) {
 	// update the observation information
 	update_observations(bearing, rssi);
 
-	if (verbose) {
-		printf("calculating the next command with input (%f, %i)\n", bearing, rssi);
-	}
+	if (common::verbose) printf("calculating the next command with input (%f, %i)\n", bearing, rssi);
 	
 	// for debug purposes, force a specific bearing and rssi
 	double bear = bearing;
@@ -136,9 +134,7 @@ vector<float> calc_next_command_variable(double &bearing, int &rssi) {
 
 	stepSizes.push_back(step);
 
-	if (verbose) {
-		printf("calculating the next variable size command with input (%f, %i)\n", bearing, rssi);
-	}
+	if (common::verbose) printf("calculating the next variable size command with input (%f, %i)\n", bearing, rssi);
 
 	// commands are a vector of [north, south]
 	vector<float> commands;

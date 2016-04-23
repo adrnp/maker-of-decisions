@@ -8,19 +8,12 @@
 #ifndef MOD_H_
 #define MOD_H_
 
-// all the standard includes
-// include "common_include.h"
-
-
-// include common variables
-// #include "common_vars.h"
-
-
-/* read in the command line arguments */
-void read_arguments(int argc, char **argv, char **uart_name, char *baudrate, char **wifly1, char **wifly2);
 
 /* quit using CTRL-C */
 void quit_handler(int sig);
+
+/* read in the config file */
+int get_configuration(int argc, char **argv);
 
 
 /* main function */

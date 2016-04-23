@@ -42,8 +42,8 @@ int num_cmds = 0;
 int cmd_index = 0;
 
 bool load_move_commands() {
-	string file_name(command_file);
-	ifstream cmd_file ("commands/" + file_name + ".csv");
+	string file_name(common::command_file);
+	ifstream cmd_file (file_name);
 
 	if (!cmd_file.is_open()) {
 		// means there is an error in loading the file
@@ -87,26 +87,26 @@ void send_next_command(uint8_t &prev_state, uint8_t &new_state, double &bearing,
 			// rotating = false;	// NO LONGER NEEDED
 
 			// if running emily config, will need to rotate twice
-			if (emily && second_rotation_required) {
+			if (common::emily && second_rotation_required) {
 				send_df_mode(1);
-				pixhawk->send_rotate_command(-1.0);
+				common::pixhawk->send_rotate_command(-1.0);
 				second_rotation_required = false;
 				break;
 			}
 
 			/* send next command depending on flight mode */
-			if (execute_tracking) {
+			if (common::execute_tracking) {
 				 printf("sending a tracking command\n");
 
 				vector<float> commands = calc_next_command_variable(bearing, rssi);
 				
-				if (verbose) printf("following tracking command (%f, %f)\n", commands[0], commands[1]);
+				if (common::verbose) printf("following tracking command (%f, %f)\n", commands[0], commands[1]);
 				float commandNorth = commands[0];
 				float commandEast = commands[1];
-				pixhawk->send_tracking_command(commandNorth, commandEast, 360.0);
+				common::pixhawk->send_tracking_command(commandNorth, commandEast, 360.0);
 				
 			} else {
-				if (verbose) printf("sending the next preset move command\n");	
+				if (common::verbose) printf("sending the next preset move command\n");	
 				// send the next move command
 				send_move_command();
 			}
@@ -114,13 +114,13 @@ void send_next_command(uint8_t &prev_state, uint8_t &new_state, double &bearing,
 		case TRACKING_HUNT_STATE_MOVE:
 			// moving = false;		// NO LONGER NEEDED
 
-			if (emily) {
+			if (common::emily) {
 				// make sure in "normal" mode of operation
 				send_df_mode(0);
 			}
 		
 			// send a rotate command
-			pixhawk->send_rotate_command(-1.0);
+			common::pixhawk->send_rotate_command(-1.0);
 
 			// management for emily config
 			second_rotation_required = true;
@@ -149,7 +149,7 @@ void send_move_command() {
 
 	cmd_index++;
 
-	pixhawk->send_tracking_command(nextNorth, nextEast, nextAlt);
+	common::pixhawk->send_tracking_command(nextNorth, nextEast, nextAlt);
 
 	return;
 
@@ -159,8 +159,8 @@ void send_move_command() {
 void send_df_mode(int mode) {
 
 	if (mode == 1) {
-		write(df_arduino->fd, "1", 1);
+		write(common::df_arduino->fd, "1", 1);
 	} else {
-		write(df_arduino->fd, "0", 1);
+		write(common::df_arduino->fd, "0", 1);
 	}
 }

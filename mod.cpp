@@ -25,6 +25,7 @@
 
 #include "read_thread.h"
 #include "wifly_thread.h"
+#include "hunting_thread.h"
 #include "dirk_thread.h"
 
 #include "mod.h"
@@ -33,132 +34,47 @@ using std::string;
 using namespace std;
 
 
-// variable declarations
+// common variable declarations
+namespace common {
+	bool verbose = false;	// default verbose to false
+	bool debug = false;		// default debug to false
 
-bool verbose = false;	// default verbose to false
-bool debug = false;		// default debug to false
-bool nowifly = false;	// default to wanting wifly
-bool get_commands = false;	// default for whether or not we want to read the command file
-bool dual_wifly = false;	// default to only have one wifly active
-bool phased_array = false;	// default to not using a phased array antenna
-bool emily = false;			// default to not running the emily antenna configuration
+	bool get_commands = false;	// default for whether or not we want to read the command file
+	const char* command_file = (char*) "commands/commands.csv";
+	MAVInfo uav;			// object to hold all the state information on the UAV
+	int RUNNING_FLAG = 1;	// default the read and write threads to be running
 
-bool execute_tracking = false;	// default to not executing a tracking mission
-float flight_alt = 380;			// default flight is AMSL
+	MavlinkSerial* pixhawk = nullptr;	// serial connection to the pixhawk
+	SerialPort* df_arduino = nullptr;	// serial connection to the df arduino
 
-MAVInfo uav;			// object to hold all the state information on the UAV
+	const char* sensor_port = (char*)"/dev/ttyUSB0";
+	const char* omni_wifly_port = (char*)"/dev/ttyUSB3";
 
-MavlinkSerial* pixhawk = nullptr;	// serial connection to the pixhawk
-SerialPort* df_arduino = nullptr;	// serial connection to the df arduino
+	bool dual_wifly = false;	// default to only have one wifly active
 
-int RUNNING_FLAG = 1;	// default the read and write threads to be running
+	bool execute_tracking = false;	// default to not executing a tracking mission
+	float flight_alt = 380;			// default flight is AMSL
 
-const char* wifly_port1;
-const char* wifly_port2;
-char* pa_port;
-
-char* command_file = (char*) "commands";
-
-/**
- * read in the passed arguments to the function on start
- *
- * TODO: figure out what to return and how to handle uart and baud values
- */
-void read_arguments(int argc, char **argv, char **uart_name, int *baudrate, char **wifly1, char **wifly2) {
-
-	// string to be displayed on incorrect inputs to show correct function usage
-	const char *commandline_usage = "\tusage: %s -d <devicename> -b <baudrate> [options]\n\n"
-			"\t-v/--verbose\t\t detailed output of current state\n"
-			"\n\t\tdefault: -d %s -b %i\n";
-
-	// loop through all the program arguments
-	for (int i = 1; i < argc; i++) { /* argv[0] is "mavlink" */
-
-		// help text requested
-		if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
-			printf(commandline_usage, argv[0], *uart_name, *baudrate);
-			throw EXIT_FAILURE;
-		}
-
-		/* UART device ID */
-		if (strcmp(argv[i], "-d") == 0 || strcmp(argv[i], "--device") == 0) {
-			if (argc > i + 1) {
-				*uart_name = argv[i + 1];
-
-			} else {
-				cout << "nope\n";
-				//printf(commandline_usage, argv[0], *uart_name, *baudrate);
-				//throw EXIT_FAILURE;
-			}
-		}
-
-		/* baud rate */
-		if (strcmp(argv[i], "-b") == 0 || strcmp(argv[i], "--baud") == 0) {
-			if (argc > i + 1) {
-				*baudrate = atoi(argv[i + 1]);
-
-			} else {
-				cout << "more nope\n";
-				//printf(commandline_usage, argv[0], *uart_name, *baudrate);
-				//throw EXIT_FAILURE;
-			}
-		}
-
-		/* verbosity */
-		if (strcmp(argv[i], "-v") == 0 || strcmp(argv[i], "--verbose") == 0) {
-			verbose = true;
-		}
-
-		/* debug */
-		if (strcmp(argv[i], "-v") == 0 || strcmp(argv[i], "--debug") == 0) {
-			debug = true;
-		}
-
-		/* wifly state */
-		if (strcmp(argv[i], "-nw") == 0 || strcmp(argv[i], "--nowifly") == 0) {
-			nowifly = true;
-		}
-
-		/* command file state */
-		if (strcmp(argv[i], "-c") == 0 || strcmp(argv[i], "--commands") == 0) {
-			get_commands = true;
-			
-			// get the name of the desired command file
-			if (argc > i + 1) {
-				command_file = argv[i + 1];
-			}
-		}
-
-		/* wifly 1 port */
-		if (strcmp(argv[i], "-w1") == 0 || strcmp(argv[i], "--wifly1") == 0) {
-			*wifly1 = argv[i + 1];
-		}
-
-		/* wifly 2 port */
-		if (strcmp(argv[i], "-w2") == 0 || strcmp(argv[i], "--wifly2") == 0) {
-			*wifly2 = argv[i + 1];
-			dual_wifly = true;
-		}
-
-		/* phased array port */
-		if (strcmp(argv[i], "-pa") == 0 || strcmp(argv[i], "--phased") == 0) {
-			phased_array = true;
-		}
-
-		/* whether or not executing a tracking mission */
-		if (strcmp(argv[i], "-t") == 0 || strcmp(argv[i], "--track") == 0) {
-			execute_tracking = true;
-		}
-
-		/* whether or not using the emily configuration */
-		if (strcmp(argv[i], "-e") == 0 || strcmp(argv[i], "--emily") == 0) {
-			emily = true;
-		}
-	}
+	bool emily = false;			// default to not running the emily antenna configuration
 }
 
 
-void get_configuration(int argc, char **argv) {
+// "local" globals
+bool phased_array = false;	// default to not using a phased array antenna
+char* pa_port;
+
+bool nowifly = false;	// default to wanting wifly
+
+int mission_type = 0;
+int tracker_type = 0;
+int sensor_type = 0;
+
+const char *pixhawk_port = (char*)"/dev/ttyUSB1";
+int baudrate = 115200;
+
+
+
+int get_configuration(int argc, char **argv) {
 
 	char *config_filename = (char*)"config.cfg";
 
@@ -174,7 +90,7 @@ void get_configuration(int argc, char **argv) {
 		// help text requested
 		if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
 			cout << commandline_usage;
-			return;
+			return -1;
 		}
 
 		/* UART device ID */
@@ -210,43 +126,77 @@ void get_configuration(int argc, char **argv) {
 		}
 	}
 
-	// set all the parameters from the config file
-	
 	/* general */
-	verbose = false;
 	if (config_map.find("verbose") != config_map.end()) {
-		verbose = (config_map["verbose"].c_str() == 1);
+		common::verbose = (stoi(config_map["verbose"]) == 1);
 	}
 
+	if (config_map.find("mission_type") != config_map.end()) {
+		mission_type = stoi(config_map["mission_type"]);
+	}
+
+	if (config_map.find("tracker_type") != config_map.end()) {
+		tracker_type = stoi(config_map["tracker_type"]);
+	}
+
+	if (config_map.find("sensor_type") != config_map.end()) {
+		sensor_type = stoi(config_map["sensor_type"]);
+	}
+
+	if (config_map.find("flight_alt") != config_map.end()) {
+		common::flight_alt = stoi(config_map["flight_alt"]);
+	}
+
+	/* command file */
+	if (config_map.find("command_file") != config_map.end()) {
+		common::command_file = config_map["command_file"].c_str();
+	}
 
 	/* pixhawk */
-	const char* pixhawk_uart = "/dev/ttyUSB1";
 	if (config_map.find("pixhawk_port") != config_map.end()) {
-		pixhawk_uart = config_map["pixhawk_port"].c_str();
+		pixhawk_port = config_map["pixhawk_port"].c_str();
 	} else {
-		cout << "pixhawk port is a required config.  Please check your config file (" << config_filename << ")\n";
-		return;
+		cout << "Pixhawk port is a required config.\nPlease check your config file (" << config_filename << ")\n";
+		return -1;
 	}
 
-	int baudrate = 115200;
 	if (config_map.find("pixhawk_baudrate") != config_map.end()) {
 		baudrate = stoi(config_map["pixhawk_baudrate"]);
 	} else {
-		cout << "pixhawk baudrate is a required config.  Please check your config file (" << config_filename << ")\n";
-		return;
+		cout << "Pixhawk baudrate is a required config.\nPlease check your config file (" << config_filename << ")\n";
+		return -1;
 	}
 
 	/* wifly */
 	if (config_map.find("sensor_port") != config_map.end()) {
-		wifly_port1 = config_map["sensor_port"].c_str();
+		common::sensor_port = config_map["sensor_port"].c_str();
 	} else {
-		cout << "sensor port is a required config.  Please check your config file (" << config_filename << ")\n";
-		return;
+		cout << "Sensor port is a required config.\nPlease check your config file (" << config_filename << ")\n";
+		return -1;
 	}
 
+	if (config_map.find("dual_wifly") != config_map.end()) {
+		common::dual_wifly = (stoi(config_map["dual_wifly"]) == 1);
+	}
 
+	if (common::dual_wifly) {
+		if (config_map.find("omni_wifly_port") != config_map.end()) {
+			common::omni_wifly_port = config_map["omni_wifly_port"].c_str();
+		} else {
+			cout << "Running 2 wiflys but failed to provide port for second wifly.\nPlease check your config file (" << config_filename << ")\n";
+			return -1;
+		}
+		
+	}
 
+	/* emily */
+	if (config_map.find("emily_antenna") != config_map.end()) {
+		common::emily = (stoi(config_map["emily_antenna"]) == 1);
+	}
+
+	return 1;
 }
+
 
 
 void quit_handler(int sig) {
@@ -255,9 +205,9 @@ void quit_handler(int sig) {
 	printf("Terminating script\n");
 
 	// set the running flag to 0 to kill all loops
-	RUNNING_FLAG = 0;
+	common::RUNNING_FLAG = 0;
 
-	pixhawk->end_serial();
+	common::pixhawk->end_serial();
 
 }
 
@@ -265,78 +215,97 @@ void quit_handler(int sig) {
 
 int main(int argc, char **argv) {
 
-	// get all the confguration parameters
-	get_configuration(argc, argv);
-
-/*
 	cout << "[MOD] starting...\n";
-	printf("[MOD] printf starting...\n");
-
-	// ids of the threads
-	pthread_t readId;
-	pthread_t wiflyId;
-	pthread_t phasedId;
-
-	// default values for arguments
-	char *uart_name = (char*)"/dev/ttyUSB1";
-
-	wifly_port1 = (char*) "/dev/ttyUSB0";
-	wifly_port2 = (char*) "/dev/ttyUSB2";
-
-
-	char* df_uart_name = (char*) "/dev/ttyACM0";
-
-	int baudrate = 115200;
-
-	cout << "[MOD] reading arguments\n";
-	// read the input arguments
-	read_arguments(argc, argv, &uart_name, &baudrate, &wifly_port1, &wifly_port2);
-
-	// open and configure the com port being used for communication
-	// begin_serial(uart_name, baudrate);
-	cout << "[MOD] creating new mavlink serial object\n";
-	pixhawk = new MavlinkSerial(verbose, uart_name, baudrate);
-
-	cout << "[MOD] pixhawk fd " << pixhawk->fd << "\n";
-	cout << "[MOD] pixhawk get fd " << pixhawk->get_fd() << "\n";
-
-	// also create connection to df arduino if needed here
-	if (emily) {
-		df_arduino = new SerialPort(verbose, df_uart_name, baudrate);
-	}
 
 	// setup termination using CRT-C
 	signal(SIGINT, quit_handler);
 
-
-	// need to create read and write threads
-	cout<< "[MOD] handling threads\n";
-	pthread_create(&readId, NULL, read_thread, (void *)&uav);
+	// ---------------------------------- //
+	// get and set all the configurations
+	// ---------------------------------- //
 	
-	// create a thread for the wifly stuff (only if want wifly running)
-	if (!nowifly && !phased_array) {
-		printf("[MOD] starting wifly thread...\n");
-		pthread_create(&wiflyId, NULL, wifly_thread, (void *)&uav);
+	cout << "[MOD] reading arguments\n";
+	
+	
+	// get all the confguration parameters
+	if (get_configuration(argc, argv) < 0) {
+		return 0;
 	}
 
-	if (phased_array) {
-		printf("[MOD] starting dirk antenna thread...\n");
-		pthread_create(&phasedId, NULL, dirk_thread, (void *)&uav);
+	// set some additional commons
+	if (mission_type > 0) {
+		common::execute_tracking = true;
 	}
+
+	if (mission_type == 0) {
+		common::get_commands = true;
+	}
+
+
+	// connect to the pixhawk
+	cout << "[MOD] connecting to pixhawk...\n";
+	common::pixhawk = new MavlinkSerial(common::verbose, pixhawk_port, baudrate);
+	cout << "[MOD] pixhawk get fd " << common::pixhawk->get_fd() << "\n";
+
+	
+
+	if (sensor_type == 0) {
+		// we don't want to use the wifly...
+	}
+
+	// ids of the threads
+	pthread_t readId;
+	pthread_t huntingId;
+	
+	// ---------------------------------- //
+	// create threads
+	// ---------------------------------- //
+	
+	// read thread
+	cout << "[MOD] handling threads\n";
+	pthread_create(&readId, NULL, read_thread, (void *)&common::uav);
+
+
+	// create a thread for the wifly stuff (only if want wifly running)
+	bool hunt_running = false;
+	switch (sensor_type) {
+	case 0:
+		printf("[MOD] starting wifly thread...\n");
+		pthread_create(&huntingId, NULL, wifly_thread, (void *)&common::uav);
+		hunt_running = true;
+		break;
+	case 1:
+		printf("[MOD] starting hunting thread...\n");
+		pthread_create(&huntingId, NULL, hunting_thread, (void *)&common::uav);
+		hunt_running = true;
+		break;
+	case 2:
+		printf("[MOD] starting dirk antenna thread...\n");
+		pthread_create(&huntingId, NULL, dirk_thread, (void *)&common::uav);
+		hunt_running = true;
+		break;
+	}
+
+	// ---------------------------------- //
+	// wrap things up
+	// ---------------------------------- //
 
 	pthread_join(readId, NULL);
 	
-	if (!nowifly && !phased_array) {
-		pthread_join(wiflyId, NULL);
+	if (hunt_running == true) {
+		pthread_join(huntingId, NULL);
 	}
 
-	if (phased_array) {
-		pthread_join(phasedId, NULL);
-	}
-	
 	// close the pixhawk connection
-	pixhawk->end_serial();
-*/
+	common::pixhawk->end_serial();
+
+
+	/*
+	// also create connection to df arduino if needed here
+	if (common::emily) {
+		df_arduino = new SerialPort(verbose, df_uart_name, baudrate);
+	}
+	*/
 
 	return 0;
 }

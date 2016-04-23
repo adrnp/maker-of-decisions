@@ -129,7 +129,7 @@ void *wifly_thread(void *param) {
 	char *bearing_mle_file_name = (char *) "bearing_calc_mle.csv";
 
 	// connect to the first wifly
-	WiflySerial* wifly1 = new WiflySerial(verbose, wifly_port1);
+	WiflySerial* wifly1 = new WiflySerial(common::verbose, common::sensor_port);
 	if (wifly1->fd < 0) {
 		printf("[WIFLY] Error opening wifly connection\n");
 		return NULL;
@@ -160,7 +160,7 @@ void *wifly_thread(void *param) {
 
 	FILE *bearing_file_mle = NULL;
 	WiflySerial* wifly2 = NULL;
-	if (dual_wifly) {
+	if (common::dual_wifly) {
 		bearing_file_mle = fopen(bearing_mle_file_name, "a");
 		if (bearing_file_mle == NULL) {
 			printf("[WIFLY] Error opening bearing mle output file\n");
@@ -169,7 +169,7 @@ void *wifly_thread(void *param) {
 			return NULL;
 		}
 
-		wifly2 = new WiflySerial(verbose, wifly_port2);
+		wifly2 = new WiflySerial(common::verbose, common::omni_wifly_port);
 		if (wifly1->fd < 0) {
 			printf("[WIFLY] Error opening wifly connection\n");
 			fclose(wifly_file);
@@ -183,13 +183,13 @@ void *wifly_thread(void *param) {
 	UDP* udp = new UDP();
 
 
-	if (get_commands) {
+	if (common::get_commands) {
 		bool loaded = load_move_commands();
 		if (!loaded) {
 			printf("[WIFLY] Error loading move commands\n");
 			fclose(wifly_file);
 			fclose(bearing_file);
-			if (dual_wifly) {
+			if (common::dual_wifly) {
 				fclose(bearing_file_mle);
 			}
 			return NULL;
@@ -211,7 +211,7 @@ void *wifly_thread(void *param) {
 
 	// main loop that should be constantly taking measurements
 	// until the main program is stopped
-	while (RUNNING_FLAG) {
+	while (common::RUNNING_FLAG) {
 
 		// only want to execute this at most ever 30 ms
 		// basically does a dynamic sleep in the sense that if there is a lot of processing time for doing the bearing
@@ -258,19 +258,19 @@ void *wifly_thread(void *param) {
 
 		int dir_rssi = INT_MAX;
 
-		if (verbose) printf("[WIFLY] scanning wifly 1...\n");
+		if (common::verbose) printf("[WIFLY] scanning wifly 1...\n");
 		int16_t heading_dir_pre = uavData->vfr_hud.heading;
 		dir_rssi = wifly1->scanrssi(ssid);
 		
-		if (verbose) printf("[WIFLY] dir rssi recevied: %i\n", dir_rssi);
+		if (common::verbose) printf("[WIFLY] dir rssi recevied: %i\n", dir_rssi);
 		
 		int16_t heading_dir_post = uavData->vfr_hud.heading;
 
 		int omni_rssi = INT_MAX;
-		if (dual_wifly) {
-			if (verbose) printf("[WIFLY] scanning wifly 2...\n");
+		if (common::dual_wifly) {
+			if (common::verbose) printf("[WIFLY] scanning wifly 2...\n");
 			omni_rssi = wifly2->scanrssi(ssid);
-			if (verbose) printf("[WIFLY] omni rssi recevied: %i\n", omni_rssi);
+			if (common::verbose) printf("[WIFLY] omni rssi recevied: %i\n", omni_rssi);
 		}
 
 		int16_t heading_omni_post = uavData->vfr_hud.heading;
@@ -301,7 +301,7 @@ void *wifly_thread(void *param) {
 
 			// if using both wiflies, need to see if there was an omni update
 			// may have a problem with omni value not matching the same location as the dir measurement
-			if (dual_wifly) {
+			if (common::dual_wifly) {
 				
 				// add omni rssi to the correct array
 				omni_gains.push_back(omni_rssi);
@@ -310,7 +310,7 @@ void *wifly_thread(void *param) {
 				norm_gains.push_back(gains2normgain(dir_rssi, omni_rssi));
 
 				// do constant calculation of bearing
-				if (verbose) printf("[WIFLY] calculating bearing mle\n");
+				if (common::verbose) printf("[WIFLY] calculating bearing mle\n");
 				double curr_bearing_est = get_bearing_mle(angles, norm_gains);
 
 				// save the calculated mle bearing
@@ -318,7 +318,7 @@ void *wifly_thread(void *param) {
 					uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, curr_bearing_est);
 
 				// send a mavlink message of the calculated mle bearing
-				pixhawk->send_bearing_mle_message(curr_bearing_est, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
+				common::pixhawk->send_bearing_mle_message(curr_bearing_est, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
 
 				// send the udp message (directly to ground)
 				udp->send_bearing_message(TYPE_BEARING_MLE, curr_bearing_est, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
@@ -330,26 +330,26 @@ void *wifly_thread(void *param) {
 			printf("[WIFLY][STATE][ROT] ended rotation\n");
 			in_rotation = false;
 
-			if (verbose) printf("[WIFLY] calculating end of rotation bearing...\n");
+			if (common::verbose) printf("[WIFLY] calculating end of rotation bearing...\n");
 
 			// do bearing calculation at this point
 			bearing_cc = get_bearing_cc(angles, gains);
-			if (verbose) printf("[WIFLY] calculated cc bearing: %f\n", bearing_cc);
+			if (common::verbose) printf("[WIFLY] calculated cc bearing: %f\n", bearing_cc);
 
 			// also do max bearing calculation
 			bearing_max = get_bearing_max(angles, gains);
-			if (verbose) printf("[WIFLY] calculated max bearing: %f\n", bearing_max);
+			if (common::verbose) printf("[WIFLY] calculated max bearing: %f\n", bearing_max);
 
 			// get what the max value was for the rssi
 			max_rssi = get_max_rssi(gains);
-			if (verbose) printf("[WIFLY] max rssi value: %i\n", max_rssi);
+			if (common::verbose) printf("[WIFLY] max rssi value: %i\n", max_rssi);
 
 			// save bearing cc to file (with important information)
 			fprintf(bearing_file, "%llu,%i,%i,%f,%f,%f,%i\n", uavData->sys_time_us.time_unix_usec,
 				uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, bearing_cc, bearing_max, max_rssi);
 
 			// send a mavlink message of the calculated bearing
-			pixhawk->send_bearing_cc_message(bearing_cc, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
+			common::pixhawk->send_bearing_cc_message(bearing_cc, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
 
 			// send the udp message (directly to ground)
 			udp->send_bearing_message(TYPE_BEARING_CC, bearing_cc, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
@@ -373,7 +373,7 @@ void *wifly_thread(void *param) {
 				uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, dir_rssi);
 
 		// send a mavlink message with the current rssi
-		pixhawk->send_rssi_message(dir_rssi, omni_rssi, heading_dir_pre, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
+		common::pixhawk->send_rssi_message(dir_rssi, omni_rssi, heading_dir_pre, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
 
 		// send the udp message (directly to ground)
 		// TODO: potentially only do this if we are in a rotation
@@ -404,7 +404,7 @@ void *wifly_thread(void *param) {
 	delete &udp;
 
 
-	if (dual_wifly) {
+	if (common::dual_wifly) {
 		fclose(bearing_file_mle);
 		wifly2->end_serial();
 	}

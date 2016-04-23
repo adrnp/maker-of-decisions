@@ -205,39 +205,9 @@ void handle_message(const mavlink_message_t *message, MAVInfo *uavRead) {
 			// need to check to see if we have changed into waiting for the first time
 			if (!hunting && uavRead->tracking_status.hunt_mode_state > TRACKING_HUNT_STATE_OFF) {
 				hunting = true;
-
-				// this is the first time we have triggered into hunting
-				uavRead->last_cmd_finished_id = -1; // set the last cmd id to -1, so that when we run get next cmd it sends the correct one
-
-				// command the vehicle to rotate
-				// cout << "Sending Rotate Command\n";
-				// sendRotateCommand(-1.0);
-				// sendNextCommand();
-
-				// mark that we are now rotating
-				// rotating = true;
-			}
-
-			/* if the pixhawk is in wait mode, send a rotate command */
-			if (!rotating && uavRead->tracking_status.hunt_mode_state == TRACKING_HUNT_STATE_WAIT) {
-				// cout << "Sending Rotate Command\n";
-				// sendRotateCommand(-1.0);
-				// sendNextCommand();
-
-				// mark that we are now rotating
-				// rotating = true;
-			} else {
-				// finishing the rotation
-				// rotating = false;
-
-				// TODO: this is where we will want to calculate the bearing....
-				// NOTE: wifly thread is currently doing bearing calculations
 			}
 
 			mode_change = false;
-
-
-
 			break;
 		}
 		case MAVLINK_MSG_ID_TRACKING_CMD:
@@ -294,13 +264,13 @@ void *read_thread(void *param) {
 	lastStatus.packet_rx_drop_count = 0;	// initialize to 0 just for the first pass
 
 	// run this infinite loop (as long as RUNNING_FLAG == 1) which reads messages as they come in
-	while (RUNNING_FLAG) {
+	while (common::RUNNING_FLAG) {
 
 		// variables needed for the message reading
 		mavlink_message_t message;	// the message itself
 		
 		// read from serial, if message received, will be written to message variable
-		uint8_t msgReceived = pixhawk->read_serial(&lastStatus, &message);
+		uint8_t msgReceived = common::pixhawk->read_serial(&lastStatus, &message);
 
 		// If a message could be decoded, handle it
 		// TODO: only need to do this once

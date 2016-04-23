@@ -110,7 +110,7 @@ void *dirk_thread(void *param) {
 		return NULL;
 	}
 
-	if (get_commands) {
+	if (common::get_commands) {
 		bool loaded = load_move_commands();
 		if (!loaded) {
 			printf("Error loading move commands\n");
@@ -129,7 +129,7 @@ void *dirk_thread(void *param) {
 
 	// main loop that is constantly waiting for information from the arduino
 	// this is all the measured bearing information coming in
-	while (RUNNING_FLAG) {
+	while (common::RUNNING_FLAG) {
 
 		// handle hunt state changes required (sending of commands)
 		if (uavData->tracking_status.hunt_mode_state != d_prev_hunt_state) {
