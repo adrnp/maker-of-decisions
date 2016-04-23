@@ -21,7 +21,7 @@ public:
 	/* constructor */
 	WiflySerial();
 	WiflySerial(bool verbose);
-	WiflySerial(bool verbose, char* &uart_name);
+	WiflySerial(bool verbose, const char* &uart_name);
 
 	/* destructor */
 	~WiflySerial();

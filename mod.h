@@ -15,16 +15,6 @@
 // include common variables
 // #include "common_vars.h"
 
-// system inclusions
-#include <iostream>
-#include <cstdlib>
-#include <unistd.h>
-#include <cmath>
-#include <string.h>
-#include <inttypes.h>
-#include <fstream>
-#include <signal.h>
-
 
 /* read in the command line arguments */
 void read_arguments(int argc, char **argv, char **uart_name, char *baudrate, char **wifly1, char **wifly2);

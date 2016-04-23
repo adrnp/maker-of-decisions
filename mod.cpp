@@ -8,6 +8,19 @@
  *  Created on: August, 2014
  *      Author: Adrien Perkins
  */
+// system inclusions
+
+#include <cstdlib>
+#include <unistd.h>
+#include <cmath>
+#include <string.h>
+#include <inttypes.h>
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <map>
+#include <signal.h>
+
 #include "common.h"
 
 #include "read_thread.h"
@@ -40,8 +53,8 @@ SerialPort* df_arduino = nullptr;	// serial connection to the df arduino
 
 int RUNNING_FLAG = 1;	// default the read and write threads to be running
 
-char* wifly_port1;
-char* wifly_port2;
+const char* wifly_port1;
+const char* wifly_port2;
 char* pa_port;
 
 char* command_file = (char*) "commands";
@@ -145,6 +158,97 @@ void read_arguments(int argc, char **argv, char **uart_name, int *baudrate, char
 }
 
 
+void get_configuration(int argc, char **argv) {
+
+	char *config_filename = (char*)"config.cfg";
+
+	// string to be displayed on incorrect inputs to show correct function usage
+	const char *commandline_usage = "\tusage: -c/--config <config_filename>\n\n"
+									"\tthe config filename is optional and will default to config.cfg\n"
+									"\t(see config.cfg to see what is required in the config file)\n\n"
+									"\texample: ./mod -d config.cfg\n";
+
+	// loop through all the program arguments
+	for (int i = 1; i < argc; i++) { /* argv[0] is "mavlink" */
+
+		// help text requested
+		if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
+			cout << commandline_usage;
+			return;
+		}
+
+		/* UART device ID */
+		if (strcmp(argv[i], "-c") == 0 || strcmp(argv[i], "--config") == 0) {
+			if (argc > i + 1) {
+				config_filename = argv[i + 1];
+			}
+		}
+	}
+
+	// the map containing all the params
+	map<string, string> config_map;
+
+	/* parse through the config file */
+	ifstream infile(config_filename);
+	
+	string line, key, value;  // some initialization
+	while (getline(infile, line)) { // loop while we can get a new line from the file
+
+		// skip comment lines
+		size_t found = line.find_first_not_of(" \t");
+		if (found != string::npos) {
+			if (line[found] == '#') continue;
+		}
+
+		// get an input string stream of the current line
+		istringstream curr_line(line);
+		if (getline(curr_line, key, '=')) {  // read up to the = sign and set that to key
+			if (getline(curr_line, value)) {  // read rest set that to value
+				config_map[key] = value;
+				cout << "key: " << key << "\tvalue: " << value << "\n";
+			}
+		}
+	}
+
+	// set all the parameters from the config file
+	
+	/* general */
+	verbose = false;
+	if (config_map.find("verbose") != config_map.end()) {
+		verbose = (config_map["verbose"].c_str() == 1);
+	}
+
+
+	/* pixhawk */
+	const char* pixhawk_uart = "/dev/ttyUSB1";
+	if (config_map.find("pixhawk_port") != config_map.end()) {
+		pixhawk_uart = config_map["pixhawk_port"].c_str();
+	} else {
+		cout << "pixhawk port is a required config.  Please check your config file (" << config_filename << ")\n";
+		return;
+	}
+
+	int baudrate = 115200;
+	if (config_map.find("pixhawk_baudrate") != config_map.end()) {
+		baudrate = stoi(config_map["pixhawk_baudrate"]);
+	} else {
+		cout << "pixhawk baudrate is a required config.  Please check your config file (" << config_filename << ")\n";
+		return;
+	}
+
+	/* wifly */
+	if (config_map.find("sensor_port") != config_map.end()) {
+		wifly_port1 = config_map["sensor_port"].c_str();
+	} else {
+		cout << "sensor port is a required config.  Please check your config file (" << config_filename << ")\n";
+		return;
+	}
+
+
+
+}
+
+
 void quit_handler(int sig) {
 
 	// notify user of termination
@@ -161,6 +265,10 @@ void quit_handler(int sig) {
 
 int main(int argc, char **argv) {
 
+	// get all the confguration parameters
+	get_configuration(argc, argv);
+
+/*
 	cout << "[MOD] starting...\n";
 	printf("[MOD] printf starting...\n");
 
@@ -169,7 +277,7 @@ int main(int argc, char **argv) {
 	pthread_t wiflyId;
 	pthread_t phasedId;
 
-	/* default values for arguments */
+	// default values for arguments
 	char *uart_name = (char*)"/dev/ttyUSB1";
 
 	wifly_port1 = (char*) "/dev/ttyUSB0";
@@ -228,6 +336,7 @@ int main(int argc, char **argv) {
 	
 	// close the pixhawk connection
 	pixhawk->end_serial();
+*/
 
 	return 0;
 }

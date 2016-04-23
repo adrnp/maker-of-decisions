@@ -39,7 +39,7 @@ _command_id(0)
 	printf("verbose mavlink serial constructor\n");
 }
 
-MavlinkSerial::MavlinkSerial(bool verbose, char* &uart_name,  const int &baudrate) : 
+MavlinkSerial::MavlinkSerial(bool verbose, const char* &uart_name,  const int &baudrate) : 
 SerialPort(verbose, uart_name, baudrate),
 _command_id(0)
 {

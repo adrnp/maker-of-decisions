@@ -45,8 +45,8 @@ extern bool rotating;
 extern bool moving;
 
 /** wifly device locations */
-extern char * wifly_port1;
-extern char * wifly_port2;
+extern const char * wifly_port1;
+extern const char * wifly_port2;
 
 extern bool dual_wifly;
 

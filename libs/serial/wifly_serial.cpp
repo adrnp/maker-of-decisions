@@ -39,7 +39,7 @@ WiflySerial::WiflySerial(bool verbose) : SerialPort(verbose) {
 	printf("verbose wifly constructor\n");
 }
 
-WiflySerial::WiflySerial(bool verbose, char* &uart_name) : SerialPort(verbose, uart_name) {
+WiflySerial::WiflySerial(bool verbose, const char* &uart_name) : SerialPort(verbose, uart_name) {
 	printf("complex wifly constructor\n");
 }
 

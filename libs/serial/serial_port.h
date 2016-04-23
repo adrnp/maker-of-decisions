@@ -22,18 +22,18 @@ public:
 	/* constructor */
 	SerialPort();
 	SerialPort(bool verbose);
-	SerialPort(bool verbose, char* &uart_name);
-	SerialPort(bool verbose, char* &uart_name, const int &baudrate);
+	SerialPort(bool verbose, const char* &uart_name);
+	SerialPort(bool verbose, const char* &uart_name, const int &baudrate);
 	//SerialPort(bool verbose, int num_connections);
 
 	/* destructor */
 	~SerialPort();
 
 	/* begin the serial connection (includes opening and configuring the connection) */
-	void begin_serial(char* &uart_name, const int &baudrate);
+	void begin_serial(const char* &uart_name, const int &baudrate);
 
 	/* simply open the serial connection, used for the more simple serial connections */
-	void open_serial(char* &uart_name);
+	void open_serial(const char* &uart_name);
 	//void open_serial(char* &uart_name1, char* &uart_name2);
 	
 	/* end the serial connection */

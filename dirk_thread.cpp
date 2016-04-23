@@ -95,7 +95,7 @@ void *dirk_thread(void *param) {
 	char *bearing_file_name = (char *) "bearing_pa.csv";
 	
 	const int baudrate = 115200;
-	char *dirk_uart = (char *) "/dev/ttyACM0";
+	const char *dirk_uart = (char *) "/dev/ttyACM0";
 
 	// connect to the arduino
 	SerialPort arduino(false);

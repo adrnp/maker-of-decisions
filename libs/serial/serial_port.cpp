@@ -20,7 +20,7 @@ _verbose(verbose)
 	printf("setting fd to -1, serial port constructor\n");
 }
 
-SerialPort::SerialPort(bool verbose, char* &uart_name) :
+SerialPort::SerialPort(bool verbose, const char* &uart_name) :
 fd(-1),
 _verbose(verbose)
 {
@@ -28,7 +28,7 @@ _verbose(verbose)
 	open_serial(uart_name);
 }
 
-SerialPort::SerialPort(bool verbose, char* &uart_name, const int &baudrate) :
+SerialPort::SerialPort(bool verbose, const char* &uart_name, const int &baudrate) :
 fd(-1),
 _verbose(verbose)
 {
@@ -42,7 +42,7 @@ SerialPort::~SerialPort() {
 }
 
 
-void SerialPort::begin_serial(char* &uart_name, const int &baudrate) {
+void SerialPort::begin_serial(const char* &uart_name, const int &baudrate) {
 	// display status as needed
 	if (_verbose) printf("Trying to connect to %s.. ", uart_name);
 	fflush(stdout);
@@ -84,7 +84,7 @@ void SerialPort::begin_serial(char* &uart_name, const int &baudrate) {
 	if (_verbose) printf("\nREADY, waiting for heartbeat.\n");
 }
 
-void SerialPort::open_serial(char* &uart_name) {
+void SerialPort::open_serial(const char* &uart_name) {
 	open_port(uart_name);
 	if (fd == -1) {
 		if (_verbose) printf("failure, could not open port.\n");
