@@ -48,6 +48,7 @@ namespace common {
 	/* stuff needed for the tracking command */
 	extern bool execute_tracking;
 	extern float flight_alt;
+	extern int tracker_type;
 
 	/* stuff needed for emily antenna */
 	extern bool emily;

@@ -48,12 +48,13 @@ namespace common {
 	SerialPort* df_arduino = nullptr;	// serial connection to the df arduino
 
 	const char* sensor_port = (char*)"/dev/ttyUSB0";
-	const char* omni_wifly_port = (char*)"/dev/ttyUSB3";
+	const char* omni_wifly_port = (char*)"/dev/ttyUSB2";
 
 	bool dual_wifly = false;	// default to only have one wifly active
 
 	bool execute_tracking = false;	// default to not executing a tracking mission
 	float flight_alt = 380;			// default flight is AMSL
+	int tracker_type = 0;			// the type of tracker to use
 
 	bool emily = false;			// default to not running the emily antenna configuration
 }
@@ -66,7 +67,6 @@ char* pa_port;
 bool nowifly = false;	// default to wanting wifly
 
 int mission_type = 0;
-int tracker_type = 0;
 int sensor_type = 0;
 
 const char *pixhawk_port = (char*)"/dev/ttyUSB1";
@@ -136,7 +136,7 @@ int get_configuration(int argc, char **argv) {
 	}
 
 	if (config_map.find("tracker_type") != config_map.end()) {
-		tracker_type = stoi(config_map["tracker_type"]);
+		common::tracker_type = stoi(config_map["tracker_type"]);
 	}
 
 	if (config_map.find("sensor_type") != config_map.end()) {
@@ -144,7 +144,7 @@ int get_configuration(int argc, char **argv) {
 	}
 
 	if (config_map.find("flight_alt") != config_map.end()) {
-		common::flight_alt = stoi(config_map["flight_alt"]);
+		common::flight_alt = stof(config_map["flight_alt"]);
 	}
 
 	/* command file */
@@ -235,12 +235,9 @@ int main(int argc, char **argv) {
 	// set some additional commons
 	if (mission_type > 0) {
 		common::execute_tracking = true;
-	}
-
-	if (mission_type == 0) {
+	} else {
 		common::get_commands = true;
 	}
-
 
 	// connect to the pixhawk
 	cout << "[MOD] connecting to pixhawk...\n";
