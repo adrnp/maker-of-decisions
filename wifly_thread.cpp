@@ -255,7 +255,7 @@ void *wifly_thread(void *param) {
 		// TODO: potentially capture all measurements at the same time as 
 		// making the rssi measurement (i.e. lat, lon, alt)
 		// not sure what the variability is from here to later on
-
+		printf("[WIFLY] making measurement...\n");
 		int dir_rssi = INT_MAX;
 
 		if (common::verbose) printf("[WIFLY] scanning wifly 1...\n");
