@@ -1,5 +1,5 @@
-#ifndef HUNTING_THREAD_H_
-#define HUNTING_THREAD_H_
+#ifndef RFDEETECTOR_THREAD_H_
+#define RFDEETECTOR_THREAD_H_
 
 #include <vector>
 
@@ -72,4 +72,4 @@ private:
 void *rfdetector_thread(void *param);
 
 
-#endif /* WIFLY_THREAD_H_ */
+#endif /* RFDEETECTOR_THREAD_H_ */
