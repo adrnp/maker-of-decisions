@@ -25,7 +25,7 @@
 
 #include "read_thread.h"
 #include "wifly_thread.h"
-#include "hunting_thread.h"
+#include "rfdetector_thread.h"
 #include "dirk_thread.h"
 
 #include "mod.h"
@@ -272,8 +272,8 @@ int main(int argc, char **argv) {
 		hunt_running = true;
 		break;
 	case 2:
-		printf("[MOD] starting hunting thread...\n");
-		pthread_create(&huntingId, NULL, hunting_thread, (void *)&common::uav);
+		printf("[MOD] starting rfdetector thread...\n");
+		pthread_create(&huntingId, NULL, rfdetector_thread, (void *)&common::uav);
 		hunt_running = true;
 		break;
 	case 3:

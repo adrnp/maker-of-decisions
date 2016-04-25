@@ -39,11 +39,11 @@
 
 #include "common.h"
 #include "commander.h"
-#include "hunting_thread.h"
+#include "rfdetector_thread.h"
 
 using std::vector;
 
-Hunter::Hunter(struct MAVInfo* uavData, bool verbose) :
+RFDetector::RFDetector(struct MAVInfo* uavData, bool verbose) :
 _jager(uavData),
 _verbose(verbose),
 _in_rotation(false),
@@ -66,12 +66,12 @@ _max_rssi(-100)
 	_norm_gains.clear();
 }
 
-Hunter::~Hunter() {
+RFDetector::~RFDetector() {
 
 }
 
 
-void Hunter::rotation_init() {
+void RFDetector::rotation_init() {
 
 	printf("[HUNTING][STATE][ROT] rotation started\n");
 
@@ -86,7 +86,7 @@ void Hunter::rotation_init() {
 }
 
 
-void Hunter::rotation_completed() {
+void RFDetector::rotation_completed() {
 	printf("[HUNTING][STATE][ROT] ended rotation\n");
 
 	// no longer in a rotation
@@ -107,7 +107,7 @@ void Hunter::rotation_completed() {
 }
 
 
-void Hunter::get_measurement() {
+void RFDetector::get_measurement() {
 	if (_verbose) printf("[HUNTING] getting most recent measurement...\n");
 
 	// defaults for all the values
@@ -119,7 +119,7 @@ void Hunter::get_measurement() {
 }
 
 
-void Hunter::check_hunt_state() {
+void RFDetector::check_hunt_state() {
 
 	// check to see if the hunt state has changed (and if a command is required)
 	if (_jager->tracking_status.hunt_mode_state != _curr_hunt_state) {
@@ -144,7 +144,7 @@ void Hunter::check_hunt_state() {
 }
 
 
-void Hunter::update_state(const uint8_t &new_state) {
+void RFDetector::update_state(const uint8_t &new_state) {
 	
 	switch (new_state) {
 	case TRACKING_HUNT_STATE_WAIT:
@@ -175,7 +175,7 @@ void Hunter::update_state(const uint8_t &new_state) {
 	}
 }
 
-int Hunter::get_max_rssi(const vector<double> rssi_values) {
+int RFDetector::get_max_rssi(const vector<double> rssi_values) {
 
 	// set it to below what the RF detector can detect
 	double max_rssi = -100;
@@ -200,7 +200,7 @@ int Hunter::get_max_rssi(const vector<double> rssi_values) {
 }
 
 
-int Hunter::main_loop() {
+int RFDetector::main_loop() {
 
 	// some constants that all need to become parameters
 	char *file_name = (char *) "wifly.csv";
@@ -358,9 +358,9 @@ int Hunter::main_loop() {
 
 
 
-void *hunting_thread(void *param) {
+void *rfdetector_thread(void *param) {
 
 	// just launch the hunter loop
-	Hunter* hunter = new Hunter((struct MAVInfo *)param, common::verbose);
-	return (void *) hunter->main_loop();
+	RFDetector* rfdetector_hunter = new RFDetector((struct MAVInfo *)param, common::verbose);
+	return (void *) rfdetector_hunter->main_loop();
 }

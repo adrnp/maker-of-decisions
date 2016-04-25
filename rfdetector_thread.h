@@ -5,13 +5,13 @@
 
 using std::vector;
 
-class Hunter {
+class RFDetector {
 
 public:
 
 	/* constructor and desctructor */
-	Hunter(struct MAVInfo* uavData, bool verbose);
-	~Hunter();
+	RFDetector(struct MAVInfo* uavData, bool verbose);
+	~RFDetector();
 
 	/* this is actually the main loop that will be running */
 	int main_loop();
@@ -69,7 +69,7 @@ private:
 
 
 /* main thread function to be called by pthread in mod.cpp - actually just a springboard for the main thread in the above class */
-void *hunting_thread(void *param);
+void *rfdetector_thread(void *param);
 
 
 #endif /* WIFLY_THREAD_H_ */
