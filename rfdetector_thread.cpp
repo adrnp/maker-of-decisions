@@ -1,5 +1,5 @@
 /**
- * hunting_thread.cpp
+ * rf_detector.cpp
  *
  * This is basically a revamp of the wifly thread.
  * Now contains everything within a class (which I guess could have been done with a namespace before)
@@ -73,7 +73,7 @@ RFDetector::~RFDetector() {
 
 void RFDetector::rotation_init() {
 
-	printf("[HUNTING][STATE][ROT] rotation started\n");
+	printf("[RFDETECTOR][STATE][ROT] rotation started\n");
 
 	// set our logic to mark we are now running the rotation logic
 	_in_rotation = true;
@@ -87,12 +87,12 @@ void RFDetector::rotation_init() {
 
 
 void RFDetector::rotation_completed() {
-	printf("[HUNTING][STATE][ROT] ended rotation\n");
+	printf("[RFDETECTOR][STATE][ROT] ended rotation\n");
 
 	// no longer in a rotation
 	_in_rotation = false;
 
-	if (_verbose) printf("[HUNTING] calculating end of rotation bearing...\n");
+	if (_verbose) printf("[RFDETECTOR] calculating end of rotation bearing...\n");
 
 	/* get bearing and values */
 	_bearing_cc = get_bearing_cc(_angles, _gains);		// do bearing calculation at this point
@@ -100,15 +100,15 @@ void RFDetector::rotation_completed() {
 	_max_rssi = get_max_rssi(_gains);					// get what the max value was for the rssi
 
 	if (_verbose) {
-		printf("[HUNTING] calculated cc bearing: %f\n", _bearing_cc);
-		printf("[HUNTING] calculated max bearing: %f\n", _bearing_max);
-		printf("[HUNTING] max rssi value: %i\n", _max_rssi);
+		printf("[RFDETECTOR] calculated cc bearing: %f\n", _bearing_cc);
+		printf("[RFDETECTOR] calculated max bearing: %f\n", _bearing_max);
+		printf("[RFDETECTOR] max rssi value: %i\n", _max_rssi);
 	}
 }
 
 
 void RFDetector::get_measurement() {
-	if (_verbose) printf("[HUNTING] getting most recent measurement...\n");
+	if (_verbose) printf("[RFDETECTOR] getting most recent measurement...\n");
 
 	// defaults for all the values
 	_dir_rssi = INT_MAX;
@@ -124,12 +124,12 @@ void RFDetector::check_hunt_state() {
 	// check to see if the hunt state has changed (and if a command is required)
 	if (_jager->tracking_status.hunt_mode_state != _curr_hunt_state) {
 
-		printf("[HUNTING][STATE] State changed from %u to %u\n", _curr_hunt_state, _jager->tracking_status.hunt_mode_state);
+		printf("[RFDETECTOR][STATE] State changed from %u to %u\n", _curr_hunt_state, _jager->tracking_status.hunt_mode_state);
 
 		// update the prev hunt state to be the "current" state and update the current state to be the new current state
 		_prev_hunt_state = _curr_hunt_state;
 		_curr_hunt_state = _jager->tracking_status.hunt_mode_state;
-		printf("[HUNTING][STATE] Prev State changed to: %u\n", _prev_hunt_state);
+		printf("[RFDETECTOR][STATE] Prev State changed to: %u\n", _prev_hunt_state);
 
 		// update state information
 		update_state(_curr_hunt_state);
@@ -137,7 +137,7 @@ void RFDetector::check_hunt_state() {
 		// check to see if need to flag the next command to be sent
 		// NOTE: want to send to the command at the end of this iteration to use the calculated data
 		if (_curr_hunt_state == TRACKING_HUNT_STATE_WAIT) {
-			printf("[HUNTING][CMD] flagging next command to be sent\n");
+			printf("[RFDETECTOR][CMD] flagging next command to be sent\n");
 			_send_next = true;
 		}	
 	}
@@ -212,7 +212,7 @@ int RFDetector::main_loop() {
 	if (wifly_file == NULL)
 	{
 		// TODO: figure out what we do want to return when there is an error
-		printf("[HUNTING] Error opening wifly file\n");
+		printf("[RFDETECTOR] Error opening wifly file\n");
 		return -1;
 	}
 
@@ -221,7 +221,7 @@ int RFDetector::main_loop() {
 	if (bearing_file == NULL)
 	{
 		// TODO: figure out what we do want to return when there is an error
-		printf("[HUNTING] Error opening bearing output file\n");
+		printf("[RFDETECTOR] Error opening bearing output file\n");
 		fclose(wifly_file);
 		return -1;
 	}
@@ -236,7 +236,7 @@ int RFDetector::main_loop() {
 	if (common::get_commands) {
 		bool loaded = load_move_commands();
 		if (!loaded) {
-			printf("[HUNTING] Error loading move commands\n");
+			printf("[RFDETECTOR] Error loading move commands\n");
 			fclose(wifly_file);
 			fclose(bearing_file);
 			return -1;
@@ -263,7 +263,7 @@ int RFDetector::main_loop() {
 		prev_loop_timestamp = current_loop_time;
 
 		printf("\n--------------------------------\n");
-		printf("[HUNTING] Top of wifly loop\n");
+		printf("[RFDETECTOR] Top of wifly loop\n");
 
 		// check the hunt state from JAGER and adjust states accordingly
 		check_hunt_state();
@@ -289,7 +289,7 @@ int RFDetector::main_loop() {
 				rotation_init();
 			}
 
-			printf("[HUNTING][STATE][ROT] rotating\n");
+			printf("[RFDETECTOR][STATE][ROT] rotating\n");
 
 			// add heading and rssi to the correct arrays (note will always get both dir and omni in this case)
 			_angles.push_back((double) _meas_heading);
@@ -338,7 +338,7 @@ int RFDetector::main_loop() {
 
 		// if sending the next command has been flagged, send the next command, using the calculated data
 		if (_send_next) {
-			printf("[HUNTING][CMD] calling to send the next command...\n");
+			printf("[RFDETECTOR][CMD] calling to send the next command...\n");
 			send_next_command(_prev_hunt_state, _jager->tracking_status.hunt_mode_state, _bearing_max, _max_rssi);
 			_send_next = false;
 		}
