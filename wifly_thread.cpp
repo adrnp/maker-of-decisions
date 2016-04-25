@@ -44,44 +44,120 @@ using std::string;
 using std::vector;
 using namespace std;
 
-/* this is to help with some of the rotation logic */
-bool in_rotation = false;
 
-/* keep track of the current previous hunt state, as hunt state is sent periodically, not just on updates */
-uint8_t current_hunt_state = 0;
-uint8_t prev_hunt_state = 0;
 
-/* whether or not we are currently rotating */
-bool rotating = false;
 
-/* whether or not we are currently moving */
-bool moving = false;
+WiflyHunter::WiflyHunter(struct MAVInfo* uavData, bool verbose) :
+_jager(uavData),
+_verbose(verbose),
+_in_rotation(false),
+_rotating(false),
+_moving(false),
+_send_next(false),
+_curr_hunt_state(0),
+_prev_hunt_state(0),
+_dir_rssi(INT_MAX),
+_omni_rssi(INT_MAX),
+_heading_dir_pre(0),
+_heading_dir_post(0),
+_heading_omni_post(0),
+_bearing_cc(0),
+_bearing_max(0),
+_max_rssi(-100)
+{
+	/* "initialize" all the vectors */
+	_angles.clear();
+	_gains.clear();
+	_omni_gains.clear();
+	_norm_gains.clear();
+}
 
-/* microsecond timestamp of the previous loop iteration */
-unsigned long prev_loop_timestamp = 0;
+WiflyHunter::~WiflyHunter() {
 
-unsigned long prev_omni_update_timestamp = 0;
+}
 
-void update_state(uint8_t &new_state) {
 
+void WiflyHunter::rotation_init() {
+
+	printf("[WIFLY][STATE][ROT] rotation started\n");
+
+	// set our logic to mark we are now running the rotation logic
+	_in_rotation = true;
+
+	// clear the vectors
+	_angles.clear();
+	_gains.clear();
+	_omni_gains.clear();
+	_norm_gains.clear();
+}
+
+
+void WiflyHunter::rotation_completed() {
+	printf("[WIFLY][STATE][ROT] ended rotation\n");
+
+	// no longer in a rotation
+	_in_rotation = false;
+
+	if (_verbose) printf("[WIFLY] calculating end of rotation bearing...\n");
+
+	/* get bearing and values */
+	_bearing_cc = get_bearing_cc(_angles, _gains);		// do bearing calculation at this point
+	_bearing_max = get_bearing_max(_angles, _gains);	// also do max bearing calculation
+	_max_rssi = get_max_rssi(_gains);					// get what the max value was for the rssi
+
+	if (_verbose) {
+		printf("[WIFLY] calculated cc bearing: %f\n", _bearing_cc);
+		printf("[WIFLY] calculated max bearing: %f\n", _bearing_max);
+		printf("[WIFLY] max rssi value: %i\n", _max_rssi);
+	}
+}
+
+
+void WiflyHunter::check_hunt_state() {
+
+	// check to see if the hunt state has changed (and if a command is required)
+	if (_jager->tracking_status.hunt_mode_state != _curr_hunt_state) {
+
+		printf("[WIFLY][STATE] State changed from %u to %u\n", _curr_hunt_state, _jager->tracking_status.hunt_mode_state);
+
+		// update the prev hunt state to be the "current" state and update the current state to be the new current state
+		_prev_hunt_state = _curr_hunt_state;
+		_curr_hunt_state = _jager->tracking_status.hunt_mode_state;
+		printf("[WIFLY][STATE] Prev State changed to: %u\n", _prev_hunt_state);
+
+		// update state information
+		update_state(_curr_hunt_state);
+
+		// check to see if need to flag the next command to be sent
+		// NOTE: want to send to the command at the end of this iteration to use the calculated data
+		if (_curr_hunt_state == TRACKING_HUNT_STATE_WAIT) {
+			printf("[WIFLY][CMD] flagging next command to be sent\n");
+			_send_next = true;
+		}	
+	}
+}
+
+
+void WiflyHunter::update_state(const uint8_t &new_state) {
+	
 	switch (new_state) {
 	case TRACKING_HUNT_STATE_WAIT:
 
 		// mark that the rotation or moving has ended
-		rotating = false;
-		moving = false;
+		_rotating = false;
+		_moving = false;
 		break;
 
 	case TRACKING_HUNT_STATE_ROTATE:
 
 		// mark as now rotating
-		rotating = true;
+		_rotating = true;
 		break;
 
 	case TRACKING_HUNT_STATE_MOVE:
 
 		// mark as now moving
-		moving = true;
+		_moving = true;
 		break;
 
 	case TRACKING_HUNT_STATE_OFF:
@@ -93,11 +169,12 @@ void update_state(uint8_t &new_state) {
 	}
 }
 
+int WiflyHunter::get_max_rssi(const vector<double> rssi_values) {
 
-int get_max_rssi(vector<double> rssi_values) {
-
+	// set it to below what the RF detector can detect
 	double max_rssi = -100;
 	
+	// loop through all values to get the max
 	int len = rssi_values.size();
 	for (int i = 0; i < len; i++) {
 		
@@ -117,11 +194,8 @@ int get_max_rssi(vector<double> rssi_values) {
 }
 
 
-void *wifly_thread(void *param) {
-	
-	// retrieve the MAVInfo struct that is sent to this function as a parameter
-	struct MAVInfo *uavData = (struct MAVInfo *)param;
-	
+int WiflyHunter::main_loop() {
+
 	// some constants that all need to become parameters
 	char *ssid = (char *) "JAMMER01"; // "ADL"; // "JAMMER01";
 	char *file_name = (char *) "wifly.csv";
@@ -129,10 +203,10 @@ void *wifly_thread(void *param) {
 	char *bearing_mle_file_name = (char *) "bearing_calc_mle.csv";
 
 	// connect to the first wifly
-	WiflySerial* wifly1 = new WiflySerial(common::verbose, common::sensor_port);
+	WiflySerial* wifly1 = new WiflySerial(_verbose, common::sensor_port);
 	if (wifly1->fd < 0) {
 		printf("[WIFLY] Error opening wifly connection\n");
-		return NULL;
+		return -1;
 	}
 
 	/* Go into command mode */
@@ -145,7 +219,7 @@ void *wifly_thread(void *param) {
 	{
 		// TODO: figure out what we do want to return when there is an error
 		printf("[WIFLY] Error opening wifly file\n");
-		return NULL;
+		return -1;
 	}
 
 	/* Open a file to write bearing calcs to */
@@ -155,7 +229,7 @@ void *wifly_thread(void *param) {
 		// TODO: figure out what we do want to return when there is an error
 		printf("[WIFLY] Error opening bearing output file\n");
 		fclose(wifly_file);
-		return NULL;
+		return -1;
 	}
 
 	FILE *bearing_file_mle = NULL;
@@ -166,16 +240,16 @@ void *wifly_thread(void *param) {
 			printf("[WIFLY] Error opening bearing mle output file\n");
 			fclose(wifly_file);
 			fclose(bearing_file);
-			return NULL;
+			return -1;
 		}
 
-		wifly2 = new WiflySerial(common::verbose, common::omni_wifly_port);
+		wifly2 = new WiflySerial(_verbose, common::omni_wifly_port);
 		if (wifly1->fd < 0) {
 			printf("[WIFLY] Error opening wifly connection\n");
 			fclose(wifly_file);
 			fclose(bearing_file);
 			fclose(bearing_file_mle);
-			return NULL;
+			return -1;
 		}
 	}
 
@@ -192,22 +266,13 @@ void *wifly_thread(void *param) {
 			if (common::dual_wifly) {
 				fclose(bearing_file_mle);
 			}
-			return NULL;
+			return -1;
 		}
 	}
 	
-	vector<double> angles;
-	vector<double> gains;
-	vector<double> omni_gains;
-	vector<int> norm_gains;
 
 	struct timeval tv;
-
-	double bearing_cc;
-	double bearing_max;
-	int max_rssi;
-
-	bool send_next = false;
+	unsigned long prev_loop_timestamp;
 
 	// main loop that should be constantly taking measurements
 	// until the main program is stopped
@@ -227,26 +292,8 @@ void *wifly_thread(void *param) {
 		printf("\n--------------------------------\n");
 		printf("[WIFLY] Top of wifly loop\n");
 
-		// handle hunt state changes required (sending of commands)
-		if (uavData->tracking_status.hunt_mode_state != current_hunt_state) {
-			
-			printf("[WIFLY][STATE] State changed from %u to %u\n", current_hunt_state, uavData->tracking_status.hunt_mode_state);
-
-			// update the prev hunt state to be the "current" state and update the current state to be the new current state
-			prev_hunt_state = current_hunt_state;
-			current_hunt_state = uavData->tracking_status.hunt_mode_state;
-			printf("[WIFLY][STATE] Prev State changed to: %u\n", prev_hunt_state);
-
-			// update state information
-			update_state(current_hunt_state);
-
-			// check to see if need to flag the next command to be sent
-			// NOTE: want to send to the command at the end of this iteration to use the calculated data
-			if (current_hunt_state == TRACKING_HUNT_STATE_WAIT) {
-				printf("[WIFLY][CMD] flagging next command to be sent\n");
-				send_next = true;
-			}	
-		}
+		// check the hunt state from JAGER and adjust states accordingly
+		check_hunt_state();
 
 		//-----------------------------------------------//
 		// make measurement, and get start and end angle (for during the measurement)
@@ -255,129 +302,100 @@ void *wifly_thread(void *param) {
 		// TODO: potentially capture all measurements at the same time as 
 		// making the rssi measurement (i.e. lat, lon, alt)
 		// not sure what the variability is from here to later on
+
 		printf("[WIFLY] making measurement...\n");
-		int dir_rssi = INT_MAX;
+		_dir_rssi = INT_MAX;
+		_omni_rssi = INT_MAX;
 
-		if (common::verbose) printf("[WIFLY] scanning wifly 1...\n");
-		int16_t heading_dir_pre = uavData->vfr_hud.heading;
-		dir_rssi = wifly1->scanrssi(ssid);
+		if (_verbose) printf("[WIFLY] scanning wifly 1...\n");
+		_heading_dir_pre = _jager->vfr_hud.heading;
+		_dir_rssi = wifly1->scanrssi(ssid);
+		_heading_dir_post = _jager->vfr_hud.heading;
+		if (_verbose) printf("[WIFLY] dir rssi recevied: %i\n", _dir_rssi);
 		
-		if (common::verbose) printf("[WIFLY] dir rssi recevied: %i\n", dir_rssi);
-		
-		int16_t heading_dir_post = uavData->vfr_hud.heading;
-
-		int omni_rssi = INT_MAX;
 		if (common::dual_wifly) {
-			if (common::verbose) printf("[WIFLY] scanning wifly 2...\n");
-			omni_rssi = wifly2->scanrssi(ssid);
-			if (common::verbose) printf("[WIFLY] omni rssi recevied: %i\n", omni_rssi);
+			if (_verbose) printf("[WIFLY] scanning wifly 2...\n");
+			_omni_rssi = wifly2->scanrssi(ssid);
+			_heading_omni_post = _jager->vfr_hud.heading;
+			if (_verbose) printf("[WIFLY] omni rssi recevied: %i\n", _omni_rssi);
 		}
-
-		int16_t heading_omni_post = uavData->vfr_hud.heading;
 
 		//-----------------------------------------------//
 		// Rotation specific calculations
 		//-----------------------------------------------//
 
 		/* check if we are in an official rotation */
-		if (rotating) {
-			if (!in_rotation) {
-				printf("[WIFLY][STATE][ROT] rotation started\n");
-				// set our logic to mark we are now running the rotation logic
-				in_rotation = true;
+		if (_rotating) {
 
-				// clear the vectors
-				angles.clear();
-				gains.clear();
-				omni_gains.clear();
-				norm_gains.clear();
+			if (!_in_rotation) {
+				rotation_init();
 			}
 
 			printf("[WIFLY][STATE][ROT] rotating\n");
 
-			// add heading and rssi to the correct arrays
-			angles.push_back((double) heading_dir_pre);
-			gains.push_back(dir_rssi);
-
+			// add heading and rssi to the correct arrays (note will always get both dir and omni in this case)
+			_angles.push_back((double) _heading_dir_pre);
+			_gains.push_back(_dir_rssi);
+			
 			// if using both wiflies, need to see if there was an omni update
 			// may have a problem with omni value not matching the same location as the dir measurement
 			if (common::dual_wifly) {
 				
 				// add omni rssi to the correct array
-				omni_gains.push_back(omni_rssi);
+				_omni_gains.push_back(_omni_rssi);
 
 				// calculate the normalized gains
-				norm_gains.push_back(gains2normgain(dir_rssi, omni_rssi));
+				_norm_gains.push_back(gains2normgain(_dir_rssi, _omni_rssi));
 
 				// do constant calculation of bearing
-				if (common::verbose) printf("[WIFLY] calculating bearing mle\n");
-				double curr_bearing_est = get_bearing_mle(angles, norm_gains);
+				if (_verbose) printf("[WIFLY] calculating bearing mle\n");
+				double curr_bearing_est = get_bearing_mle(_angles, _norm_gains);
 
 				// save the calculated mle bearing
-				fprintf(bearing_file_mle, "%llu,%i,%i,%f,%f\n", uavData->sys_time_us.time_unix_usec,
-					uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, curr_bearing_est);
+				fprintf(bearing_file_mle, "%llu,%i,%i,%f,%f\n", _jager->sys_time_us.time_unix_usec,
+					_jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt, curr_bearing_est);
 
 				// send a mavlink message of the calculated mle bearing
-				common::pixhawk->send_bearing_mle_message(curr_bearing_est, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
+				common::pixhawk->send_bearing_mle_message(curr_bearing_est, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);
 
 				// send the udp message (directly to ground)
-				udp->send_bearing_message(TYPE_BEARING_MLE, curr_bearing_est, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
+				udp->send_bearing_message(TYPE_BEARING_MLE, curr_bearing_est, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);
 			}
 		}
 
+
 		/* catch the end of a rotation in order to do the cc gain measurement */
-		if (!rotating && in_rotation) {
-			printf("[WIFLY][STATE][ROT] ended rotation\n");
-			in_rotation = false;
-
-			if (common::verbose) printf("[WIFLY] calculating end of rotation bearing...\n");
-
-			// do bearing calculation at this point
-			bearing_cc = get_bearing_cc(angles, gains);
-			if (common::verbose) printf("[WIFLY] calculated cc bearing: %f\n", bearing_cc);
-
-			// also do max bearing calculation
-			bearing_max = get_bearing_max(angles, gains);
-			if (common::verbose) printf("[WIFLY] calculated max bearing: %f\n", bearing_max);
-
-			// get what the max value was for the rssi
-			max_rssi = get_max_rssi(gains);
-			if (common::verbose) printf("[WIFLY] max rssi value: %i\n", max_rssi);
+		if (!_rotating && _in_rotation) {
+			rotation_completed();
 
 			// save bearing cc to file (with important information)
-			fprintf(bearing_file, "%llu,%i,%i,%f,%f,%f,%i\n", uavData->sys_time_us.time_unix_usec,
-				uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, bearing_cc, bearing_max, max_rssi);
+			fprintf(bearing_file, "%llu,%i,%i,%f,%f,%f,%i\n", _jager->sys_time_us.time_unix_usec,
+				_jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt, _bearing_cc, _bearing_max, _max_rssi);
 
 			// send a mavlink message of the calculated bearing
-			common::pixhawk->send_bearing_cc_message(bearing_cc, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
+			common::pixhawk->send_bearing_cc_message(_bearing_cc, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);
 
 			// send the udp message (directly to ground)
-			udp->send_bearing_message(TYPE_BEARING_CC, bearing_cc, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
-
-			// send a mavlink message of the max bearing over the mle message for now
-			// send_bearing_mle_message(bearing_max, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
-
-			// tell pixhawk we are finished with the rotation
-			// send_finish_command();
+			udp->send_bearing_message(TYPE_BEARING_CC, _bearing_cc, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);
 		}
+
 
 		//-----------------------------------------------//
 		// save the measured data information to file
 		//-----------------------------------------------//
 
 
-		/* write the directional atenna information */
-		printf("[WIFLY] writing dir rssi to file: %i\n", dir_rssi);
-		fprintf(wifly_file, "%llu,%u,%i,%i,%i,%i,%i,%f,%i\n",
-				uavData->sys_time_us.time_unix_usec, uavData->custom_mode, rotating, heading_dir_pre, heading_dir_post,
-				uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt, dir_rssi);
+		/* write the directional antenna information */
+		fprintf(wifly_file, "%llu,%u,%i,%i,%i,%i,%i,%f,%i, %i\n",
+				_jager->sys_time_us.time_unix_usec, _jager->custom_mode, _rotating, _heading_dir_pre, _heading_dir_post,
+				_jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt, _dir_rssi, _omni_rssi);
 
 		// send a mavlink message with the current rssi
-		common::pixhawk->send_rssi_message(dir_rssi, omni_rssi, heading_dir_pre, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
+		common::pixhawk->send_rssi_message(_dir_rssi, _omni_rssi, _heading_dir_pre, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);
 
 		// send the udp message (directly to ground)
 		// TODO: potentially only do this if we are in a rotation
-		udp->send_rssi_message(dir_rssi, omni_rssi, heading_dir_pre, uavData->gps_position.lat, uavData->gps_position.lon, uavData->vfr_hud.alt);
+		udp->send_rssi_message(_dir_rssi, _omni_rssi, _heading_dir_pre, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);
 
 
 		//-----------------------------------------------//
@@ -385,12 +403,11 @@ void *wifly_thread(void *param) {
 		//-----------------------------------------------//
 
 		// if sending the next command has been flagged, send the next command, using the calculated data
-		if (send_next) {
+		if (_send_next) {
 			printf("[WIFLY][CMD] calling to send the next command...\n");
-			send_next_command(prev_hunt_state, uavData->tracking_status.hunt_mode_state, bearing_max, max_rssi);
-			send_next = false;
+			send_next_command(_prev_hunt_state, _jager->tracking_status.hunt_mode_state, _bearing_max, _max_rssi);
+			_send_next = false;
 		}
-
 
 
 	} // end of while running
@@ -409,5 +426,14 @@ void *wifly_thread(void *param) {
 		wifly2->end_serial();
 	}
 
-	return NULL;
+	return 0;
+}
+
+
+
+
+void *wifly_thread(void *param) {
+	// just launch the wifly loop
+	WiflyHunter* wifly_hunter = new WiflyHunter((struct MAVInfo *)param, common::verbose);
+	return (void *) wifly_hunter->main_loop();
 }
