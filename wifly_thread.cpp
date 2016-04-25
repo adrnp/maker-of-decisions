@@ -209,7 +209,7 @@ int WiflyHunter::main_loop() {
 		return -1;
 	}
 
-	printf("[WIFLY] wifly 1 fd is %d\n", wifly2->fd);
+	printf("[WIFLY] wifly 1 fd is %d\n", wifly1->fd);
 
 	/* Go into command mode */
 	wifly1->enter_commandmode();
@@ -253,8 +253,10 @@ int WiflyHunter::main_loop() {
 			fclose(bearing_file_mle);
 			return -1;
 		}
-
 		printf("[WIFLY] wifly 2 fd is %d\n", wifly2->fd);
+
+		/* enter command mode */
+		wifly2->enter_commandmode();
 	}
 
 	/* open a UDP connection to send data down to the ground station */
