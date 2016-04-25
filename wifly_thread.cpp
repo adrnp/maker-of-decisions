@@ -209,6 +209,8 @@ int WiflyHunter::main_loop() {
 		return -1;
 	}
 
+	printf("[WIFLY] wifly 1 fd is %d\n", wifly2->fd);
+
 	/* Go into command mode */
 	wifly1->enter_commandmode();
 
@@ -244,13 +246,15 @@ int WiflyHunter::main_loop() {
 		}
 
 		wifly2 = new WiflySerial(_verbose, common::omni_wifly_port);
-		if (wifly1->fd < 0) {
-			printf("[WIFLY] Error opening wifly connection\n");
+		if (wifly2->fd < 0) {
+			printf("[WIFLY] Error opening wifly 2 connection\n");
 			fclose(wifly_file);
 			fclose(bearing_file);
 			fclose(bearing_file_mle);
 			return -1;
 		}
+
+		printf("[WIFLY] wifly 2 fd is %d\n", wifly2->fd);
 	}
 
 	/* open a UDP connection to send data down to the ground station */
