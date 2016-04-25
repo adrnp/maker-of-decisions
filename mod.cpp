@@ -266,17 +266,17 @@ int main(int argc, char **argv) {
 	// create a thread for the wifly stuff (only if want wifly running)
 	bool hunt_running = false;
 	switch (sensor_type) {
-	case 0:
+	case 1:
 		printf("[MOD] starting wifly thread...\n");
 		pthread_create(&huntingId, NULL, wifly_thread, (void *)&common::uav);
 		hunt_running = true;
 		break;
-	case 1:
+	case 2:
 		printf("[MOD] starting hunting thread...\n");
 		pthread_create(&huntingId, NULL, hunting_thread, (void *)&common::uav);
 		hunt_running = true;
 		break;
-	case 2:
+	case 3:
 		printf("[MOD] starting dirk antenna thread...\n");
 		pthread_create(&huntingId, NULL, dirk_thread, (void *)&common::uav);
 		hunt_running = true;
