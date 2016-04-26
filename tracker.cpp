@@ -38,8 +38,8 @@ using namespace std;
 
 
 // variable step size calculation params
-#define BEARING_TOL 10.0			// desired tolerance in degrees for 2 bearing measurements to be considered the same
-#define STEP_INCREASE_FACTOR 2.0	// factor by which step size increases if along the same path as before
+#define BEARING_TOL 30.0			// desired tolerance in degrees for 2 bearing measurements to be considered the same
+#define STEP_INCREASE_FACTOR 1.5	// factor by which step size increases if along the same path as before
 #define STEP_SMALL 10.0
 #define STEP_LARGE 50.0
 
@@ -125,8 +125,9 @@ vector<float> calc_next_command_variable(double &bearing, int &rssi) {
 	// update the observation information
 	update_observations(bearing, rssi);
 
-	float step = STEP_SMALL;
+	float step = STEP_LARGE;
 	if (firstStep) {
+		firstStep = false;
 		//step = false;
 	} else {
 		step = calculate_step_size();

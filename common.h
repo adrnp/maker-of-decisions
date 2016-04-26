@@ -15,6 +15,11 @@
 #include "mav_struct.h"
 #include "libs/serial/mavlink_serial.h"
 
+// some constants to determine tracking method
+#define TRACK_NAIVE 1
+#define TRACK_POMDP 2
+#define TRACK_VARIABLE 3
+
 namespace common {
 
 	/** boolean to determine whether or not to show all outputs */

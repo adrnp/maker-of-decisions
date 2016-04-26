@@ -56,7 +56,7 @@ namespace common {
 
 	bool execute_tracking = false;	// default to not executing a tracking mission
 	float flight_alt = 380;			// default flight is AMSL
-	int tracker_type = 0;			// the type of tracker to use
+	int tracker_type = TRACK_NAIVE;	// the type of tracker to use
 
 	bool emily = false;			// default to not running the emily antenna configuration
 	
@@ -248,7 +248,6 @@ int create_directory(const char *path, mode_t mode) {
 	return status;
 }
 
-
 string to_zeropad_string(const int &val, const int &len) {
 	string input = to_string(val);
 	return string(len - input.length(), '0') + input;
@@ -300,7 +299,6 @@ int setup_logfiles() {
 
 	return 0;
 }
-
 
 
 int main(int argc, char **argv) {

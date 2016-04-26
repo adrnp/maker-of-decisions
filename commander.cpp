@@ -27,6 +27,9 @@
 #include "commander.h"
 #include "tracker.h"
 
+// include what is needed ofr  the POMDP commands
+#include "planner/pomdp.h"
+
 using std::string;
 using std::vector;
 using namespace std;
@@ -79,7 +82,9 @@ bool load_move_commands() {
 void send_next_command(uint8_t &prev_state, uint8_t &new_state, double &bearing, int &rssi) {
 
 	 printf("the previous state was: %i\n", prev_state);
-	
+
+	vector<float> commands;
+	std::pair<float, float> commands_pair;	
 	switch (prev_state) {
 		case TRACKING_HUNT_STATE_OFF:
 		case TRACKING_HUNT_STATE_START:
@@ -97,13 +102,42 @@ void send_next_command(uint8_t &prev_state, uint8_t &new_state, double &bearing,
 			/* send next command depending on flight mode */
 			if (common::execute_tracking) {
 				 printf("sending a tracking command\n");
+				 // get the next command, which depends on the tracking method desired
+				 float d_north = 0.0;
+				 float d_east = 0.0;
+				 switch (common::tracker_type) {
+					 case TRACK_NAIVE:
+						if (common::verbose) printf("[COMMANDER] naive tracking command being made...\n");
+					 	commands = calc_next_command(bearing, rssi);
+						d_north = commands[0];
+						d_east = commands[1];
+						break;
+					 case TRACK_VARIABLE:
+						if (common::verbose) printf("[COMMANDER] variable tracking command being made...\n");
+						commands = calc_next_command_variable(bearing, rssi);
+						d_north = commands[0];
+						d_east = commands[1];
+						break;
+					 case TRACK_POMDP:
+						if (common::verbose) printf("[COMMANDER] pomdp tracking command being made...\n");
+						commands_pair = get_next_pomdp_action(bearing, rssi);
+						d_north = commands_pair.first;
+						d_east = commands_pair.second;
 
-				vector<float> commands = calc_next_command_variable(bearing, rssi);
-				
-				if (common::verbose) printf("following tracking command (%f, %f)\n", commands[0], commands[1]);
+						if (d_north == 1000.0) {
+							printf("[COMMANDER] sending finish command\n");
+							common::pixhawk->send_finish_command();
+							return;
+						}
+
+						break;
+				 }
+			 	 
+				if (common::verbose) printf("[COMMANDER] following tracking command (%f, %f)\n", commands[0], commands[1]);
 				float commandNorth = commands[0];
 				float commandEast = commands[1];
 				common::pixhawk->send_tracking_command(commandNorth, commandEast, 360.0);
+				
 				
 			} else {
 				if (common::verbose) printf("sending the next preset move command\n");	
@@ -139,12 +173,14 @@ void send_move_command() {
 	if (cmd_index >= num_cmds) {
 		cmd_index = 0;
 	}
+
 	printf("sending move command with index: %d\n", cmd_index);
 
 	// extract the next north and east commands
 	float nextNorth = cmd_north[cmd_index];
 	float nextEast = cmd_east[cmd_index];
 	float nextAlt = cmd_alt[cmd_index];
+
 	printf("sending command %i: N %f\tE %f\tA %f\n", cmd_index, nextNorth, nextEast, nextAlt);
 
 	cmd_index++;

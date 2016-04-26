@@ -13,6 +13,8 @@ add_subdirectory ("libs/udp")
 
 # include the planners directory
 include_directories ("${PROJECT_SOURCE_DIR}/planners")
+include_directories ("${PROJECT_SOURCE_DIR}/planner")
+add_subdirectory ("planner")
 
 # set the output path for the resulting executable
 set (EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR})
@@ -26,4 +28,5 @@ add_executable(mod ${SOURCES} ${PLANNER_SOURCES})
 target_link_libraries (mod BearingLib)
 target_link_libraries (mod SerialLib)
 target_link_libraries (mod UDPLib)
+target_link_libraries (mod PomdpLib)
 target_link_libraries (mod ${CMAKE_THREAD_LIBS_INIT})
