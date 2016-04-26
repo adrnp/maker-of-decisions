@@ -249,6 +249,12 @@ int create_directory(const char *path, mode_t mode) {
 }
 
 
+string to_zeropad_string(const int &val, const int &len) {
+	string input = to_string(val);
+	return string(len - input.length(), '0') + input;
+}
+
+
 int setup_logfiles() {
 
 	// the return variable
@@ -262,7 +268,7 @@ int setup_logfiles() {
 	time(&rawtime);
 	timeinfo = localtime(&rawtime);
 	//int wday = timeinfo->tm_wday;
-
+	
 	// get the current time while we are at it for actually naming the files....
 	int hour = timeinfo->tm_hour;
 	int min = timeinfo->tm_min;
@@ -276,14 +282,14 @@ int setup_logfiles() {
 	
 	// now check to make sure if this specific day of the week directory has been created
 	//string day_path = log_path + day[wday] + "/";
-	string day_path = log_path + to_string(timeinfo->tm_mon + 1) + "_" + to_string(timeinfo->tm_mday) + "/";
+	string day_path = log_path + to_zeropad_string(timeinfo->tm_mon + 1, 2) + "_" + to_zeropad_string(timeinfo->tm_mday, 2) + "/";
 	status = create_directory(day_path.c_str(), 0777);
 	if (status < 0) {
 		return -1;
 	}	
 
 	// finally create yet another directory that is timestamped that will contain all the log files
-	string time_path = day_path + to_string(hour) + "_" + to_string(min) + "/";
+	string time_path = day_path + to_zeropad_string(hour, 2) + "_" + to_zeropad_string(min, 2) + "/";
 	status = create_directory(time_path.c_str(), 0777);
 	if (status < 0) {
 		return -1;

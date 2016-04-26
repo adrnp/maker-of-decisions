@@ -18,6 +18,9 @@ int get_configuration(int argc, char **argv);
 /* check to see if a directory exists and create it if it doesn't */
 int create_directory(const char *path, mode_t mode);
 
+/* convert an integer to a string with that integer zeropaded to a given length */
+std::string to_zeropad_string(const int &val, const int &len);
+
 /* create all the folders needed for the logging and populate the logfile dir variable */
 int setup_logfiles();
 
