@@ -20,6 +20,8 @@
 #include <sstream>
 #include <map>
 #include <signal.h>
+#include <time.h>	// to determine the time of day and day of week
+#include <sys/stat.h>	// to create the logfile directory as needed
 
 #include "common.h"
 
@@ -57,6 +59,8 @@ namespace common {
 	int tracker_type = 0;			// the type of tracker to use
 
 	bool emily = false;			// default to not running the emily antenna configuration
+	
+	const char *logfile_dir;		// the logfile directory that will be used
 }
 
 
@@ -211,6 +215,70 @@ void quit_handler(int sig) {
 
 }
 
+// 0 = success, -1 = error
+int create_directory(const char *path, mode_t mode) {
+	struct stat st;
+	int status = 0;
+	
+	if (stat(path, &st) != 0) {
+		if (mkdir(path, mode) != 0) {
+			status = -1;
+		}
+	} else {
+		cout << "directory already exists\n";
+	}
+
+	// return the status
+	return status;
+}
+
+
+int setup_logfiles() {
+
+	// the return variable
+	int status = 0;
+	
+	// get the current day of the week for the logging file
+	const string day[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+	
+	time_t rawtime;
+	struct tm *timeinfo;
+	time(&rawtime);
+	timeinfo = localtime(&rawtime);
+	int wday = timeinfo->tm_wday;
+
+	// get the current time while we are at it for actually naming the files....
+	int hour = timeinfo->tm_hour;
+	int min = timeinfo->tm_min;
+
+	// check to see if the logs directory exists, and if it doesn't create it
+	string log_path = "logs/";
+	status = create_directory(log_path.c_str(), 0777);
+	if (status < 0) {
+		return -1;
+	}
+	
+	// now check to make sure if this specific day of the week directory has been created
+	//string day_path = log_path + day[wday] + "/";
+	string day_path = log_path + to_string(timeinfo->tm_mon + 1) + "_" + to_string(timeinfo->tm_mday) + "/";
+	status = create_directory(day_path.c_str(), 0777);
+	if (status < 0) {
+		return -1;
+	}	
+
+	// finally create yet another directory that is timestamped that will contain all the log files
+	string time_path = day_path + to_string(hour) + "_" + to_string(min) + "/";
+	status = create_directory(time_path.c_str(), 0777);
+	if (status < 0) {
+		return -1;
+	}
+
+	// at this point means that all the directories are now present so the logfile dir can be populared
+	common::logfile_dir = time_path.c_str();
+
+	return 0;
+}
+
 
 
 int main(int argc, char **argv) {
@@ -239,17 +307,15 @@ int main(int argc, char **argv) {
 		common::get_commands = true;
 	}
 
+	// setup all the log file stuff for this run
+	setup_logfiles();
+
 	// connect to the pixhawk
 	cout << "[MOD] connecting to pixhawk...\n";
 	common::pixhawk = new MavlinkSerial(common::verbose, pixhawk_port, baudrate);
 	cout << "[MOD] pixhawk get fd " << common::pixhawk->get_fd() << "\n";
 
 	
-
-	if (sensor_type == 0) {
-		// we don't want to use the wifly...
-	}
-
 	// ids of the threads
 	pthread_t readId;
 	pthread_t huntingId;

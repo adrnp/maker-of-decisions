@@ -53,6 +53,8 @@ namespace common {
 	/* stuff needed for emily antenna */
 	extern bool emily;
 
+	/* the directory for all the log files for this run */
+	extern const char *logfile_dir;
 }
 
 
