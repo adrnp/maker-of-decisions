@@ -1,9 +1,18 @@
+#include <cstdlib>
+#include <fstream>
+#include <iostream>
+#include <cmath>
+#include <vector>
+#include <inttypes.h>
+#include <unistd.h>
+#include <string.h>
 
 #include "fixed_planner.h"
 
+using namespace std;
 
-FixedPlanner(const char * command_file_name) : Planner(),
-_command_file_name(command_file_name)
+FixedPlanner::FixedPlanner(const char * command_file_name) : Planner(),
+_command_file_name(command_file_name),
 _num_cmds(0),
 _cmd_index(0)
 {
@@ -13,7 +22,7 @@ _cmd_index(0)
 }
 
 
-~FixedPlanner() {
+FixedPlanner::~FixedPlanner() {
 
 }
 
@@ -30,9 +39,9 @@ bool FixedPlanner::initialize() {
 	}
 
 	// make sure vectors are clean
-	cmd_north.clear();
-	cmd_east.clear();
-	cmd_alt.clear();
+	_cmd_north.clear();
+	_cmd_east.clear();
+	_cmd_alt.clear();
 
 	float cmdN;
 	float cmdE;
@@ -48,7 +57,7 @@ bool FixedPlanner::initialize() {
 		printf("[FIXED PLANNER] Alt cmd: %f\n", cmdA);
 	}
 
-	printf("[FIXED PLANNER] num commands read: %d\n", num_cmds);
+	printf("[FIXED PLANNER] num commands read: %d\n", _num_cmds);
 
 	_num_cmds = _cmd_north.size();
 	return true;

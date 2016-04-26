@@ -30,6 +30,9 @@
 #include "rfdetector_thread.h"
 #include "dirk_thread.h"
 
+#include "planners/fixed_planner.h"
+#include "planners/naive_planner.h"
+
 #include "mod.h"
 
 using std::string;
@@ -61,6 +64,8 @@ namespace common {
 	bool emily = false;			// default to not running the emily antenna configuration
 	
 	string logfile_dir;		// the logfile directory that will be used
+
+	Planner *planner = nullptr;
 }
 
 
@@ -330,22 +335,46 @@ int main(int argc, char **argv) {
 		common::get_commands = true;
 	}
 
-	
+	// ---------------------------------- //
+	// initialize things
+	// ---------------------------------- //
 
 	// connect to the pixhawk
 	cout << "[MOD] connecting to pixhawk...\n";
 	common::pixhawk = new MavlinkSerial(common::verbose, pixhawk_port, baudrate);
 	cout << "[MOD] pixhawk get fd " << common::pixhawk->get_fd() << "\n";
 
-	
-	// ids of the threads
-	pthread_t readId;
-	pthread_t huntingId;
+	// initialize the planner
+	common::planner = new FixedPlanner(common::command_file);	// default to running command files, this ensures this isn't null
+	switch (common::tracker_type) {
+
+		/* the naive tracker */
+		case TRACK_NAIVE:
+
+			common::planner = new NaivePlanner();
+			break;
+
+		/* variable step naive tracker */
+		case TRACK_VARIABLE:
+
+			common::planner = new NaivePlanner();
+			break;
+
+		/* the pomdp tracker */
+		case TRACK_POMDP:
+
+			break;
+	}
+	common::planner->initialize();
 	
 	// ---------------------------------- //
 	// create threads
 	// ---------------------------------- //
 	
+	// ids of the threads
+	pthread_t readId;
+	pthread_t huntingId;
+
 	// read thread
 	cout << "[MOD] handling threads\n";
 	pthread_create(&readId, NULL, read_thread, (void *)&common::uav);

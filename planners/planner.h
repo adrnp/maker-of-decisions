@@ -25,16 +25,19 @@ public:
 	/* complete a set of observations (e.g. ending a rotation) */
 	void complete_observations();
 
+	/* determine what the max rssi value was of the last rotation set */
+	int get_max_rssi(const vector<double> rssi_values);
+
 	/* update with a single observation */
 	// TODO: maybe want lat/lon here....?
 	void update_observation(const double &heading, const double &dir_gain, const double &omni_gain);
 
 	/* initialize the current planner */
 	// TODO: these initializations might need different inputs....
-	virtual bool initialize();
+	virtual bool initialize() {};
 
 	/* calculates what the next action should be - this is to be implemented by the subclasses */
-	virtual vector<float> action();
+	virtual vector<float> action() {};
 
 protected:
 

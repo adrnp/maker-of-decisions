@@ -37,10 +37,10 @@ private:
 	vector<float> _cmd_alt;
 
 	// file details
-	_num_cmds;
+	int _num_cmds;
 
 	// index param
-	_cmd_index;
+	int _cmd_index;
 
 };
 

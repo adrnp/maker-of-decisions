@@ -14,6 +14,7 @@
 
 #include "mav_struct.h"
 #include "libs/serial/mavlink_serial.h"
+#include "planners/planner.h"
 
 // some constants to determine tracking method
 #define TRACK_PATH		0
@@ -52,16 +53,19 @@ namespace common {
 
 	extern bool dual_wifly;
 
-	/* stuff needed for the tracking command */
+	/** stuff needed for the tracking command */
 	extern bool execute_tracking;
 	extern float flight_alt;
 	extern int tracker_type;
 
-	/* stuff needed for emily antenna */
+	/** stuff needed for emily antenna */
 	extern bool emily;
 
-	/* the directory for all the log files for this run */
+	/** the directory for all the log files for this run */
 	extern std::string logfile_dir;
+
+	/** the planner being used */
+	extern Planner *planner;
 }
 
 

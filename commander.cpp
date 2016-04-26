@@ -84,7 +84,8 @@ void send_next_command(uint8_t &prev_state, uint8_t &new_state, double &bearing,
 	printf("[COMMANDER] the previous state was: %i\n", prev_state);
 
 	vector<float> commands;
-	std::pair<float, float> commands_pair;	
+	float d_north = 0.0;
+	float d_east = 0.0;
 	switch (prev_state) {
 		case TRACKING_HUNT_STATE_OFF:
 		case TRACKING_HUNT_STATE_START:
@@ -99,7 +100,22 @@ void send_next_command(uint8_t &prev_state, uint8_t &new_state, double &bearing,
 				break;
 			}
 
+			/* send the next command depending on tracking mode */
+			commands = common::planner->action();
+			d_north = commands[0];
+			d_east = commands[1];
+
+			if (common::verbose) printf("[COMMANDER] following tracking command (%f, %f)\n", d_north, d_east);
+			common::pixhawk->send_tracking_command(d_north, d_east, 360.0);
+
+			if (d_north == 1000.0) {
+				printf("[COMMANDER] sending finish command\n");
+				common::pixhawk->send_finish_command();
+				return;
+			}
+
 			/* send next command depending on flight mode */
+			/*
 			if (common::execute_tracking) {
 				printf("[COMMANDER] sending a tracking command\n");
 				// get the next command, which depends on the tracking method desired
@@ -141,7 +157,8 @@ void send_next_command(uint8_t &prev_state, uint8_t &new_state, double &bearing,
 				if (common::verbose) printf("[COMMANDER] sending the next preset move command\n");	
 				// send the next move command
 				send_move_command();
-			}
+			} */
+
 			break;
 		case TRACKING_HUNT_STATE_MOVE:
 			// moving = false;		// NO LONGER NEEDED

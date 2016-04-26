@@ -21,10 +21,11 @@ set (EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR})
 
 # get all the files that make up mod
 file (GLOB SOURCES "*.cpp")
-file (GLOB PLANNER_SOURCE "planners/*.cpp")
+file (GLOB PLANNER_SOURCES "planners/*.cpp")
 
 # make the executable
-add_executable(mod ${SOURCES} ${PLANNER_SOURCES})
+add_executable(mod ${SOURCES}
+					${PLANNER_SOURCES})
 target_link_libraries (mod BearingLib)
 target_link_libraries (mod SerialLib)
 target_link_libraries (mod UDPLib)
