@@ -60,7 +60,7 @@ namespace common {
 
 	bool emily = false;			// default to not running the emily antenna configuration
 	
-	const char *logfile_dir;		// the logfile directory that will be used
+	string logfile_dir;		// the logfile directory that will be used
 }
 
 
@@ -108,6 +108,12 @@ int get_configuration(int argc, char **argv) {
 	// the map containing all the params
 	map<string, string> config_map;
 
+	// the logfile that will get all the config params
+	// doing this so we know what configs were used for each flight
+	string config_logfile_path = common::logfile_dir + "config.cfg";
+	ofstream config_logfile(config_logfile_path);
+	bool log_open = config_logfile.is_open();
+
 	/* parse through the config file */
 	ifstream infile(config_filename);
 	
@@ -126,8 +132,18 @@ int get_configuration(int argc, char **argv) {
 			if (getline(curr_line, value)) {  // read rest set that to value
 				config_map[key] = value;
 				cout << "key: " << key << "\tvalue: " << value << "\n";
+				
+				// log the configuration
+				if (log_open) {
+					config_logfile << key << "=" << value << "\n";
+				}
 			}
 		}
+	}
+
+	// close the configuration log
+	if (log_open) {
+		config_logfile.close();
 	}
 
 	/* general */
@@ -239,13 +255,13 @@ int setup_logfiles() {
 	int status = 0;
 	
 	// get the current day of the week for the logging file
-	const string day[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+	//const string day[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
 	
 	time_t rawtime;
 	struct tm *timeinfo;
 	time(&rawtime);
 	timeinfo = localtime(&rawtime);
-	int wday = timeinfo->tm_wday;
+	//int wday = timeinfo->tm_wday;
 
 	// get the current time while we are at it for actually naming the files....
 	int hour = timeinfo->tm_hour;
@@ -274,7 +290,7 @@ int setup_logfiles() {
 	}
 
 	// at this point means that all the directories are now present so the logfile dir can be populared
-	common::logfile_dir = time_path.c_str();
+	common::logfile_dir = time_path;
 
 	return 0;
 }
@@ -292,6 +308,9 @@ int main(int argc, char **argv) {
 	// get and set all the configurations
 	// ---------------------------------- //
 	
+	// setup all the log file stuff for this run
+	setup_logfiles();
+	
 	cout << "[MOD] reading arguments\n";
 	
 	
@@ -307,8 +326,7 @@ int main(int argc, char **argv) {
 		common::get_commands = true;
 	}
 
-	// setup all the log file stuff for this run
-	setup_logfiles();
+	
 
 	// connect to the pixhawk
 	cout << "[MOD] connecting to pixhawk...\n";
