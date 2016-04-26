@@ -1,5 +1,11 @@
+#include <cstdlib>
+#include <fstream>
+#include <cmath>
 #include <vector>
-#include "planner.h"
+#include <inttypes.h>
+#include <unistd.h>
+
+#include "naive_planner.h"
 
 using std::vector;
 
@@ -9,38 +15,9 @@ using std::vector;
 #define STEP_LARGE 50.0
 
 
-class NaivePlanner : public Planner {
-
-public:
-
-	/* return the action */
-	vector<float> action();
-
-private:
-
-	// overall information used to make decisions
-	vector<double> _observed_bearing;
-	vector<int> _observed_rssi;
-	vector<float> _step_sizes;
-
-
-	/* update vars that contain list of all the observations for a given tracking run */
-	void update_naive_observations();
-
-	float calculate_step_size();
-
-	// METHODS FOR CALCULATING NEXT COMMANDS
-
-	/* calculate the next tracking command */
-	vector<float> calc_next_command();
-
-
-	/* calculate the next tracking command with a variable step size */
-	vector<float> calc_next_command_variable();
-};
-
-
-NaivePlanner::NaivePlanner() : Planner() {
+NaivePlanner::NaivePlanner() : Planner(),
+_first_step(false)
+{
 	_observed_bearing.clear();
 	_observed_rssi.clear();
 	_step_sizes.clear();
@@ -51,29 +28,103 @@ NaivePlanner::~NaivePlanner() {
 }
 
 
-NaivePlanner::update_naive_observations() {
+void NaivePlanner::update_naive_observations() {
 
-}
-
-NaivePlanner::calculate_step_size() {
-
-}
-
-NaivePlanner::calc_next_command() {
-
-}
-
-NaivePlanner::calc_next_command_variable() {
+	/* simply adding the most recent bearing and max rssi to the list of observations we've made */
+	_observed_bearing.push_back(_bearing_max);
+	_observed_rssi.push_back(_max_rssi);
 
 }
 
 
-NaivePlanner::action() {
+float NaivePlanner::calculate_step_size() {
+	// figure out how many observations have been made
+	int numObs = _observed_bearing.size();
+
+	float prevStepSize = _step_sizes[_step_sizes.size() - 1];
+	float nextStepSize = prevStepSize;
+
+	float difference = abs(_observed_bearing[numObs-1] - _observed_bearing[numObs-2]); 
+	printf("[NAIVE] difference is %f\n", difference);
+	if (difference < BEARING_TOL) {
+		printf("[NAIVE] step sizes within tolerance\n");
+		// double the step size
+		nextStepSize *= STEP_INCREASE_FACTOR;
+	} else {
+		printf("[NAIVE] step size not within tol\n");
+		// reset back to the smallest step size
+		nextStepSize = STEP_SMALL;
+	}
+
+	return nextStepSize;
+}
+
+
+vector<float> NaivePlanner::calc_next_command(const double &bearing, const double &rssi) {
+	// bearing is degrees from 0 to 359
+
+	printf("[NAIVE] calculating the next command with input (%f, %f)\n", bearing, rssi);
+	
+	// for debug purposes, force a specific bearing and rssi
+	double bear = _bearing_max;
+	if (bear >= 360.0) {
+		bear = bear - 360.0;
+	}
+	int rs = 20;
+
+	// commands are a vector of [north, south]
+	vector<float> commands;
+
+	float k = 0.5; // units: m / dB
+
+	//float north = k * (double) rssi * cos(bearing * M_PI/180.0);
+	//float east = k * ( double) rssi * sin(bearing * M_PI/180.0);
+
+	float north = k * (double) rs * cos(bear * M_PI/180.0);
+	float east = k * ( double) rs * sin(bear * M_PI/180.0);
+
+	commands.push_back(north);
+	commands.push_back(east);
+
+	return commands;
+}
+
+
+vector<float> NaivePlanner::calc_next_command_variable(const double &bearing, const double &rssi) {
+
+	float step = STEP_SMALL;
+	if (!_first_step) {
+		step = calculate_step_size();
+	}
+	_step_sizes.push_back(step);
+
+	printf("[NAIVE] calculating the next variable size command with input (%f, %f)\n", bearing, rssi);
+
+	// commands are a vector of [north, south]
+	vector<float> commands;
+
+	float north = step * cos(bearing * M_PI/180.0);
+	float east = step * sin(bearing * M_PI/180.0);
+
+	commands.push_back(north);
+	commands.push_back(east);
+
+	return commands;
+}
+
+// the virtual function implementations
+
+bool NaivePlanner::initialize() {
+	// nothing needs to be done for initialization.... this just needs to be here
+}
+
+
+vector<float> NaivePlanner::action() {
 	// use the most recently calculated bearing and max rssi to update the internal lists
 	update_naive_observations();
 
 	// TODO: need some configurability...
 
 	// right now just use the variable step size code
-	return calc_next_command_variable();
+	return calc_next_command_variable(_bearing_max, _max_rssi);
 }

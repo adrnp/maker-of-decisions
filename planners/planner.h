@@ -31,7 +31,7 @@ public:
 
 	/* initialize the current planner */
 	// TODO: these initializations might need different inputs....
-	virtual void initialize();
+	virtual bool initialize();
 
 	/* calculates what the next action should be - this is to be implemented by the subclasses */
 	virtual vector<float> action();

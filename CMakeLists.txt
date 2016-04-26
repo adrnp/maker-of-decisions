@@ -11,14 +11,18 @@ add_subdirectory ("libs/bearing")
 add_subdirectory ("libs/serial")
 add_subdirectory ("libs/udp")
 
+# include the planners directory
+include_directories ("${PROJECT_SOURCE_DIR}/planners")
+
 # set the output path for the resulting executable
 set (EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR})
 
 # get all the files that make up mod
-file(GLOB SOURCES "*.cpp")
+file (GLOB SOURCES "*.cpp")
+file (GLOB PLANNER_SOURCE "planners/*.cpp")
 
 # make the executable
-add_executable(mod ${SOURCES})
+add_executable(mod ${SOURCES} ${PLANNER_SOURCES})
 target_link_libraries (mod BearingLib)
 target_link_libraries (mod SerialLib)
 target_link_libraries (mod UDPLib)
