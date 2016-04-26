@@ -197,10 +197,11 @@ int WiflyHunter::get_max_rssi(const vector<double> rssi_values) {
 int WiflyHunter::main_loop() {
 
 	// some constants that all need to become parameters
-	char *ssid = (char *) "JAMMER01"; // "ADL"; // "JAMMER01";
-	char *file_name = (char *) "wifly.csv";
-	char *bearing_file_name = (char *) "bearing_calc_eor.csv";
-	char *bearing_mle_file_name = (char *) "bearing_calc_mle.csv";
+	char *ssid = (char *) "JAMMER01"; // "ADL"; // "JAMMER01";		// the SSID that the wifly is looking for
+
+	string rssi_logfile_name = common::logfile_dir + "rssi.csv";					// the logfile for the rssi values
+	string bearing_logfile_name = common::logfile_dir + "bearing_calc_eor.csv";		// the logfile for the end of rotation bearing calculations
+	string bearing_mle_logfile_name = common::logfile_dir + "bearing_calc_mle.csv";	// the logfile for the mle bearing estimates
 
 	// connect to the first wifly
 	WiflySerial* wifly1 = new WiflySerial(_verbose, common::sensor_port);
@@ -216,8 +217,8 @@ int WiflyHunter::main_loop() {
 
 	/* Open a file to write values to */
 	/* Appending values */
-	FILE *wifly_file = fopen(file_name, "a");
-	if (wifly_file == NULL)
+	FILE *rssi_logfile = fopen(rssi_logfile_name.c_str(), "a");
+	if (rssi_logfile == NULL)
 	{
 		// TODO: figure out what we do want to return when there is an error
 		printf("[WIFLY] Error opening wifly file\n");
@@ -225,32 +226,32 @@ int WiflyHunter::main_loop() {
 	}
 
 	/* Open a file to write bearing calcs to */
-	FILE *bearing_file = fopen(bearing_file_name, "a");
-	if (bearing_file == NULL)
+	FILE *bearing_logfile = fopen(bearing_logfile_name.c_str(), "a");
+	if (bearing_logfile == NULL)
 	{
 		// TODO: figure out what we do want to return when there is an error
 		printf("[WIFLY] Error opening bearing output file\n");
-		fclose(wifly_file);
+		fclose(rssi_logfile);
 		return -1;
 	}
 
-	FILE *bearing_file_mle = NULL;
+	FILE *bearing_logfile_mle = NULL;
 	WiflySerial* wifly2 = NULL;
 	if (common::dual_wifly) {
-		bearing_file_mle = fopen(bearing_mle_file_name, "a");
-		if (bearing_file_mle == NULL) {
+		bearing_logfile_mle = fopen(bearing_mle_logfile_name.c_str(), "a");
+		if (bearing_logfile_mle == NULL) {
 			printf("[WIFLY] Error opening bearing mle output file\n");
-			fclose(wifly_file);
-			fclose(bearing_file);
+			fclose(rssi_logfile);
+			fclose(bearing_logfile);
 			return -1;
 		}
 
 		wifly2 = new WiflySerial(_verbose, common::omni_wifly_port);
 		if (wifly2->fd < 0) {
 			printf("[WIFLY] Error opening wifly 2 connection\n");
-			fclose(wifly_file);
-			fclose(bearing_file);
-			fclose(bearing_file_mle);
+			fclose(rssi_logfile);
+			fclose(bearing_logfile);
+			fclose(bearing_logfile_mle);
 			return -1;
 		}
 		printf("[WIFLY] wifly 2 fd is %d\n", wifly2->fd);
@@ -267,10 +268,10 @@ int WiflyHunter::main_loop() {
 		bool loaded = load_move_commands();
 		if (!loaded) {
 			printf("[WIFLY] Error loading move commands\n");
-			fclose(wifly_file);
-			fclose(bearing_file);
+			fclose(rssi_logfile);
+			fclose(bearing_logfile);
 			if (common::dual_wifly) {
-				fclose(bearing_file_mle);
+				fclose(bearing_logfile_mle);
 			}
 			return -1;
 		}
@@ -358,7 +359,7 @@ int WiflyHunter::main_loop() {
 				double curr_bearing_est = get_bearing_mle(_angles, _norm_gains);
 
 				// save the calculated mle bearing
-				fprintf(bearing_file_mle, "%llu,%i,%i,%f,%f\n", _jager->sys_time_us.time_unix_usec,
+				fprintf(bearing_logfile_mle, "%llu,%i,%i,%f,%f\n", _jager->sys_time_us.time_unix_usec,
 					_jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt, curr_bearing_est);
 
 				// send a mavlink message of the calculated mle bearing
@@ -375,7 +376,7 @@ int WiflyHunter::main_loop() {
 			rotation_completed();
 
 			// save bearing cc to file (with important information)
-			fprintf(bearing_file, "%llu,%i,%i,%f,%f,%f,%i\n", _jager->sys_time_us.time_unix_usec,
+			fprintf(bearing_logfile, "%llu,%i,%i,%f,%f,%f,%i\n", _jager->sys_time_us.time_unix_usec,
 				_jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt, _bearing_cc, _bearing_max, _max_rssi);
 
 			// send a mavlink message of the calculated bearing
@@ -392,7 +393,7 @@ int WiflyHunter::main_loop() {
 
 
 		/* write the directional antenna information */
-		fprintf(wifly_file, "%llu,%u,%i,%i,%i,%i,%i,%f,%i, %i\n",
+		fprintf(rssi_logfile, "%llu,%u,%i,%i,%i,%i,%i,%f,%i, %i\n",
 				_jager->sys_time_us.time_unix_usec, _jager->custom_mode, _rotating, _heading_dir_pre, _heading_dir_post,
 				_jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt, _dir_rssi, _omni_rssi);
 
@@ -420,15 +421,15 @@ int WiflyHunter::main_loop() {
 	
 	
 	/* Be sure to close the output file and connection */
-	fclose(wifly_file);
-	fclose(bearing_file);
+	fclose(rssi_logfile);
+	fclose(bearing_logfile);
 	wifly1->end_serial();
 
 	delete &udp;
 
 
 	if (common::dual_wifly) {
-		fclose(bearing_file_mle);
+		fclose(bearing_logfile_mle);
 		wifly2->end_serial();
 	}
 

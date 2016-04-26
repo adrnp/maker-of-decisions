@@ -203,13 +203,13 @@ int RFDetector::get_max_rssi(const vector<double> rssi_values) {
 int RFDetector::main_loop() {
 
 	// some constants that all need to become parameters
-	char *file_name = (char *) "wifly.csv";
-	char *bearing_file_name = (char *) "bearing_calc_eor.csv";
-
+	string rssi_logfile_name = common::logfile_dir + "rssi.csv";					// the logfile for the rssi values
+	string bearing_logfile_name = common::logfile_dir + "bearing_calc_eor.csv";		// the logfile for the end of rotation bearing calculations
+	
 	/* Open a file to write values to */
 	/* Appending values */
-	FILE *wifly_file = fopen(file_name, "a");
-	if (wifly_file == NULL)
+	FILE *rssi_logfile = fopen(rssi_logfile_name.c_str(), "a");
+	if (rssi_logfile == NULL)
 	{
 		// TODO: figure out what we do want to return when there is an error
 		printf("[RFDETECTOR] Error opening wifly file\n");
@@ -217,12 +217,12 @@ int RFDetector::main_loop() {
 	}
 
 	/* Open a file to write bearing calcs to */
-	FILE *bearing_file = fopen(bearing_file_name, "a");
-	if (bearing_file == NULL)
+	FILE *bearing_logfile = fopen(bearing_logfile_name.c_str(), "a");
+	if (bearing_logfile == NULL)
 	{
 		// TODO: figure out what we do want to return when there is an error
 		printf("[RFDETECTOR] Error opening bearing output file\n");
-		fclose(wifly_file);
+		fclose(rssi_logfile);
 		return -1;
 	}
 
@@ -237,8 +237,8 @@ int RFDetector::main_loop() {
 		bool loaded = load_move_commands();
 		if (!loaded) {
 			printf("[RFDETECTOR] Error loading move commands\n");
-			fclose(wifly_file);
-			fclose(bearing_file);
+			fclose(rssi_logfile);
+			fclose(bearing_logfile);
 			return -1;
 		}
 	}
@@ -303,7 +303,7 @@ int RFDetector::main_loop() {
 			rotation_completed();
 
 			// save bearing cc to file (with important information)
-			fprintf(bearing_file, "%llu,%i,%i,%f,%f,%f,%i\n", _jager->sys_time_us.time_unix_usec,
+			fprintf(bearing_logfile, "%llu,%i,%i,%f,%f,%f,%i\n", _jager->sys_time_us.time_unix_usec,
 				_jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt, _bearing_cc, _bearing_max, _max_rssi);
 
 			// send a mavlink message of the calculated bearing
@@ -320,7 +320,7 @@ int RFDetector::main_loop() {
 
 
 		/* write the directional antenna information */
-		fprintf(wifly_file, "%llu,%u,%i,%i,%i,%i,%i,%f,%i, %i\n",
+		fprintf(rssi_logfile, "%llu,%u,%i,%i,%i,%i,%i,%f,%i, %i\n",
 				_jager->sys_time_us.time_unix_usec, _jager->custom_mode, _rotating, _meas_heading, _meas_heading,
 				_jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt, _dir_rssi, _omni_rssi);
 
@@ -348,8 +348,8 @@ int RFDetector::main_loop() {
 	
 	
 	/* Be sure to close the output file and connection */
-	fclose(wifly_file);
-	fclose(bearing_file);
+	fclose(rssi_logfile);
+	fclose(bearing_logfile);
 
 	delete &udp;
 
