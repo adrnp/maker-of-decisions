@@ -16,9 +16,11 @@
 #include "libs/serial/mavlink_serial.h"
 
 // some constants to determine tracking method
-#define TRACK_NAIVE 1
-#define TRACK_POMDP 2
-#define TRACK_VARIABLE 3
+#define TRACK_PATH		0
+#define TRACK_NAIVE 	1
+#define TRACK_VARIABLE 	2
+#define TRACK_POMDP 	3
+
 
 namespace common {
 
