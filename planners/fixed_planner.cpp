@@ -56,12 +56,11 @@ bool FixedPlanner::initialize() {
 		printf("[FIXED PLANNER] East cmd: %f\n", cmdE);
 		printf("[FIXED PLANNER] Alt cmd: %f\n", cmdA);
 	}
-
-	printf("[FIXED PLANNER] num commands read: %d\n", _num_cmds);
-
+	
 	_num_cmds = _cmd_north.size();
+	printf("[FIXED PLANNER] num commands read: %d\n", _num_cmds);
+	
 	return true;
-
 }
 
 

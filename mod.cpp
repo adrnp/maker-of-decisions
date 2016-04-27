@@ -347,24 +347,24 @@ int main(int argc, char **argv) {
 	// initialize the planner
 	common::planner = new FixedPlanner(common::command_file);	// default to running command files, this ensures this isn't null
 	switch (common::tracker_type) {
-
 		/* the naive tracker */
 		case TRACK_NAIVE:
-
+			cout << "[MOD] running naive planner\n";
 			common::planner = new NaivePlanner();
 			break;
 
 		/* variable step naive tracker */
 		case TRACK_VARIABLE:
-
+			cout << "[MOD] running naive planner variable\n";
 			common::planner = new NaivePlanner();
 			break;
 
 		/* the pomdp tracker */
 		case TRACK_POMDP:
-
+			cout << "[MOD} running pomdp planner\n";
 			break;
 	}
+	cout << "[MOD] initializing planner...\n";
 	common::planner->initialize();
 	
 	// ---------------------------------- //
