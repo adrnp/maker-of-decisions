@@ -13,30 +13,57 @@ class Planner {
 
 public:
 
-	/* constructor */
+	/**
+	 * constructor
+	 */
 	Planner();
 
-	/* destructor */
+	/**
+	 * destructor
+	 */
 	~Planner();
 
-	/* reset set of obs (e.g. starting a rotation) */
+	/**
+	 * reset the current observation values.  Not necessarily needed, but good to make sure.
+	 */
 	void reset_observations();
 
-	/* complete a set of observations (e.g. ending a rotation) */
-	void complete_observations();
-
-	/* determine what the max rssi value was of the last rotation set */
+	/**
+	 * determine max signal strength from a set of measurements.
+	 * @param  rssi_values  vector of the set of measurements
+	 * @return              integer value of the maximum signal strength
+	 */
 	int get_max_rssi(const vector<double> rssi_values);
 
-	/* update with a single observation */
-	// TODO: maybe want lat/lon here....?
+	/**
+	 * update a single observation.  A single observations is just a heading and signal strength.
+	 * @param heading   heading of the antenna for this measurement
+	 * @param dir_gain  signal strength value from the directional antenna
+	 * @param omni_gain signal strength value from the omni directional atenna
+	 */
 	void update_observation(const double &heading, const double &dir_gain, const double &omni_gain);
 
-	/* initialize the current planner */
-	// TODO: these initializations might need different inputs....
+	/**
+	 * update a set of observations.  For example after a rotation.
+	 * @param headings     vector of headings for the signal strength measurements
+	 * @param dir_gains    vector of measured signal strength values from the directional antenna
+	 * @param omni_gains   vector of measured signal strength values from the omnidirectional antenna
+	 * @param bearing_cc   calculated cross correlation bearing
+	 * @param bearing_max  calculated max bearing
+	 * @param bearing_max3 calculated max3 bearing
+	 */
+	void update_observations(const vector<double> headings, const vector<double> dir_gains, const vector<double> omni_gains,
+							 double &bearing_cc, double &bearing_max, double &bearing_max3);
+
+	/**
+	 * initialize the current planner. To be implemented by each individual planner.
+	 * @return true if initialization was successful
+	 */
 	virtual bool initialize() {};
 
-	/* calculates what the next action should be - this is to be implemented by the subclasses */
+	/**
+	 * calculates what the next action should be.  This is to be each individual planner.
+	 */
 	virtual vector<float> action() {};
 
 protected:
