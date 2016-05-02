@@ -118,14 +118,6 @@ void *dirk_thread(void *param) {
 		return NULL;
 	}
 
-	if (common::get_commands) {
-		bool loaded = load_move_commands();
-		if (!loaded) {
-			printf("Error loading move commands\n");
-			return NULL;
-		}
-	}
-
 	bool move_pending = false;
 	int num_measurements_received = 0;
 	bool received_data = false;

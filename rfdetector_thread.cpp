@@ -229,19 +229,6 @@ int RFDetector::main_loop() {
 	UDP* udp = new UDP();
 
 
-	// TODO: move this into a class or something
-	/* check if using specific commands */
-	if (common::get_commands) {
-		bool loaded = load_move_commands();
-		if (!loaded) {
-			printf("[RFDETECTOR] Error loading move commands\n");
-			fclose(rssi_logfile);
-			fclose(bearing_logfile);
-			return -1;
-		}
-	}
-	
-
 	struct timeval tv;
 	unsigned long prev_loop_timestamp;
 
@@ -337,7 +324,7 @@ int RFDetector::main_loop() {
 		// if sending the next command has been flagged, send the next command, using the calculated data
 		if (_send_next) {
 			printf("[RFDETECTOR][CMD] calling to send the next command...\n");
-			send_next_command(_prev_hunt_state, _jager->tracking_status.hunt_mode_state, _bearing_max, _max_rssi);
+			send_next_command(_prev_hunt_state, _jager->tracking_status.hunt_mode_state);
 			_send_next = false;
 		}
 

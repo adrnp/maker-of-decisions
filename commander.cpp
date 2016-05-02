@@ -33,7 +33,6 @@
 #include "libs/serial/mavlink_serial.h"
 #include "common.h"
 #include "commander.h"
-#include "tracker.h"
 
 // include what is needed ofr  the POMDP commands
 #include "planner/pomdp.h"

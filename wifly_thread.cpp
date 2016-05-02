@@ -259,21 +259,6 @@ int WiflyHunter::main_loop() {
 	/* open a UDP connection to send data down to the ground station */
 	UDP* udp = new UDP();
 
-
-	if (common::get_commands) {
-		bool loaded = load_move_commands();
-		if (!loaded) {
-			printf("[WIFLY] Error loading move commands\n");
-			fclose(rssi_logfile);
-			fclose(bearing_logfile);
-			if (common::dual_wifly) {
-				fclose(bearing_logfile_mle);
-			}
-			return -1;
-		}
-	}
-	
-
 	struct timeval tv;
 	unsigned long prev_loop_timestamp;
 
@@ -408,7 +393,7 @@ int WiflyHunter::main_loop() {
 		// if sending the next command has been flagged, send the next command, using the calculated data
 		if (_send_next) {
 			printf("[WIFLY][CMD] calling to send the next command...\n");
-			send_next_command(_prev_hunt_state, _jager->tracking_status.hunt_mode_state, _bearing_max, _max_rssi);
+			send_next_command(_prev_hunt_state, _jager->tracking_status.hunt_mode_state);
 			_send_next = false;
 		}
 
