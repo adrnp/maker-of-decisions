@@ -339,11 +339,6 @@ int main(int argc, char **argv) {
 	// initialize things
 	// ---------------------------------- //
 
-	// connect to the pixhawk
-	cout << "[MOD] connecting to pixhawk...\n";
-	common::pixhawk = new MavlinkSerial(common::verbose, pixhawk_port, baudrate);
-	cout << "[MOD] pixhawk get fd " << common::pixhawk->get_fd() << "\n";
-
 	// initialize the planner
 	common::planner = new FixedPlanner(common::command_file);	// default to running command files, this ensures this isn't null
 	switch (common::tracker_type) {
@@ -366,6 +361,11 @@ int main(int argc, char **argv) {
 	}
 	cout << "[MOD] initializing planner...\n";
 	common::planner->initialize();
+
+	// connect to the pixhawk
+	cout << "[MOD] connecting to pixhawk...\n";
+	common::pixhawk = new MavlinkSerial(common::verbose, pixhawk_port, baudrate);
+	cout << "[MOD] pixhawk get fd " << common::pixhawk->get_fd() << "\n";
 	
 	// ---------------------------------- //
 	// create threads
