@@ -29,10 +29,6 @@ namespace common {
 	/** boolean to determine whether or not to show debug outputs */
 	extern bool debug;
 
-	/** use command file */
-	extern bool get_commands;
-	extern const char* command_file;
-
 	/** MAVInfo object containing the current state information of the uav */
 	extern MAVInfo uav;
 
@@ -52,7 +48,6 @@ namespace common {
 	extern bool dual_wifly;
 
 	/** stuff needed for the tracking command */
-	extern bool execute_tracking;
 	extern float flight_alt;
 	extern int tracker_type;
 

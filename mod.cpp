@@ -44,8 +44,6 @@ namespace common {
 	bool verbose = false;	// default verbose to false
 	bool debug = false;		// default debug to false
 
-	bool get_commands = false;	// default for whether or not we want to read the command file
-	const char* command_file = (char*) "commands/commands.csv";
 	MAVInfo uav;			// object to hold all the state information on the UAV
 	int RUNNING_FLAG = 1;	// default the read and write threads to be running
 
@@ -57,7 +55,6 @@ namespace common {
 
 	bool dual_wifly = false;	// default to only have one wifly active
 
-	bool execute_tracking = false;	// default to not executing a tracking mission
 	float flight_alt = 380;			// default flight is AMSL
 	int tracker_type = TRACK_NAIVE;	// the type of tracker to use
 
@@ -81,6 +78,8 @@ int sensor_type = 0;
 const char *pixhawk_port = (char*)"/dev/ttyUSB1";
 int baudrate = 115200;
 
+
+const char *command_file = (char*) "commands/commands.csv";
 
 
 int get_configuration(int argc, char **argv) {
@@ -156,12 +155,8 @@ int get_configuration(int argc, char **argv) {
 		common::verbose = (stoi(config_map["verbose"]) == 1);
 	}
 
-	if (config_map.find("mission_type") != config_map.end()) {
-		mission_type = stoi(config_map["mission_type"]);
-	}
-
-	if (config_map.find("tracker_type") != config_map.end()) {
-		common::tracker_type = stoi(config_map["tracker_type"]);
+	if (config_map.find("planner_type") != config_map.end()) {
+		common::tracker_type = stoi(config_map["planner_type"]);
 	}
 
 	if (config_map.find("sensor_type") != config_map.end()) {
@@ -174,7 +169,7 @@ int get_configuration(int argc, char **argv) {
 
 	/* command file */
 	if (config_map.find("command_file") != config_map.end()) {
-		common::command_file = config_map["command_file"].c_str();
+		command_file = config_map["command_file"].c_str();
 	}
 
 	/* pixhawk */
@@ -328,19 +323,12 @@ int main(int argc, char **argv) {
 		return 0;
 	}
 
-	// set some additional commons
-	if (mission_type > 0) {
-		common::execute_tracking = true;
-	} else {
-		common::get_commands = true;
-	}
-
 	// ---------------------------------- //
 	// initialize things
 	// ---------------------------------- //
 
 	// initialize the planner
-	common::planner = new FixedPlanner(common::command_file);	// default to running command files, this ensures this isn't null
+	common::planner = new FixedPlanner(command_file);	// default to running command files, this ensures this isn't null
 	switch (common::tracker_type) {
 		/* the naive tracker */
 		case TRACK_NAIVE:
