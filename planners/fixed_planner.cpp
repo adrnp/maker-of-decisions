@@ -26,6 +26,7 @@ _cmd_index(0)
 {
 	_cmd_north.clear();
 	_cmd_east.clear();
+	_cmd_yaw.clear();
 	_cmd_alt.clear();
 }
 
@@ -65,6 +66,7 @@ bool FixedPlanner::initialize() {
 
 		printf("[FIXED PLANNER] North command: %f\n", cmdN);
 		printf("[FIXED PLANNER] East cmd: %f\n", cmdE);
+		printf("[FIXED PLANNER] Yaw cmd: %f\n", cmdY);
 		printf("[FIXED PLANNER] Alt cmd: %f\n", cmdA);
 	}
 	
