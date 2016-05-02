@@ -12,7 +12,7 @@
 
 #include "mav_struct.h"
 #include "libs/serial/mavlink_serial.h"
-#include "planners/planner.h"
+#include "libs/planners/planner.h"
 
 // some constants to determine tracking method
 #define TRACK_PATH		0

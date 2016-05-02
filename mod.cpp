@@ -30,8 +30,8 @@
 #include "rfdetector_thread.h"
 #include "dirk_thread.h"
 
-#include "planners/fixed_planner.h"
-#include "planners/naive_planner.h"
+#include "libs/planners/fixed_planner.h"
+#include "libs/planners/naive_planner.h"
 
 #include "mod.h"
 

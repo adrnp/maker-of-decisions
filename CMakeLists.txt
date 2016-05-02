@@ -10,9 +10,9 @@ include_directories ("${PROJECT_SOURCE_DIR}/libs/*")
 add_subdirectory ("libs/bearing")
 add_subdirectory ("libs/serial")
 add_subdirectory ("libs/udp")
+add_subdirectory ("libs/planners")
 
 # include the planners directory
-include_directories ("${PROJECT_SOURCE_DIR}/planners")
 include_directories ("${PROJECT_SOURCE_DIR}/planner")
 add_subdirectory ("planner")
 
@@ -21,13 +21,12 @@ set (EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR})
 
 # get all the files that make up mod
 file (GLOB SOURCES "*.cpp")
-file (GLOB PLANNER_SOURCES "planners/*.cpp")
 
 # make the executable
-add_executable(mod ${SOURCES}
-					${PLANNER_SOURCES})
+add_executable(mod ${SOURCES})
 target_link_libraries (mod BearingLib)
 target_link_libraries (mod SerialLib)
 target_link_libraries (mod UDPLib)
 target_link_libraries (mod PomdpLib)
+target_link_libraries (mod PlannerLib)
 target_link_libraries (mod ${CMAKE_THREAD_LIBS_INIT})
