@@ -70,6 +70,7 @@ private:
 	int16_t _heading_omni_post;
 	double _bearing_cc;
 	double _bearing_max;
+	double _bearing_max3;
 	int _max_rssi;
 
 

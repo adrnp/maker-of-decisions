@@ -59,6 +59,7 @@ _heading_dir_post(0),
 _heading_omni_post(0),
 _bearing_cc(0),
 _bearing_max(0),
+_bearing_max3(0),
 _max_rssi(-100)
 {
 	/* "initialize" all the vectors */
@@ -99,6 +100,7 @@ void WiflyHunter::rotation_completed() {
 	/* get bearing and values */
 	_bearing_cc = get_bearing_cc(_angles, _gains);		// do bearing calculation at this point
 	_bearing_max = get_bearing_max(_angles, _gains);	// also do max bearing calculation
+	_bearing_max3 = get_bearing_max3(_angles, _gains);	// do meax3 bearing calculation
 	_max_rssi = get_max_rssi(_gains);					// get what the max value was for the rssi
 
 	if (_verbose) {
@@ -317,6 +319,7 @@ int WiflyHunter::main_loop() {
 
 			if (!_in_rotation) {
 				rotation_init();
+				common::planner->reset_observations();
 			}
 
 			printf("[WIFLY][STATE][ROT] rotating\n");
@@ -343,12 +346,13 @@ int WiflyHunter::main_loop() {
 				fprintf(bearing_logfile_mle, "%llu,%i,%i,%f,%f\n", _jager->sys_time_us.time_unix_usec,
 					_jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt, curr_bearing_est);
 
-				// send a mavlink message of the calculated mle bearing
-				common::pixhawk->send_bearing_mle_message(curr_bearing_est, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);
-
-				// send the udp message (directly to ground)
-				udp->send_bearing_message(TYPE_BEARING_MLE, curr_bearing_est, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);
+				/* send data */
+				common::pixhawk->send_bearing_mle_message(curr_bearing_est, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);		// send a mavlink message of the calculated mle bearing
+				udp->send_bearing_message(TYPE_BEARING_MLE, curr_bearing_est, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);		// send the udp message (directly to ground)
 			}
+
+			// update the planner's most recent observations
+			common::planner->update_observation(_heading_dir_pre, _dir_rssi, _omni_rssi);
 		}
 
 
@@ -356,15 +360,16 @@ int WiflyHunter::main_loop() {
 		if (!_rotating && _in_rotation) {
 			rotation_completed();
 
+			// update the planner's full observations
+			common::planner->update_observations(_angles, _gains, _omni_gains, _norm_gains, _bearing_cc, _bearing_max, _bearing_max3);
+
 			// save bearing cc to file (with important information)
 			fprintf(bearing_logfile, "%llu,%i,%i,%f,%f,%f,%i\n", _jager->sys_time_us.time_unix_usec,
 				_jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt, _bearing_cc, _bearing_max, _max_rssi);
 
-			// send a mavlink message of the calculated bearing
-			common::pixhawk->send_bearing_cc_message(_bearing_cc, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);
-
-			// send the udp message (directly to ground)
-			udp->send_bearing_message(TYPE_BEARING_CC, _bearing_cc, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);
+			/* send data */
+			common::pixhawk->send_bearing_cc_message(_bearing_cc, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);		// send a mavlink message of the calculated bearing
+			udp->send_bearing_message(TYPE_BEARING_CC, _bearing_cc, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);	// send the udp message (directly to ground)
 		}
 
 
@@ -378,12 +383,9 @@ int WiflyHunter::main_loop() {
 				_jager->sys_time_us.time_unix_usec, _jager->custom_mode, _rotating, _heading_dir_pre, _heading_dir_post,
 				_jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt, _dir_rssi, _omni_rssi);
 
-		// send a mavlink message with the current rssi
-		common::pixhawk->send_rssi_message(_dir_rssi, _omni_rssi, _heading_dir_pre, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);
-
-		// send the udp message (directly to ground)
-		// TODO: potentially only do this if we are in a rotation
-		udp->send_rssi_message(_dir_rssi, _omni_rssi, _heading_dir_pre, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);
+		/* send data */
+		common::pixhawk->send_rssi_message(_dir_rssi, _omni_rssi, _heading_dir_pre, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);	// send a mavlink message with the current rssi
+		udp->send_rssi_message(_dir_rssi, _omni_rssi, _heading_dir_pre, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);				// send the udp message (directly to ground)
 
 
 		//-----------------------------------------------//

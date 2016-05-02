@@ -67,6 +67,7 @@ private:
 	int16_t _meas_heading;
 	double _bearing_cc;
 	double _bearing_max;
+	double _bearing_max3;
 	int _max_rssi;
 
 

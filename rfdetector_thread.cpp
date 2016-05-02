@@ -55,6 +55,7 @@ _omni_rssi(INT_MAX),
 _meas_heading(0),
 _bearing_cc(0),
 _bearing_max(0),
+_bearing_max3(0),
 _max_rssi(-100)
 {
 	/* "initialize" all the vectors */
@@ -95,6 +96,7 @@ void RFDetector::rotation_completed() {
 	/* get bearing and values */
 	_bearing_cc = get_bearing_cc(_angles, _gains);		// do bearing calculation at this point
 	_bearing_max = get_bearing_max(_angles, _gains);	// also do max bearing calculation
+	_bearing_max3 = get_bearing_max3(_angles, _gains);	// do max3 bearing calculation
 	_max_rssi = get_max_rssi(_gains);					// get what the max value was for the rssi
 
 	if (_verbose) {
@@ -272,6 +274,7 @@ int RFDetector::main_loop() {
 
 			if (!_in_rotation) {
 				rotation_init();
+				common::planner->reset_observations();
 			}
 
 			printf("[RFDETECTOR][STATE][ROT] rotating\n");
@@ -280,6 +283,9 @@ int RFDetector::main_loop() {
 			_angles.push_back((double) _meas_heading);
 			_gains.push_back(_dir_rssi);
 			_omni_gains.push_back(_omni_rssi);
+
+			// update the planner's most recent observations
+			common::planner->update_observation(_meas_heading, _dir_rssi, _omni_rssi);
 		}
 
 
@@ -287,15 +293,17 @@ int RFDetector::main_loop() {
 		if (!_rotating && _in_rotation) {
 			rotation_completed();
 
+			// update the planner's full observations
+			common::planner->update_observations(_angles, _gains, _omni_gains, _norm_gains, _bearing_cc, _bearing_max, _bearing_max3);
+
+
 			// save bearing cc to file (with important information)
 			fprintf(bearing_logfile, "%llu,%i,%i,%f,%f,%f,%i\n", _jager->sys_time_us.time_unix_usec,
 				_jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt, _bearing_cc, _bearing_max, _max_rssi);
 
-			// send a mavlink message of the calculated bearing
-			common::pixhawk->send_bearing_cc_message(_bearing_cc, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);
-
-			// send the udp message (directly to ground)
-			udp->send_bearing_message(TYPE_BEARING_CC, _bearing_cc, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);
+			/* send data */
+			common::pixhawk->send_bearing_cc_message(_bearing_cc, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);		// send a mavlink message of the calculated bearing
+			udp->send_bearing_message(TYPE_BEARING_CC, _bearing_cc, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);	// send the udp message (directly to ground)
 		}
 
 

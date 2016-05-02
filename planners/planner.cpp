@@ -71,13 +71,14 @@ void Planner::update_observation(const double &heading, const double &dir_gain, 
 }
 
 
-void Planner::update_observations(const vector<double> headings, const vector<double> dir_gains, const vector<double> omni_gains,
+void Planner::update_observations(const vector<double> headings, const vector<double> dir_gains, const vector<double> omni_gains, const vector<int> norm_gains,
 							 double &bearing_cc, double &bearing_max, double &bearing_max3) {
 	
 	// copy over the vectors
 	_angles = headings;
 	_gains = dir_gains;
 	_omni_gains = omni_gains;
+	_norm_gains = norm_gains;
 
 	// copy over the bearings
 	_bearing_cc = bearing_cc;
