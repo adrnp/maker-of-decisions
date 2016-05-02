@@ -1,12 +1,10 @@
-/*
- * common.h
+/**
+ * @file common.h
  *
- * this file contains variables that will be common throughout all of the files.
- * 
- * Note: the actual declaration of these variables can be found in the mod.cpp file
+ * The definition of a set of common variables used among the files.
+ * Note the namespace (common) to designate these as common variables.
  *
- *  Created on: Jan 23, 2015
- *      Author: adrienp
+ * @Author Adrien Perkins <adrienp@stanford.edu>
  */
 
 #ifndef COMMON_H_

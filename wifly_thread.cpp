@@ -1,12 +1,11 @@
 /**
- * wifly_thread.cpp
+ * @file wifly_thread.cpp
  *
- * TODO: this file needs some renaming!!!
- *
- * this handles all of the main work of the maker of decision.
- * reads from the wifly modules and triggers commands to be sent accordingly
+ * Implements the wifly thread and WiflyHunter class.
+ * reads from the wifly modules and triggers commands to be sent accordingly.
  * 
  */
+
 // Standard includes
 #include <iostream>
 #include <cstdlib>
@@ -17,7 +16,6 @@
 #include <fstream>
 #include <sys/time.h>
 #include <limits.h>
-
 
 // Serial includes
 #include <stdio.h>   /* Standard input/output definitions */
@@ -39,11 +37,9 @@
 #include "wifly_thread.h"
 
 
-
 using std::string;
 using std::vector;
 using namespace std;
-
 
 
 

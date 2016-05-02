@@ -1,19 +1,43 @@
+/**
+ * @file wifly_thread.h
+ *
+ * Thread to handle reading from one or two wifly modules.
+ * 
+ * @author Adrien Perkins <adrienp@stanford.edu>
+ */
 
 #ifndef WIFLY_THREAD_H_
 #define WIFLY_THREAD_H_
+
+
 #include <vector>
 
 using std::vector;
 
+
+/**
+ * WiflyHunter class.
+ *
+ * Class that contains a main loop to read from the wifly modules.
+ */
 class WiflyHunter {
 
 public:
 
-	/* constructor and desctructor */
+	/**
+	 * constructor.
+	 */
 	WiflyHunter(struct MAVInfo* uavData, bool verbose);
+
+	/**
+	 * desctructor.
+	 */
 	~WiflyHunter();
 
-	/* this is actually the main loop that will be running */
+	/**
+	 * the main loop running for the thread
+	 * @return  0 when finished
+	 */
 	int main_loop();
 
 
@@ -51,20 +75,41 @@ private:
 
 	// helper functions
 	
-	/* handle rotation logic and related computation */
+	/**
+	 * set all variables initializng a rotation.
+	 */
 	void rotation_init();
+
+	/**
+	 * process all measurements from the rotation.
+	 */
 	void rotation_completed();
 
-	/* update the state booleans */
+	/**
+	 * check and update current state if needed.
+	 */
 	void check_hunt_state();
+
+	/**
+	 * update current state
+	 * @param new_state  the new state
+	 */
 	void update_state(const uint8_t &new_state);
 
-	/* get the max rssi value from the set collected during a rotation */
+	/**
+	 * get the max rssi value from the set collected during a rotation
+	 * @param  rssi_values  vector of rssi values from this rotation
+	 * @return              the maximum signal strength from a given rotation
+	 */
 	int get_max_rssi(const vector<double> rssi_values);
 
 };
 
-/* main thread function to be called by pthread in mod.cpp */
+/**
+ * springboard to starting the main loop of the WiflyHunter class.
+ * @param  param  mavstruct containing uav information
+ * @return        standard return
+ */
 void *wifly_thread(void *param);
 
 

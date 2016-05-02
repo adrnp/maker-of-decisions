@@ -1,3 +1,11 @@
+/**
+ * @file rfdetector_thread.h
+ *
+ * Thread handling reading from the rf detector.
+ * 
+ * @author Adrien Perkins <adrienp@stanford.edu>
+ */
+
 #ifndef RFDEETECTOR_THREAD_H_
 #define RFDEETECTOR_THREAD_H_
 
@@ -5,15 +13,30 @@
 
 using std::vector;
 
+/**
+ * RFDetector Class
+ *
+ * Contains the main loop for the sensor reading thread.
+ * 
+ */
 class RFDetector {
 
 public:
 
-	/* constructor and desctructor */
+	/**
+	 * constructor
+	 */
 	RFDetector(struct MAVInfo* uavData, bool verbose);
+
+	/**
+	 * destructor
+	 */
 	~RFDetector();
 
-	/* this is actually the main loop that will be running */
+	/**
+	 * the main loop running for the thread
+	 * @return  0 when finished
+	 */
 	int main_loop();
 
 
@@ -49,26 +72,48 @@ private:
 
 	// helper functions
 	
-	/* handle rotation logic and related computation */
+	/**
+	 * set all variables initializng a rotation.
+	 */
 	void rotation_init();
+
+	/**
+	 * process all measurements from the rotation.
+	 */
 	void rotation_completed();
 
-	/* measurement function */
+	/**
+	 * read from the sensor.
+	 */
 	void get_measurement();
 	
-	/* update the state booleans */
+	/**
+	 * check and update current state if needed.
+	 */
 	void check_hunt_state();
+
+	/**
+	 * update current state
+	 * @param new_state  the new state
+	 */
 	void update_state(const uint8_t &new_state);
 
-	/* get the max rssi value from the set collected during a rotation */
+	/**
+	 * get the max rssi value from the set collected during a rotation
+	 * @param  rssi_values  vector of rssi values from this rotation
+	 * @return              the maximum signal strength from a given rotation
+	 */
 	int get_max_rssi(const vector<double> rssi_values);
 
 };
 
 
 
-
-/* main thread function to be called by pthread in mod.cpp - actually just a springboard for the main thread in the above class */
+/**
+ * springboard to starting the main loop of the RFDetector class.
+ * @param  param  mavstruct containing uav information
+ * @return        standard return
+ */
 void *rfdetector_thread(void *param);
 
 

@@ -1,3 +1,11 @@
+/**
+ * @file commander.cpp
+ *
+ * Definition of the set of functions handling sending commands to the pixhawk.
+ * 
+ * @author Adrien Perkins <adrienp@stanford.edu>
+ */
+
 // Standard includes
 #include <iostream>
 #include <cstdlib>
@@ -34,52 +42,11 @@ using std::string;
 using std::vector;
 using namespace std;
 
-/* needed for emily antenna logic */
+/** rotation handling for DF antenna */
 bool second_rotation_required = true;
 
-vector<float> cmd_north;
-vector<float> cmd_east;
-vector<float> cmd_alt;
 
-int num_cmds = 0;
-int cmd_index = 0;
-
-bool load_move_commands() {
-	string file_name(common::command_file);
-	ifstream cmd_file (file_name);
-
-	if (!cmd_file.is_open()) {
-		// means there is an error in loading the file
-		return false;
-	}
-
-	// make sure vectors are clean
-	cmd_north.clear();
-	cmd_east.clear();
-	cmd_alt.clear();
-
-	float cmdN;
-	float cmdE;
-	float cmdA;
-	char comma;
-	while (cmd_file >> cmdN >> comma >> cmdE >> comma >> cmdA) {
-		cmd_north.push_back(cmdN);
-		cmd_east.push_back(cmdE);
-		cmd_alt.push_back(cmdA);
-
-		printf("North command: %f\n", cmdN);
-		printf("East cmd: %f\n", cmdE);
-		printf("Alt cmd: %f\n", cmdA);
-	}
-
-	printf("num commands read: %d\n", num_cmds);
-
-	num_cmds = cmd_north.size();
-	return true;
-}
-
-
-void send_next_command(uint8_t &prev_state, uint8_t &new_state, double &bearing, int &rssi) {
+void send_next_command(uint8_t &prev_state, uint8_t &new_state) {
 
 	printf("[COMMANDER] the previous state was: %i\n", prev_state);
 
@@ -100,7 +67,7 @@ void send_next_command(uint8_t &prev_state, uint8_t &new_state, double &bearing,
 				break;
 			}
 
-			/* send the next command depending on tracking mode */
+			// get next command from the current planner
 			commands = common::planner->action();
 			d_north = commands[0];
 			d_east = commands[1];
@@ -113,53 +80,8 @@ void send_next_command(uint8_t &prev_state, uint8_t &new_state, double &bearing,
 				common::pixhawk->send_finish_command();
 				return;
 			}
-
-			/* send next command depending on flight mode */
-			/*
-			if (common::execute_tracking) {
-				printf("[COMMANDER] sending a tracking command\n");
-				// get the next command, which depends on the tracking method desired
-				float d_north = 0.0;
-				float d_east = 0.0;
-				switch (common::tracker_type) {
-					case TRACK_NAIVE:
-						if (common::verbose) printf("[COMMANDER] naive tracking command being made...\n");
-						commands = calc_next_command(bearing, rssi);
-						d_north = commands[0];
-						d_east = commands[1];
-						break;
-					case TRACK_VARIABLE:
-						if (common::verbose) printf("[COMMANDER] variable tracking command being made...\n");
-						commands = calc_next_command_variable(bearing, rssi);
-						d_north = commands[0];
-						d_east = commands[1];
-						break;
-					case TRACK_POMDP:
-						if (common::verbose) printf("[COMMANDER] pomdp tracking command being made...\n");
-						commands_pair = get_next_pomdp_action(bearing, rssi);
-						d_north = commands_pair.first;
-						d_east = commands_pair.second;
-
-						if (d_north == 1000.0) {
-							printf("[COMMANDER] sending finish command\n");
-							common::pixhawk->send_finish_command();
-							return;
-						}
-
-						break;
-				}
-				
-				if (common::verbose) printf("[COMMANDER] following tracking command (%f, %f)\n", d_north, d_east);
-				common::pixhawk->send_tracking_command(d_north, d_east, 360.0);
-				
-				
-			} else {
-				if (common::verbose) printf("[COMMANDER] sending the next preset move command\n");	
-				// send the next move command
-				send_move_command();
-			} */
-
 			break;
+
 		case TRACKING_HUNT_STATE_MOVE:
 			// moving = false;		// NO LONGER NEEDED
 
@@ -178,32 +100,6 @@ void send_next_command(uint8_t &prev_state, uint8_t &new_state, double &bearing,
 	}
 	
 	return;
-}
-
-
-
-void send_move_command() {
-
-	// cycle the cmds (ids should go from 0 -> 3)
-	if (cmd_index >= num_cmds) {
-		cmd_index = 0;
-	}
-
-	printf("[COMMANDER] sending move command with index: %d\n", cmd_index);
-
-	// extract the next north and east commands
-	float nextNorth = cmd_north[cmd_index];
-	float nextEast = cmd_east[cmd_index];
-	float nextAlt = cmd_alt[cmd_index];
-
-	printf("[COMMANDER] sending command %i: N %f\tE %f\tA %f\n", cmd_index, nextNorth, nextEast, nextAlt);
-
-	cmd_index++;
-
-	common::pixhawk->send_tracking_command(nextNorth, nextEast, nextAlt);
-
-	return;
-
 }
 
 
