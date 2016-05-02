@@ -52,6 +52,8 @@ void send_next_command(uint8_t &prev_state, uint8_t &new_state) {
 	vector<float> commands;
 	float d_north = 0.0;
 	float d_east = 0.0;
+	float d_yaw = 0.0;
+	float alt = common::flight_alt;
 	switch (prev_state) {
 		case TRACKING_HUNT_STATE_OFF:
 		case TRACKING_HUNT_STATE_START:
@@ -70,9 +72,15 @@ void send_next_command(uint8_t &prev_state, uint8_t &new_state) {
 			commands = common::planner->action();
 			d_north = commands[0];
 			d_east = commands[1];
+			d_yaw = commands[2];
+
+			// get the altitude, but not always set
+			if (commands.size() > 3 && commands[3] > 0.0) {
+				alt = commands[3];	
+			}
 
 			if (common::verbose) printf("[COMMANDER] following tracking command (%f, %f)\n", d_north, d_east);
-			common::pixhawk->send_tracking_command(d_north, d_east, 360.0);
+			common::pixhawk->send_tracking_command(d_north, d_east, alt);
 
 			if (d_north == 1000.0) {
 				printf("[COMMANDER] sending finish command\n");
