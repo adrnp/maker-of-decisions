@@ -1,3 +1,11 @@
+/**
+ * @file naive_planner.cpp
+ *
+ * definition of the naive planner class.
+ * 
+ * @author Adrien Perkins <adrienp@stanford.edu>
+ */
+
 #include <cstdlib>
 #include <fstream>
 #include <cmath>
@@ -83,8 +91,10 @@ vector<float> NaivePlanner::calc_next_command(const double &bearing, const doubl
 	float north = k * (double) rs * cos(bear * M_PI/180.0);
 	float east = k * ( double) rs * sin(bear * M_PI/180.0);
 
-	commands.push_back(north);
-	commands.push_back(east);
+	commands.push_back(north);	// dNorth
+	commands.push_back(east);	// dEast
+	command.push_back(0);		// dYaw
+	command.push_back(-1);		// altitude
 
 	return commands;
 }
@@ -106,8 +116,10 @@ vector<float> NaivePlanner::calc_next_command_variable(const double &bearing, co
 	float north = step * cos(bearing * M_PI/180.0);
 	float east = step * sin(bearing * M_PI/180.0);
 
-	commands.push_back(north);
-	commands.push_back(east);
+	commands.push_back(north);	// dNorth
+	commands.push_back(east);	// dEast
+	command.push_back(0.0);		// dYaw
+	command.push_back(0.0);		// altitude
 
 	return commands;
 }

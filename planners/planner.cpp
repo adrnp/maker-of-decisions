@@ -1,3 +1,11 @@
+/**
+ * @file planner.cpp
+ *
+ * definition of superclass for all planners.
+ *
+ * @author Adrien Perkins <adrienp@stanford.edu>
+ */
+
 #include <cstdlib>
 #include <unistd.h>
 #include <limits.h>
@@ -19,19 +27,16 @@ _max_rssi(0)
 }
 
 
-Planner::~Planner() {
-
-}
+Planner::~Planner() {}
 
 
 void Planner::reset_observations() {
 	
-	/* clear the vectors to get ready for another observation set */
+	// clear the vectors to get ready for another observation set
 	_angles.clear();
 	_gains.clear();
 	_omni_gains.clear();
 	_norm_gains.clear();
-
 }
 
 

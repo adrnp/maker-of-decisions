@@ -1,22 +1,48 @@
+/**
+ * @file naive_planner.h
+ *
+ * Declaration of naive planning class.
+ *
+ * @author Adrien Perkins <adrienp@stanford.edu>
+ */
+
 #ifndef _NAIVE_PLANNER_H_
 #define _NAIVE_PLANNER_H_
 
 #include "planner.h"
 
+
+/**
+ * @class NaivePlanner
+ *
+ * A greedy planner that moves in the direction of the most recent bearing measurement.
+ * Can move with a variable step size based on previous measurements.
+ * 
+ */
 class NaivePlanner : public Planner {
 
 public:
 
-	/* constructor */
+	/**
+	 * constructor
+	 */
 	NaivePlanner();
 
-	/* desctructor */
+	/**
+	 * desctructor
+	 */
 	~NaivePlanner();
 
-	/* initialize the planner */
+	/**
+	 * initialize the planner
+	 * @return true if successful
+	 */
 	bool initialize();
 
-	/* return the action */
+	/**
+	 * determins the next action to take.
+	 * @return  vector of <dNorth, dEast, dYaw> action values
+	 */
 	vector<float> action();
 
 private:
@@ -29,17 +55,27 @@ private:
 	bool _first_step;
 
 
-	/* update vars that contain list of all the observations for a given tracking run */
+	/**
+	 * update our local observation list of all the bearings and max rssi values so far.
+	 */
 	void update_naive_observations();
+
+	/**
+	 * calculate the next step size.
+	 * @return the step size (in meters) that should be used
+	 */
 	float calculate_step_size();
 
-	// METHODS FOR CALCULATING NEXT COMMANDS
-
-	/* calculate the next tracking command */
+	/**
+	 * calculate the next command with constant step size.
+	 * @return  the command
+	 */
 	vector<float> calc_next_command(const double &bearing, const double &rssi);
 
-
-	/* calculate the next tracking command with a variable step size */
+	/**
+	 * calculate the next command with a variable step size
+	 * @return  the command
+	 */
 	vector<float> calc_next_command_variable(const double &bearing, const double &rssi);
 };
 

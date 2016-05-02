@@ -1,3 +1,11 @@
+/**
+ * @file fixed_planner.h
+ *
+ * declaration of fixed planner class.
+ *
+ * @author Adrien Perkins <adrienp@stanford.edu>
+ */
+
 #ifndef _FIXED_PLANNER_H_
 #define _FIXED_PLANNER_H_
 
@@ -5,25 +13,37 @@
 
 
 /**
- * this is a "planner" that just cycles a predefined set of commands.
- *
- * these commands are given by the command file, so need to figure out how
- * to handle that in the initialization function...
+ * @class FixedPlanner
+ * 
+ * A "planner" that cycles through a set of commands.
+ * Commands used are in the file that is passed into it.
+ * 
  */
 class FixedPlanner : public Planner {
 
 public:
 
-	/* constructor */
+	/**
+	 * constructor
+	 * @param command_file_name  the path to the command file.
+	 */
 	FixedPlanner(const char * command_file_name);
 
-	/* desctructor */
+	/**
+	 * desctructor
+	 */
 	~FixedPlanner();
 
-	/* initialize the planner */
+	/**
+	 * load in all the commands from file.
+	 * @return  true if successfully initialized
+	 */
 	bool initialize();
 
-	/* return the action */
+	/**
+	 * return the next command.
+	 * @return  the command
+	 */
 	vector<float> action();
 
 private:
@@ -34,6 +54,7 @@ private:
 	// the commands themselves
 	vector<float> _cmd_north;
 	vector<float> _cmd_east;
+	vector<float> _cmd_yaw;
 	vector<float> _cmd_alt;
 
 	// file details

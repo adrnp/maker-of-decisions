@@ -1,3 +1,11 @@
+/**
+ * @file planner.h
+ *
+ * Declaration of superclass for all planners.
+ *
+ * @author Adrien Perkins <adrienp@stanford.edu>
+ */
+
 #ifndef _PLANNER_H_
 #define _PLANNER_H_
 
@@ -6,7 +14,12 @@
 using std::vector;
 
 /**
- * this is the superclass for any of the planners.
+ * @class Planner
+ * 
+ * This is the superclass for any of the planners.
+ * Sets all of the observable information and is a passthrough for the action functions.
+ *
+ * Any subclass must implement and initialize() and action() functions.
  * 
  */
 class Planner {
@@ -63,20 +76,21 @@ public:
 
 	/**
 	 * calculates what the next action should be.  This is to be each individual planner.
+	 * @return  action as a vector, defined as <dNorth, dEast, dYaw, alt>
 	 */
 	virtual vector<float> action() {};
 
 protected:
 
-	// constants that will be available to all the subclasses
-	vector<double> _angles;		/* the heading associated with the gains */
-	vector<double> _gains;		/* the gains measured from the main sensor (e.g. directional antenna) */
-	vector<double> _omni_gains;	/* the gains measured from the second sensor (e.g. omni antenna) */
-	vector<int> _norm_gains;	/* the normalized gains */
-	double _bearing_cc;			/* the cross correlation bearing */
-	double _bearing_max;		/* the max method bearing */
-	double _bearing_max3;		/* the max3 method bearing */
-	double _max_rssi;			/* the max signal strength in this set */
+	/* constants that will be available to all the subclasses */
+	vector<double> _angles;		// the heading associated with the gains
+	vector<double> _gains;		// the gains measured from the main sensor (e.g. directional antenna)
+	vector<double> _omni_gains;	// the gains measured from the second sensor (e.g. omni antenna)
+	vector<int> _norm_gains;	// the normalized gains
+	double _bearing_cc;			// the cross correlation bearing
+	double _bearing_max;		// the max method bearing
+	double _bearing_max3;		// the max3 method bearing
+	double _max_rssi;			// the max signal strength in this set
 };
 
 
