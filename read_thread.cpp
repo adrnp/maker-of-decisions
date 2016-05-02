@@ -1,13 +1,13 @@
 /**
- * read_thread.cpp
- *
- * This file contains the code running on one of the core threads started by mod.
- *
+ * @file read_thread.cpp
+ * 
  * Reads data from the pixhawk over mavlink, parsing the incoming messages
  * and updating the shared MAVInfo object about JAGER.
  *
  * Currently only handles a small subset of the messages from JAGER.
  * (only the ones needed)
+ *
+ * @author Adrien Perkins <adrienp@stanford.edu>
  */
 
 
@@ -44,19 +44,19 @@
 using std::string;
 using namespace std;
 
-/* whether or not we have received a heartbeat from the pixhawk */
+/** whether or not we have received a heartbeat from the pixhawk */
 bool heartbeatReceived = false;
 
-/* whether or not we are currently in hunt mode */
+/** whether or not we are currently in hunt mode */
 bool hunting = false;
 
 /* whether or not we are currently rotating */
 // bool rotating = false;
 
-/* keep track of the previous hunt state, as hunt state is sent periodically, not just on updates */
+/** keep track of the previous hunt state, as hunt state is sent periodically, not just on updates */
 int prev_hs = -1;
 
-/* keep track of whether or not the mode has changed */
+/** keep track of whether or not the mode has changed */
 bool mode_change = false;
 
 

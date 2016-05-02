@@ -1,15 +1,15 @@
-/*
- * mod.cpp
- * 
- * This is the core running functions.
- * Reads the command line arguments (TODO: put these into a config file)
- * Starts all the necessary threads
+/**
+ * @file mod.cpp
  *
- *  Created on: August, 2014
- *      Author: Adrien Perkins
+ * Contains the core running functions.
+ * Reads a config file to populate all the necessary parameters and settings.
+ * Based on configuration, it starts the necessary thread.
+ *
+ * @author Adrien Perkins <adrienp@stanford.edu>
  */
-// system inclusions
 
+
+// system inclusions
 #include <cstdlib>
 #include <unistd.h>
 #include <cmath>

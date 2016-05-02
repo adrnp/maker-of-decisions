@@ -1,3 +1,11 @@
+/**
+ * @file dirk_thread.cpp
+ *
+ * The implimentation of the thread handling the beam steering antenna.
+ * 
+ * @author Adrien Perkins <adrienp@stanford.edu>
+ */
+
 // Standard includes
 #include <iostream>
 #include <cstdlib>

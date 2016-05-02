@@ -1,9 +1,7 @@
 /**
- * rf_detector.cpp
+ * @file rf_detector.cpp
  *
- * This is basically a revamp of the wifly thread.
- * Now contains everything within a class (which I guess could have been done with a namespace before)
- * Will communicate with the new RF detectors (through the arduino)
+ * Implementation of the rf detector class.
  *
  * @author Adrien Perkins <adrienp@stanford.edu>
  */
@@ -66,8 +64,8 @@ _max_rssi(-100)
 	_norm_gains.clear();
 }
 
-RFDetector::~RFDetector() {
 
+RFDetector::~RFDetector() {
 }
 
 
