@@ -93,8 +93,8 @@ vector<float> NaivePlanner::calc_next_command(const double &bearing, const doubl
 
 	commands.push_back(north);	// dNorth
 	commands.push_back(east);	// dEast
-	command.push_back(0);		// dYaw
-	command.push_back(-1);		// altitude
+	commands.push_back(0);		// dYaw
+	commands.push_back(-1);		// altitude
 
 	return commands;
 }
@@ -118,8 +118,8 @@ vector<float> NaivePlanner::calc_next_command_variable(const double &bearing, co
 
 	commands.push_back(north);	// dNorth
 	commands.push_back(east);	// dEast
-	command.push_back(0.0);		// dYaw
-	command.push_back(0.0);		// altitude
+	commands.push_back(0.0);		// dYaw
+	commands.push_back(0.0);		// altitude
 
 	return commands;
 }

@@ -57,7 +57,7 @@ bool FixedPlanner::initialize() {
 	float cmdY;
 	float cmdA;
 	char comma;
-	while (cmd_file >> cmdN >> comma >> cmdE >> comma >> cmdY << comma << cmdA) {
+	while (cmd_file >> cmdN >> comma >> cmdE >> comma >> cmdY >> comma >> cmdA) {
 		_cmd_north.push_back(cmdN);
 		_cmd_east.push_back(cmdE);
 		_cmd_yaw.push_back(cmdY);
