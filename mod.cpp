@@ -31,6 +31,7 @@
 #include "dirk_thread.h"
 
 #include "libs/planners/fixed_planner.h"
+#include "libs/planners/circle_planner.h"
 #include "libs/planners/naive_planner.h"
 
 #include "mod.h"
@@ -80,6 +81,7 @@ int baudrate = 115200;
 
 
 const char *command_file = (char*) "commands/commands.csv";
+string planner_config_file;
 
 
 int get_configuration(int argc, char **argv) {
@@ -170,6 +172,11 @@ int get_configuration(int argc, char **argv) {
 	/* command file */
 	if (config_map.find("command_file") != config_map.end()) {
 		command_file = config_map["command_file"].c_str();
+	}
+
+	/* planner config gile file */
+	if (config_map.find("planner_config_file") != config_map.end()) {
+		planner_config_file = config_map["planner_config_file"];
 	}
 
 	/* pixhawk */
@@ -344,8 +351,13 @@ int main(int argc, char **argv) {
 
 		/* the pomdp tracker */
 		case TRACK_POMDP:
-			cout << "[MOD} running pomdp planner\n";
+			cout << "[MOD] running pomdp planner\n";
 			break;
+
+		/* the circle planner */
+		case TRACK_CIRCLE:
+			cout << "[MOD] running circle planner\n";
+			common::planner = new CirclePlanner(planner_config_file);
 	}
 	cout << "[MOD] initializing planner...\n";
 	common::planner->initialize();
