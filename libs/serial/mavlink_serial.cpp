@@ -77,10 +77,12 @@ uint8_t MavlinkSerial::read_serial(mavlink_status_t *lastStatus, mavlink_message
 			//if (_verbose) printf("ERROR: DROPPED %d PACKETS\n", status.packet_rx_drop_count);
 			
 			// print out the characters of the packets themselves
+			/*
 			if (_verbose) {
 				unsigned char v=cp;
 				fprintf(stderr,"%02x ", v);
 			}
+			*/
 		}
 
 		// update the last message status 
