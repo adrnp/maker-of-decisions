@@ -27,7 +27,7 @@
 
 #include "read_thread.h"
 #include "wifly_thread.h"
-#include "rfdetector_thread.h"
+#include "rfhunter_thread.h"
 #include "dirk_thread.h"
 
 #include "libs/planners/fixed_planner.h"
@@ -401,7 +401,7 @@ int main(int argc, char **argv) {
 		break;
 	case 2:
 		LOG_STATUS("[MOD] starting rfdetector thread...");
-		pthread_create(&huntingId, NULL, rfdetector_thread, (void *)&common::uav);
+		pthread_create(&huntingId, NULL, rfhunter_thread, (void *)&common::uav);
 		hunt_running = true;
 		break;
 	case 3:

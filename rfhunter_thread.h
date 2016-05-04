@@ -6,32 +6,32 @@
  * @author Adrien Perkins <adrienp@stanford.edu>
  */
 
-#ifndef RFDEETECTOR_THREAD_H_
-#define RFDEETECTOR_THREAD_H_
+#ifndef RFHUNTER_THREAD_H_
+#define RFHUNTER_THREAD_H_
 
 #include <vector>
 
 using std::vector;
 
 /**
- * RFDetector Class
+ * RFHunter Class
  *
  * Contains the main loop for the sensor reading thread.
  * 
  */
-class RFDetector {
+class RFHunter {
 
 public:
 
 	/**
 	 * constructor
 	 */
-	RFDetector(struct MAVInfo* uavData, bool verbose);
+	RFHunter(struct MAVInfo* uavData, bool verbose);
 
 	/**
 	 * destructor
 	 */
-	~RFDetector();
+	~RFHunter();
 
 	/**
 	 * the main loop running for the thread
@@ -111,11 +111,11 @@ private:
 
 
 /**
- * springboard to starting the main loop of the RFDetector class.
+ * springboard to starting the main loop of the RFHunter class.
  * @param  param  mavstruct containing uav information
  * @return        standard return
  */
-void *rfdetector_thread(void *param);
+void *rfhunter_thread(void *param);
 
 
-#endif /* RFDEETECTOR_THREAD_H_ */
+#endif /* RFHUNTER_THREAD_H_ */

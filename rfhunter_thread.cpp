@@ -37,11 +37,11 @@
 
 #include "common.h"
 #include "commander.h"
-#include "rfdetector_thread.h"
+#include "rfhunter_thread.h"
 
 using std::vector;
 
-RFDetector::RFDetector(struct MAVInfo* uavData, bool verbose) :
+RFHunter::RFHunter(struct MAVInfo* uavData, bool verbose) :
 _jager(uavData),
 _verbose(verbose),
 _in_rotation(false),
@@ -66,13 +66,13 @@ _max_rssi(-100)
 }
 
 
-RFDetector::~RFDetector() {
+RFHunter::~RFHunter() {
 }
 
 
-void RFDetector::rotation_init() {
+void RFHunter::rotation_init() {
 
-	printf("[RFDETECTOR][STATE][ROT] rotation started\n");
+	printf("[RFHUNTER][STATE][ROT] rotation started\n");
 
 	// set our logic to mark we are now running the rotation logic
 	_in_rotation = true;
@@ -85,13 +85,13 @@ void RFDetector::rotation_init() {
 }
 
 
-void RFDetector::rotation_completed() {
-	printf("[RFDETECTOR][STATE][ROT] ended rotation\n");
+void RFHunter::rotation_completed() {
+	printf("[RFHUNTER][STATE][ROT] ended rotation\n");
 
 	// no longer in a rotation
 	_in_rotation = false;
 
-	if (_verbose) printf("[RFDETECTOR] calculating end of rotation bearing...\n");
+	if (_verbose) printf("[RFHUNTER] calculating end of rotation bearing...\n");
 
 	/* get bearing and values */
 	_bearing_cc = get_bearing_cc(_angles, _gains);		// do bearing calculation at this point
@@ -100,15 +100,15 @@ void RFDetector::rotation_completed() {
 	_max_rssi = get_max_rssi(_gains);					// get what the max value was for the rssi
 
 	if (_verbose) {
-		printf("[RFDETECTOR] calculated cc bearing: %f\n", _bearing_cc);
-		printf("[RFDETECTOR] calculated max bearing: %f\n", _bearing_max);
-		printf("[RFDETECTOR] max rssi value: %i\n", _max_rssi);
+		printf("[RFHUNTER] calculated cc bearing: %f\n", _bearing_cc);
+		printf("[RFHUNTER] calculated max bearing: %f\n", _bearing_max);
+		printf("[RFHUNTER] max rssi value: %i\n", _max_rssi);
 	}
 }
 
 
-void RFDetector::get_measurement() {
-	if (_verbose) printf("[RFDETECTOR] getting most recent measurement...\n");
+void RFHunter::get_measurement() {
+	if (_verbose) printf("[RFHUNTER] getting most recent measurement...\n");
 
 	// defaults for all the values
 	_dir_rssi = INT_MAX;
@@ -119,17 +119,17 @@ void RFDetector::get_measurement() {
 }
 
 
-void RFDetector::check_hunt_state() {
+void RFHunter::check_hunt_state() {
 
 	// check to see if the hunt state has changed (and if a command is required)
 	if (_jager->tracking_status.hunt_mode_state != _curr_hunt_state) {
 
-		printf("[RFDETECTOR][STATE] State changed from %u to %u\n", _curr_hunt_state, _jager->tracking_status.hunt_mode_state);
+		printf("[RFHUNTER][STATE] State changed from %u to %u\n", _curr_hunt_state, _jager->tracking_status.hunt_mode_state);
 
 		// update the prev hunt state to be the "current" state and update the current state to be the new current state
 		_prev_hunt_state = _curr_hunt_state;
 		_curr_hunt_state = _jager->tracking_status.hunt_mode_state;
-		printf("[RFDETECTOR][STATE] Prev State changed to: %u\n", _prev_hunt_state);
+		printf("[RFHUNTER][STATE] Prev State changed to: %u\n", _prev_hunt_state);
 
 		// update state information
 		update_state(_curr_hunt_state);
@@ -137,14 +137,14 @@ void RFDetector::check_hunt_state() {
 		// check to see if need to flag the next command to be sent
 		// NOTE: want to send to the command at the end of this iteration to use the calculated data
 		if (_curr_hunt_state == TRACKING_HUNT_STATE_WAIT) {
-			printf("[RFDETECTOR][CMD] flagging next command to be sent\n");
+			printf("[RFHUNTER][CMD] flagging next command to be sent\n");
 			_send_next = true;
 		}	
 	}
 }
 
 
-void RFDetector::update_state(const uint8_t &new_state) {
+void RFHunter::update_state(const uint8_t &new_state) {
 	
 	switch (new_state) {
 	case TRACKING_HUNT_STATE_WAIT:
@@ -175,7 +175,7 @@ void RFDetector::update_state(const uint8_t &new_state) {
 	}
 }
 
-int RFDetector::get_max_rssi(const vector<double> rssi_values) {
+int RFHunter::get_max_rssi(const vector<double> rssi_values) {
 
 	// set it to below what the RF detector can detect
 	double max_rssi = -100;
@@ -200,7 +200,7 @@ int RFDetector::get_max_rssi(const vector<double> rssi_values) {
 }
 
 
-int RFDetector::main_loop() {
+int RFHunter::main_loop() {
 
 	// some constants that all need to become parameters
 	string rssi_logfile_name = common::logfile_dir + "rssi.csv";					// the logfile for the rssi values
@@ -212,7 +212,7 @@ int RFDetector::main_loop() {
 	if (rssi_logfile == NULL)
 	{
 		// TODO: figure out what we do want to return when there is an error
-		printf("[RFDETECTOR] Error opening wifly file\n");
+		printf("[RFHUNTER] Error opening wifly file\n");
 		return -1;
 	}
 
@@ -221,7 +221,7 @@ int RFDetector::main_loop() {
 	if (bearing_logfile == NULL)
 	{
 		// TODO: figure out what we do want to return when there is an error
-		printf("[RFDETECTOR] Error opening bearing output file\n");
+		printf("[RFHUNTER] Error opening bearing output file\n");
 		fclose(rssi_logfile);
 		return -1;
 	}
@@ -250,7 +250,7 @@ int RFDetector::main_loop() {
 		prev_loop_timestamp = current_loop_time;
 
 		printf("\n--------------------------------\n");
-		printf("[RFDETECTOR] Top of wifly loop\n");
+		printf("[RFHUNTER] Top of wifly loop\n");
 
 		// check the hunt state from JAGER and adjust states accordingly
 		check_hunt_state();
@@ -277,7 +277,7 @@ int RFDetector::main_loop() {
 				common::planner->reset_observations();
 			}
 
-			printf("[RFDETECTOR][STATE][ROT] rotating\n");
+			printf("[RFHUNTER][STATE][ROT] rotating\n");
 
 			// add heading and rssi to the correct arrays (note will always get both dir and omni in this case)
 			_angles.push_back((double) _meas_heading);
@@ -331,7 +331,7 @@ int RFDetector::main_loop() {
 
 		// if sending the next command has been flagged, send the next command, using the calculated data
 		if (_send_next) {
-			printf("[RFDETECTOR][CMD] calling to send the next command...\n");
+			printf("[RFHUNTER][CMD] calling to send the next command...\n");
 			send_next_command(_prev_hunt_state, _jager->tracking_status.hunt_mode_state);
 			_send_next = false;
 		}
@@ -351,9 +351,9 @@ int RFDetector::main_loop() {
 
 
 
-void *rfdetector_thread(void *param) {
+void *rfhunter_thread(void *param) {
 
 	// just launch the hunter loop
-	RFDetector* rfdetector_hunter = new RFDetector((struct MAVInfo *)param, common::verbose);
-	return (void *) rfdetector_hunter->main_loop();
+	RFHunter* rfhunter_hunter = new RFHunter((struct MAVInfo *)param, common::verbose);
+	return (void *) rfhunter_hunter->main_loop();
 }
