@@ -77,9 +77,9 @@ void parse_heartbeat(const mavlink_message_t *message, MAVInfo *uavRead) {
 	}
 
 	if (!heartbeatReceived) {
-		printf("[READ] Received vehicle heartbeat\n");
-		printf("[READ] The system id: %u\n", message->sysid);
-		printf("[READ] The component id: %u\n", message->compid);
+		LOG_STATUS("[READ] Received vehicle heartbeat");
+		LOG_STATUS("[READ] The system id: %u", message->sysid);
+		LOG_STATUS("[READ] The component id: %u", message->compid);
 	}
 
 	// so we don't keep rewriting known values that stay constant
@@ -200,7 +200,7 @@ void handle_message(const mavlink_message_t *message, MAVInfo *uavRead) {
 			// set this hunt state as the previous hunt state
 			prev_hs = uavRead->tracking_status.hunt_mode_state;
 
-			cout << "[READ] HUNT STATE changed to: " << (int) uavRead->tracking_status.hunt_mode_state << "\n";
+			LOG_STATUS("[READ] HUNT STATE changed to: %d", (int) uavRead->tracking_status.hunt_mode_state);
 
 			// need to check to see if we have changed into waiting for the first time
 			if (!hunting && uavRead->tracking_status.hunt_mode_state > TRACKING_HUNT_STATE_OFF) {
@@ -286,6 +286,6 @@ void *read_thread(void *param) {
 		}
 	}
 
-	cout << "read ending\n";
+	LOG_STATUS("[READ] read ending");
 	return NULL;
 }

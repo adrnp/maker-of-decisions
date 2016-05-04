@@ -74,7 +74,7 @@ uint8_t MavlinkSerial::read_serial(mavlink_status_t *lastStatus, mavlink_message
 		if (lastStatus->packet_rx_drop_count != status.packet_rx_drop_count) {
 
 			// print out some error information containing dropped packet indo
-			if (_verbose) printf("ERROR: DROPPED %d PACKETS\n", status.packet_rx_drop_count);
+			//if (_verbose) printf("ERROR: DROPPED %d PACKETS\n", status.packet_rx_drop_count);
 			
 			// print out the characters of the packets themselves
 			if (_verbose) {

@@ -64,6 +64,7 @@ namespace common {
 	string logfile_dir;		// the logfile directory that will be used
 
 	Planner *planner = nullptr;
+	FILE *output_logfile = nullptr;
 }
 
 
@@ -322,11 +323,21 @@ int main(int argc, char **argv) {
 	// setup all the log file stuff for this run
 	setup_logfiles();
 	
-	cout << "[MOD] reading arguments\n";
+	// open the main output logfile
+	string output_logfile_name = common::logfile_dir + "log.out";
+	common::output_logfile = fopen(output_logfile_name.c_str(), "a");
+	if (common::output_logfile == NULL) {
+		cout << "[MOD] error opening main logfile\n";
+		return 0;
+	}
+
+	//cout << "[MOD] reading arguments\n";
+	LOG_STATUS("[MOD] reading arguments");
 	
 	
 	// get all the confguration parameters
 	if (get_configuration(argc, argv) < 0) {
+		fclose(common::output_logfile);
 		return 0;
 	}
 
@@ -339,33 +350,33 @@ int main(int argc, char **argv) {
 	switch (common::tracker_type) {
 		/* the naive tracker */
 		case TRACK_NAIVE:
-			cout << "[MOD] running naive planner\n";
+			LOG_STATUS("[MOD] running naive planner");
 			common::planner = new NaivePlanner();
 			break;
 
 		/* variable step naive tracker */
 		case TRACK_VARIABLE:
-			cout << "[MOD] running naive planner variable\n";
+			LOG_STATUS("[MOD] running naive planner variable");
 			common::planner = new NaivePlanner();
 			break;
 
 		/* the pomdp tracker */
 		case TRACK_POMDP:
-			cout << "[MOD] running pomdp planner\n";
+			LOG_STATUS("[MOD] running pomdp planner");
 			break;
 
 		/* the circle planner */
 		case TRACK_CIRCLE:
-			cout << "[MOD] running circle planner\n";
+			LOG_STATUS("[MOD] running circle planner");
 			common::planner = new CirclePlanner(planner_config_file);
 	}
-	cout << "[MOD] initializing planner...\n";
+	LOG_STATUS("[MOD] initializing planner...");
 	common::planner->initialize();
 
 	// connect to the pixhawk
-	cout << "[MOD] connecting to pixhawk...\n";
+	LOG_STATUS("[MOD] connecting to pixhawk...");
 	common::pixhawk = new MavlinkSerial(common::verbose, pixhawk_port, baudrate);
-	cout << "[MOD] pixhawk get fd " << common::pixhawk->get_fd() << "\n";
+	LOG_STATUS("[MOD] pixhawk fd is %d", common::pixhawk->get_fd());
 	
 	// ---------------------------------- //
 	// create threads
@@ -376,7 +387,7 @@ int main(int argc, char **argv) {
 	pthread_t huntingId;
 
 	// read thread
-	cout << "[MOD] handling threads\n";
+	LOG_STATUS("[MOD] handling threads");
 	pthread_create(&readId, NULL, read_thread, (void *)&common::uav);
 
 
@@ -384,17 +395,17 @@ int main(int argc, char **argv) {
 	bool hunt_running = false;
 	switch (sensor_type) {
 	case 1:
-		printf("[MOD] starting wifly thread...\n");
+		LOG_STATUS("[MOD] starting wifly thread...");
 		pthread_create(&huntingId, NULL, wifly_thread, (void *)&common::uav);
 		hunt_running = true;
 		break;
 	case 2:
-		printf("[MOD] starting rfdetector thread...\n");
+		LOG_STATUS("[MOD] starting rfdetector thread...");
 		pthread_create(&huntingId, NULL, rfdetector_thread, (void *)&common::uav);
 		hunt_running = true;
 		break;
 	case 3:
-		printf("[MOD] starting dirk antenna thread...\n");
+		LOG_STATUS("[MOD] starting dirk antenna thread...");
 		pthread_create(&huntingId, NULL, dirk_thread, (void *)&common::uav);
 		hunt_running = true;
 		break;
@@ -421,6 +432,8 @@ int main(int argc, char **argv) {
 	}
 	*/
 
+	// close the logfile
+	fclose(common::output_logfile);
 	return 0;
 }
 

@@ -10,6 +10,12 @@
 #ifndef COMMON_H_
 #define COMMON_H_
 
+#include <cstdlib>
+#include <stdio.h>
+#include <stdarg.h>
+#include <string.h>
+
+
 #include "mav_struct.h"
 #include "libs/serial/mavlink_serial.h"
 #include "libs/planners/planner.h"
@@ -60,6 +66,63 @@ namespace common {
 
 	/** the planner being used */
 	extern Planner *planner;
+
+	/** the logfile for all the main outputs */
+	extern FILE *output_logfile;
+}
+
+
+inline void LOG_STATUS(std::string msg, ...) {
+	// add a newline
+	msg += "\n";
+
+	// get the rest of the arguments
+	va_list args;
+	va_start(args, msg);
+
+	// output
+	vprintf(msg.c_str(), args);								// to command line
+	msg.insert(0, "[STATUS]");
+	vfprintf(common::output_logfile, msg.c_str(), args);	// to logfile
+
+	// close the end of the arguments
+	va_end(args);
+}
+
+
+inline void LOG_DEBUG(std::string msg, ...) {
+	// add a newline
+	msg += "\n";
+
+	// get the rest of the arguments
+	va_list args;
+	va_start(args, msg);
+
+	// output
+	if (common::verbose) vprintf(msg.c_str(), args);		// to command line
+	msg.insert(0, "[DEBUG]");
+	vfprintf(common::output_logfile, msg.c_str(), args);	// to logfile
+
+	// close the end of the arguments
+	va_end(args);
+}
+
+
+inline void LOG_ERROR(std::string msg, ...) {
+	// add a newline
+	msg += "\n";
+	msg.insert(0, "[ERROR]");
+
+	// get the rest of the arguments
+	va_list args;
+	va_start(args, msg);
+
+	// output
+	vprintf(msg.c_str(), args);								// to command line
+	vfprintf(common::output_logfile, msg.c_str(), args);	// to logfile
+
+	// close the end of the arguments
+	va_end(args);
 }
 
 

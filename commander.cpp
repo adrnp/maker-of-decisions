@@ -47,7 +47,7 @@ bool second_rotation_required = true;
 
 void send_next_command(uint8_t &prev_state, uint8_t &new_state) {
 
-	printf("[COMMANDER] the previous state was: %i\n", prev_state);
+	LOG_STATUS("[COMMANDER] the previous state was: %i\n", prev_state);
 
 	vector<float> commands;
 	float d_north = 0.0;
@@ -79,11 +79,11 @@ void send_next_command(uint8_t &prev_state, uint8_t &new_state) {
 				alt = commands[3];	
 			}
 
-			if (common::verbose) printf("[COMMANDER] following tracking command (%f, %f)\n", d_north, d_east);
+			LOG_DEBUG("[COMMANDER] following tracking command (%f, %f)", d_north, d_east);
 			common::pixhawk->send_tracking_command(d_north, d_east, alt);
 
 			if (d_north == 1000.0) {
-				printf("[COMMANDER] sending finish command\n");
+				LOG_STATUS("[COMMANDER] sending finish command\n");
 				common::pixhawk->send_finish_command();
 				return;
 			}
