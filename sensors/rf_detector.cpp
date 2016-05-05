@@ -138,7 +138,7 @@ int RFDetector::parse_char(const uint8_t c) {
 	case LTS_DECODE_CHK_A:
 
 		if (_chk_a == c) {
-			payload_rx_done();
+			ret = payload_rx_done();
 		}
 		_decode_state = LTS_DECODE_SYNC_A;
 		decode_init();
@@ -167,15 +167,7 @@ int RFDetector::payload_rx_add(const uint8_t c) {
 int RFDetector::payload_rx_done(void) {
 	int ret = 0;
 
-	// for all messages, the data has already been peeled out...
-
-	// TODO: just need to add timestamp and return 1
-
-	// DEBUG - for now just a bunch of printing
-	std::cout << "\nThe information is\n";
-	std::cout << "\ttimestamp: " << std::dec << _buf.signal_strength.timestamp << "\n";
-	std::cout << "\tdirectional: " << _buf.signal_strength.dir << "\n";
-	std::cout << "\tomnidirectional: " << _buf.signal_strength.omni << "\n";
+	// nothing to do here...
 
 	ret = 1;
 	return ret;

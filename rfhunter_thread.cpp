@@ -33,7 +33,9 @@
 #include <vector>
 
 #include "libs/udp/udp.h"
- #include "libs/bearing/bearing.h"
+#include "libs/bearing/bearing.h"
+#include "libs/serial/serial_port.h"
+#include "sensors/rf_detector.h"
 
 #include "common.h"
 #include "commander.h"
@@ -72,7 +74,7 @@ RFHunter::~RFHunter() {
 
 void RFHunter::rotation_init() {
 
-	printf("[RFHUNTER][STATE][ROT] rotation started\n");
+	LOG_STATUS("[RFHUNTER][STATE][ROT] rotation started\n");
 
 	// set our logic to mark we are now running the rotation logic
 	_in_rotation = true;
@@ -86,12 +88,12 @@ void RFHunter::rotation_init() {
 
 
 void RFHunter::rotation_completed() {
-	printf("[RFHUNTER][STATE][ROT] ended rotation\n");
+	LOG_STATUS("[RFHUNTER][STATE][ROT] ended rotation");
 
 	// no longer in a rotation
 	_in_rotation = false;
 
-	if (_verbose) printf("[RFHUNTER] calculating end of rotation bearing...\n");
+	LOG_DEBUG("[RFHUNTER] calculating end of rotation bearing...");
 
 	/* get bearing and values */
 	_bearing_cc = get_bearing_cc(_angles, _gains);		// do bearing calculation at this point
@@ -99,24 +101,11 @@ void RFHunter::rotation_completed() {
 	_bearing_max3 = get_bearing_max3(_angles, _gains);	// do max3 bearing calculation
 	_max_rssi = get_max_rssi(_gains);					// get what the max value was for the rssi
 
-	if (_verbose) {
-		printf("[RFHUNTER] calculated cc bearing: %f\n", _bearing_cc);
-		printf("[RFHUNTER] calculated max bearing: %f\n", _bearing_max);
-		printf("[RFHUNTER] max rssi value: %i\n", _max_rssi);
-	}
+	LOG_DEBUG("[RFHUNTER] calculated cc bearing: %f", _bearing_cc);
+	LOG_DEBUG("[RFHUNTER] calculated max bearing: %f", _bearing_max);
+	LOG_DEBUG("[RFHUNTER] max rssi value: %i", _max_rssi);
 }
 
-
-void RFHunter::get_measurement() {
-	if (_verbose) printf("[RFHUNTER] getting most recent measurement...\n");
-
-	// defaults for all the values
-	_dir_rssi = INT_MAX;
-	_omni_rssi = INT_MAX;
-	_meas_heading = _jager->vfr_hud.heading;
-
-	// TODO: get the actual measurement (from the arduino link)
-}
 
 
 void RFHunter::check_hunt_state() {
@@ -124,12 +113,12 @@ void RFHunter::check_hunt_state() {
 	// check to see if the hunt state has changed (and if a command is required)
 	if (_jager->tracking_status.hunt_mode_state != _curr_hunt_state) {
 
-		printf("[RFHUNTER][STATE] State changed from %u to %u\n", _curr_hunt_state, _jager->tracking_status.hunt_mode_state);
+		LOG_STATUS("[RFHUNTER][STATE] State changed from %u to %u", _curr_hunt_state, _jager->tracking_status.hunt_mode_state);
 
 		// update the prev hunt state to be the "current" state and update the current state to be the new current state
 		_prev_hunt_state = _curr_hunt_state;
 		_curr_hunt_state = _jager->tracking_status.hunt_mode_state;
-		printf("[RFHUNTER][STATE] Prev State changed to: %u\n", _prev_hunt_state);
+		LOG_STATUS("[RFHUNTER][STATE] Prev State changed to: %u", _prev_hunt_state);
 
 		// update state information
 		update_state(_curr_hunt_state);
@@ -137,7 +126,7 @@ void RFHunter::check_hunt_state() {
 		// check to see if need to flag the next command to be sent
 		// NOTE: want to send to the command at the end of this iteration to use the calculated data
 		if (_curr_hunt_state == TRACKING_HUNT_STATE_WAIT) {
-			printf("[RFHUNTER][CMD] flagging next command to be sent\n");
+			LOG_STATUS("[RFHUNTER][CMD] flagging next command to be sent");
 			_send_next = true;
 		}	
 	}
@@ -206,22 +195,32 @@ int RFHunter::main_loop() {
 	string rssi_logfile_name = common::logfile_dir + "rssi.csv";					// the logfile for the rssi values
 	string bearing_logfile_name = common::logfile_dir + "bearing_calc_eor.csv";		// the logfile for the end of rotation bearing calculations
 	
+	/* open the connection to the arduino */
+	SerialPort arduino(false);
+	int baudrate = 115200;
+	arduino.begin_serial(common::sensor_port, baudrate);
+
+	if (arduino.fd < 0) {
+		LOG_ERROR("[RFHUNTER] error opening arduino connection");
+		return -1;
+	}
+
+	/* create the rf detector parser */
+	RFDetector *rf_detector = new RFDetector(arduino.fd);
+
 	/* Open a file to write values to */
-	/* Appending values */
 	FILE *rssi_logfile = fopen(rssi_logfile_name.c_str(), "a");
-	if (rssi_logfile == NULL)
-	{
+	if (rssi_logfile == NULL) {
 		// TODO: figure out what we do want to return when there is an error
-		printf("[RFHUNTER] Error opening wifly file\n");
+		LOG_ERROR("[RFHUNTER] Error opening wifly file");
 		return -1;
 	}
 
 	/* Open a file to write bearing calcs to */
 	FILE *bearing_logfile = fopen(bearing_logfile_name.c_str(), "a");
-	if (bearing_logfile == NULL)
-	{
+	if (bearing_logfile == NULL) {
 		// TODO: figure out what we do want to return when there is an error
-		printf("[RFHUNTER] Error opening bearing output file\n");
+		LOG_ERROR("[RFHUNTER] Error opening bearing output file");
 		fclose(rssi_logfile);
 		return -1;
 	}
@@ -249,8 +248,8 @@ int RFHunter::main_loop() {
 		}
 		prev_loop_timestamp = current_loop_time;
 
-		printf("\n--------------------------------\n");
-		printf("[RFHUNTER] Top of wifly loop\n");
+		LOG_STATUS("\n--------------------------------");
+		LOG_STATUS("[RFHUNTER] Top of wifly loop");
 
 		// check the hunt state from JAGER and adjust states accordingly
 		check_hunt_state();
@@ -263,7 +262,25 @@ int RFHunter::main_loop() {
 		// making the rssi measurement (i.e. lat, lon, alt)
 		// not sure what the variability is from here to later on
 
-		get_measurement();
+		LOG_STATUS("[RFHUNTER] getting most recent measurement...");
+
+		// defaults for all the values
+		_dir_rssi = INT_MAX;
+		_omni_rssi = INT_MAX;
+		_meas_heading = _jager->vfr_hud.heading;
+		strength_measurement_t measurement;
+		if (rf_detector->read_measurement(&measurement)) {
+			
+			// extract the measurements
+			_dir_rssi = ((float) measurement.dir)/100.0f;
+			_omni_rssi = ((float) measurement.omni)/100.0f;
+
+			LOG_DEBUG("got timestamp = %d, dir = %f, omni = %f", measurement.timestamp, _dir_rssi, _omni_rssi);
+
+		} else {
+			// didn't get a measurement
+			LOG_ERROR("[RFHUNTER] no measurement received");
+		}
 
 		//-----------------------------------------------//
 		// Rotation specific calculations
@@ -277,7 +294,7 @@ int RFHunter::main_loop() {
 				common::planner->reset_observations();
 			}
 
-			printf("[RFHUNTER][STATE][ROT] rotating\n");
+			LOG_STATUS("[RFHUNTER][STATE][ROT] rotating");
 
 			// add heading and rssi to the correct arrays (note will always get both dir and omni in this case)
 			_angles.push_back((double) _meas_heading);
@@ -298,7 +315,7 @@ int RFHunter::main_loop() {
 
 
 			// save bearing cc to file (with important information)
-			fprintf(bearing_logfile, "%llu,%i,%i,%f,%f,%f,%i\n", _jager->sys_time_us.time_unix_usec,
+			fprintf(bearing_logfile, "%llu,%i,%i,%f,%f,%f,%f\n", _jager->sys_time_us.time_unix_usec,
 				_jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt, _bearing_cc, _bearing_max, _max_rssi);
 
 			/* send data */
@@ -313,16 +330,16 @@ int RFHunter::main_loop() {
 
 
 		/* write the directional antenna information */
-		fprintf(rssi_logfile, "%llu,%u,%i,%i,%i,%i,%i,%f,%i, %i\n",
+		fprintf(rssi_logfile, "%llu,%u,%i,%i,%i,%i,%i,%f,%f, %f\n",
 				_jager->sys_time_us.time_unix_usec, _jager->custom_mode, _rotating, _meas_heading, _meas_heading,
 				_jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt, _dir_rssi, _omni_rssi);
 
 		// send a mavlink message with the current rssi
-		common::pixhawk->send_rssi_message(_dir_rssi, _omni_rssi, _meas_heading, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);
+		common::pixhawk->send_rssi_message((int) _dir_rssi, (int) _omni_rssi, _meas_heading, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);
 
 		// send the udp message (directly to ground)
 		// TODO: potentially only do this if we are in a rotation
-		udp->send_rssi_message(_dir_rssi, _omni_rssi, _meas_heading, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);
+		udp->send_rssi_message((int) _dir_rssi, (int) _omni_rssi, _meas_heading, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);
 
 
 		//-----------------------------------------------//
@@ -331,7 +348,7 @@ int RFHunter::main_loop() {
 
 		// if sending the next command has been flagged, send the next command, using the calculated data
 		if (_send_next) {
-			printf("[RFHUNTER][CMD] calling to send the next command...\n");
+			LOG_STATUS("[RFHUNTER][CMD] calling to send the next command...");
 			send_next_command(_prev_hunt_state, _jager->tracking_status.hunt_mode_state);
 			_send_next = false;
 		}

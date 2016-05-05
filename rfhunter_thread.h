@@ -62,13 +62,13 @@ private:
 	vector<double> _gains;
 	vector<double> _omni_gains;
 	vector<int> _norm_gains;
-	int _dir_rssi;
-	int _omni_rssi;
+	float _dir_rssi;
+	float _omni_rssi;
 	int16_t _meas_heading;
 	double _bearing_cc;
 	double _bearing_max;
 	double _bearing_max3;
-	int _max_rssi;
+	float _max_rssi;
 
 
 	// helper functions
