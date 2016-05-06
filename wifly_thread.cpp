@@ -279,8 +279,8 @@ int WiflyHunter::main_loop() {
 		}
 		prev_loop_timestamp = current_loop_time;
 
-		LOG_STATUS("\n--------------------------------");
-		LOG_STATUS("[WIFLY] Top of wifly loop");
+		LOG_DEBUG("\n--------------------------------");
+		LOG_DEBUG("[WIFLY] Top of wifly loop");
 
 		// check the hunt state from JAGER and adjust states accordingly
 		check_hunt_state();
@@ -301,13 +301,13 @@ int WiflyHunter::main_loop() {
 		_heading_dir_pre = _jager->vfr_hud.heading;
 		_dir_rssi = wifly1->scanrssi(ssid);
 		_heading_dir_post = _jager->vfr_hud.heading;
-		LOG_DEBUG("[WIFLY] dir rssi recevied: %i", _dir_rssi);
+		LOG_STATUS("[WIFLY] dir rssi recevied: %i", _dir_rssi);
 		
 		if (common::dual_wifly) {
 			LOG_DEBUG("[WIFLY] scanning wifly 2...");
 			_omni_rssi = wifly2->scanrssi(ssid);
 			_heading_omni_post = _jager->vfr_hud.heading;
-			LOG_DEBUG("[WIFLY] omni rssi recevied: %i", _omni_rssi);
+			LOG_STATUS("[WIFLY] omni rssi recevied: %i", _omni_rssi);
 		}
 
 		//-----------------------------------------------//
