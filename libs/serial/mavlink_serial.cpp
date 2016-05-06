@@ -133,7 +133,8 @@ void MavlinkSerial::send_tracking_command(const float &north, const float &east,
 	// TODO: add altitude as a tracking command input!!! (this is horrible to have it as a default here)
 	
 	// retrieve the id of the last finished cmd
-	int nextCmd = 1; //_command_id++;
+	int nextCmd = _command_id;
+	_command_id++;	// increase the id for the next command
 
 	// extract the next north and east commands
 	float nextNorth = north;
@@ -166,7 +167,8 @@ void MavlinkSerial::send_tracking_command(const float &north, const float &east,
 
 void MavlinkSerial::send_rotate_command(const float direction) {
 	// retrieve the id of the last finished cmd
-	int nextCmd = _command_id++;
+	int nextCmd = _command_id;
+	_command_id++;	// increase the id for the next command
 
 	// build the mavlink message
 	mavlink_tracking_cmd_t tracking_cmd;
