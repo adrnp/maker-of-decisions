@@ -32,6 +32,7 @@
 
 #include "libs/planners/fixed_planner.h"
 #include "libs/planners/circle_planner.h"
+#include "libs/planners/greedy_planner.h"
 #include "libs/planners/naive_planner.h"
 
 #include "mod.h"
@@ -346,18 +347,18 @@ int main(int argc, char **argv) {
 	// ---------------------------------- //
 
 	// initialize the planner
-	common::planner = new FixedPlanner(command_file);	// default to running command files, this ensures this isn't null
+	common::planner = new FixedPlanner(common::logfile_dir, command_file);	// default to running command files, this ensures this isn't null
 	switch (common::tracker_type) {
 		/* the naive tracker */
 		case TRACK_NAIVE:
 			LOG_STATUS("[MOD] running naive planner");
-			common::planner = new NaivePlanner();
+			common::planner = new NaivePlanner(common::logfile_dir);
 			break;
 
 		/* variable step naive tracker */
 		case TRACK_VARIABLE:
 			LOG_STATUS("[MOD] running naive planner variable");
-			common::planner = new NaivePlanner();
+			common::planner = new NaivePlanner(common::logfile_dir);
 			break;
 
 		/* the pomdp tracker */
@@ -369,6 +370,13 @@ int main(int argc, char **argv) {
 		case TRACK_CIRCLE:
 			LOG_STATUS("[MOD] running circle planner");
 			common::planner = new CirclePlanner(planner_config_file);
+			break;
+
+		/* the greedy planner */
+		case TRACK_GREEDY:
+			LOG_STATUS("[MOD] running circle planner");
+			common::planner = new GreedyPlanner(planner_config_file);
+			break;
 	}
 	LOG_STATUS("[MOD] initializing planner...");
 	common::planner->initialize();

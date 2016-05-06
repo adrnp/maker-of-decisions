@@ -26,6 +26,7 @@
 #define TRACK_VARIABLE 	2
 #define TRACK_POMDP 	3
 #define TRACK_CIRCLE	4
+#define TRACK_GREEDY	5
 
 
 namespace common {
