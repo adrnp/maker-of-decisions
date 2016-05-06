@@ -138,7 +138,7 @@ void parse_last_cmd_finished_id(const mavlink_message_t *message, MAVInfo *uavRe
 
 void handle_message(const mavlink_message_t *message, MAVInfo *uavRead) {
 
-	LOG_DEBUG("[READ] received message (%d)", message->msgid);
+	//LOG_DEBUG("[READ] received message (%d)", message->msgid);
 
 	switch (message->msgid)
 	{
