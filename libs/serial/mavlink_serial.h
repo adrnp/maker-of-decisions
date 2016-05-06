@@ -21,9 +21,9 @@ class MavlinkSerial : public SerialPort {
 public:
 
 	/* constructor */
-	MavlinkSerial();
-	MavlinkSerial(bool verbose);
-	MavlinkSerial(bool verbose, const char* &uart_name,  const int &baudrate);
+	MavlinkSerial(std::string logfile_dir);
+	MavlinkSerial(std::string logfile_dir, bool verbose);
+	MavlinkSerial(std::string logfile_dir, bool verbose, const char* &uart_name,  const int &baudrate);
 
 	/* destructor */
 	~MavlinkSerial();

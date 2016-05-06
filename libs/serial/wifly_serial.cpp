@@ -29,17 +29,17 @@
 using std::string;
 using namespace std;
 
-WiflySerial::WiflySerial() : SerialPort() {
+WiflySerial::WiflySerial(std::string logfile_dir) : SerialPort(logfile_dir) {
 	printf("simple wifly constructor\n");
 }
 
 
-WiflySerial::WiflySerial(bool verbose) : SerialPort(verbose) {
+WiflySerial::WiflySerial(std::string logfile_dir, bool verbose) : SerialPort(logfile_dir, verbose) {
 	// nothing specific to do in this constructor
 	printf("verbose wifly constructor\n");
 }
 
-WiflySerial::WiflySerial(bool verbose, const char* &uart_name) : SerialPort(verbose, uart_name) {
+WiflySerial::WiflySerial(std::string logfile_dir, bool verbose, const char* &uart_name) : SerialPort(logfile_dir, verbose, uart_name) {
 	printf("complex wifly constructor\n");
 }
 
@@ -50,7 +50,7 @@ WiflySerial::~WiflySerial() {
 
 void WiflySerial::enter_commandmode() {
 
-	if (_verbose) printf("entering command mode...\n");
+	LOG_DEBUG("entering command mode...");
 
 	// First, we must make sure we are in command mode
 	// For now, let's assume we just booted up
@@ -72,14 +72,14 @@ void WiflySerial::enter_commandmode() {
  * Scans the channels and returns the rssi of the specified SSID
  */
 int WiflySerial::scanrssi(char *ssid) {
-	if (_verbose) printf("scanning...\n");
+	LOG_DEBUG("scanning...");
 	char buf[2048];
 	write(fd, "scan 20\r", 8);
 	usleep(500000);
-	if (_verbose) printf("reading from wifly...\n");
+	LOG_DEBUG("reading from wifly...");
 	  
 	read(fd, buf, sizeof(buf));
-	if (_verbose) printf("%s\n", buf);
+	LOG_DEBUG("%s", buf);
 	
 	return parserssi(buf, ssid);
 }
@@ -93,7 +93,7 @@ int WiflySerial::scanrssi(char *ssid) {
  * New function for parsing message, ideally prevents seg faults
  */
 int WiflySerial::parserssi(char* buf, char* ssid) {
-	if (_verbose) printf("parsing rssi from message...\n");
+	LOG_DEBUG("parsing rssi from message...");
 
 	char *delim = (char *) "\n";
 	char *comma_delim = (char *)  ",";
@@ -112,7 +112,7 @@ int WiflySerial::parserssi(char* buf, char* ssid) {
 	// can get the information of how many entries found
 	//jam_token = strtok(token, " ");
 	//jam_token = strtok(NULL, " ");
-	//if (_verbose) printf("found %s results\n", jam_token);
+	//LOG_DEBUG("found %s results\n", jam_token);
 
 	// get to the first actual line of the scan results
 	token = strtok(NULL, delim);
@@ -120,7 +120,7 @@ int WiflySerial::parserssi(char* buf, char* ssid) {
 	// now loop through to the end of the message
 	while (token != NULL && strstr(token, (char*) "END:") == NULL) {
 
-		if (_verbose) printf("%s\n", token);
+		LOG_DEBUG("%s\n", token);
 		
 		// check to see if this row contains the desired SSID
 		if (strstr(token, ssid) != NULL) {
@@ -137,11 +137,11 @@ int WiflySerial::parserssi(char* buf, char* ssid) {
 			if (jam_token != NULL) {
 				rssi_value = (int) strtol(jam_token, &pEnd, 10);
 
-				printf("rssi value parsed: %i\n", rssi_value);
+				LOG_STATUS("rssi value parsed: %i", rssi_value);
 
 				// check to make sure this was indeed the rssi value
 				if (strstr(pEnd, "\0") == NULL) {
-					printf("rssi not correct value\n");
+					LOG_STATUS("rssi not correct value");
 					rssi_value = INT_MAX;
 				}
 			}

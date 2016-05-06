@@ -19,9 +19,9 @@ class WiflySerial : public SerialPort {
 public:
 
 	/* constructor */
-	WiflySerial();
-	WiflySerial(bool verbose);
-	WiflySerial(bool verbose, const char* &uart_name);
+	WiflySerial(std::string logfile_dir);
+	WiflySerial(std::string logfile_dir, bool verbose);
+	WiflySerial(std::string logfile_dir, bool verbose, const char* &uart_name);
 
 	/* destructor */
 	~WiflySerial();

@@ -24,23 +24,23 @@
 #include "mavlink_serial.h"
 #include "system_ids.h"
 
-MavlinkSerial::MavlinkSerial() : 
-SerialPort(),
+MavlinkSerial::MavlinkSerial(std::string logfile_dir) : 
+SerialPort(logfile_dir),
 _command_id(0)
 {
 	printf("default mavlink serial constructor\n");
 }
 
-MavlinkSerial::MavlinkSerial(bool verbose) : 
-SerialPort(verbose),
+MavlinkSerial::MavlinkSerial(std::string logfile_dir, bool verbose) : 
+SerialPort(logfile_dir, verbose),
 _command_id(0)
 {
 	// nothing specific to do in this constructor
 	printf("verbose mavlink serial constructor\n");
 }
 
-MavlinkSerial::MavlinkSerial(bool verbose, const char* &uart_name,  const int &baudrate) : 
-SerialPort(verbose, uart_name, baudrate),
+MavlinkSerial::MavlinkSerial(std::string logfile_dir, bool verbose, const char* &uart_name,  const int &baudrate) : 
+SerialPort(logfile_dir, verbose, uart_name, baudrate),
 _command_id(0)
 {
 	printf("complex mavlink serial constructor\n");
@@ -74,7 +74,7 @@ uint8_t MavlinkSerial::read_serial(mavlink_status_t *lastStatus, mavlink_message
 		if (lastStatus->packet_rx_drop_count != status.packet_rx_drop_count) {
 
 			// print out some error information containing dropped packet indo
-			//if (_verbose) printf("ERROR: DROPPED %d PACKETS\n", status.packet_rx_drop_count);
+			//LOG_DEBUG("ERROR: DROPPED %d PACKETS\n", status.packet_rx_drop_count);
 			
 			// print out the characters of the packets themselves
 			/*
@@ -91,7 +91,7 @@ uint8_t MavlinkSerial::read_serial(mavlink_status_t *lastStatus, mavlink_message
 	} else { // means unable to read from the serial device
 
 		// print out error as needed
-		if (_verbose) fprintf(stderr, "ERROR: Could not read from fd %d\n", fd);
+		LOG_ERROR("ERROR: Could not read from fd %d\n", fd);
 	}
 
 	// return whether or not the message was received
@@ -101,7 +101,7 @@ uint8_t MavlinkSerial::read_serial(mavlink_status_t *lastStatus, mavlink_message
 
 int MavlinkSerial::write_serial(mavlink_message_t &message) {
 
-	if (_verbose) printf("writing to pixhawk...\n");
+	LOG_DEBUG("writing to pixhawk...");
 
 	// buffer needed for mavlink msg and function
 	char buf[300];
@@ -115,7 +115,7 @@ int MavlinkSerial::write_serial(mavlink_message_t &message) {
 	// Wait until all data has been written
 	tcdrain(fd);
 
-	if (_verbose) printf("wrote message of length %u\n", len);
+	LOG_DEBUG("wrote message of length %u", len);
 
 	return len;
 
@@ -140,7 +140,7 @@ void MavlinkSerial::send_tracking_command(const float &north, const float &east,
 	float nextNorth = north;
 	float nextEast = east;
 	float nextAlt = alt;
-	printf("sending command %d: N %f\tE %f\tA %f\n", nextCmd, nextNorth, nextEast, nextAlt);
+	LOG_STATUS("sending command %d: N %f\tE %f\tA %f", nextCmd, nextNorth, nextEast, nextAlt);
 
 	// build the mavlink message
 	mavlink_tracking_cmd_t tracking_cmd;
@@ -158,7 +158,7 @@ void MavlinkSerial::send_tracking_command(const float &north, const float &east,
 	/* printing stuff for debug purposes */
 	int len = write_serial(message);
 	if (len > 0 && _verbose) {
-		printf("sending next tracking command\n");
+		LOG_STATUS("sending next tracking command");
 	}
 
 	return;
@@ -180,14 +180,14 @@ void MavlinkSerial::send_rotate_command(const float direction) {
 	tracking_cmd.cmd_id = nextCmd;
 	tracking_cmd.cmd_type = TRACKING_CMD_ROTATE;
 
-	printf("sending rotate command (%d)\n", nextCmd);
+	LOG_STATUS("sending rotate command (%d)\n", nextCmd);
 	
 	mavlink_message_t message;
 	mavlink_msg_tracking_cmd_encode(sysid, compid, &message, &tracking_cmd);
 
 	int len = write_serial(message);
 	if (len > 0 && _verbose) {
-		printf("sending next rotate command\n");
+		LOG_STATUS("sending next rotate command");
 	}
 
 	return;
@@ -214,9 +214,9 @@ void MavlinkSerial::send_finish_command() {
 
 	int len = write_serial(message);
 	if (len > 0 && _verbose) {
-		printf("sending finish command\n");
+		LOG_STATUS("sending finish command");
 	}
-	// printf("Sent buffer of length %i\n",len);
+	// LOG_STATUS("Sent buffer of length %i\n",len);
 
 	return;
 }
@@ -236,7 +236,7 @@ void MavlinkSerial::send_bearing_cc_message(const double &bearing, const int32_t
 
 	int len = write_serial(message);
 	if (len > 0 && _verbose) {
-		printf("sending bearing cc message\n");
+		LOG_STATUS("sending bearing cc message");
 	}
 
 	return;
@@ -256,7 +256,7 @@ void MavlinkSerial::send_bearing_mle_message(const double &bearing, const int32_
 
 	int len = write_serial(message);
 	if (len > 0 && _verbose) {
-		printf("sending bearing mle message\n");
+		LOG_STATUS("sending bearing mle message");
 	}
 
 	return;
@@ -282,7 +282,7 @@ void MavlinkSerial::send_rssi_message(const int &rssi, const int &rssi2, const i
 		gettimeofday(&tv, NULL);
 		unsigned long current_time = 1000000 * tv.tv_sec + tv.tv_usec;
 
-		printf("%lu: sending rssi message\n", current_time);
+		LOG_STATUS("%lu: sending rssi message", current_time);
 	}
 	
 	return;

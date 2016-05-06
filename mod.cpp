@@ -375,7 +375,7 @@ int main(int argc, char **argv) {
 
 	// connect to the pixhawk
 	LOG_STATUS("[MOD] connecting to pixhawk...");
-	common::pixhawk = new MavlinkSerial(common::verbose, pixhawk_port, baudrate);
+	common::pixhawk = new MavlinkSerial(common::logfile_dir, common::verbose, pixhawk_port, baudrate);
 	LOG_STATUS("[MOD] pixhawk fd is %d", common::pixhawk->get_fd());
 	
 	// ---------------------------------- //

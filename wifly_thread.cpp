@@ -202,7 +202,7 @@ int WiflyHunter::main_loop() {
 	string bearing_mle_logfile_name = common::logfile_dir + "bearing_calc_mle.csv";	// the logfile for the mle bearing estimates
 
 	// connect to the first wifly
-	WiflySerial* wifly1 = new WiflySerial(_verbose, common::sensor_port);
+	WiflySerial* wifly1 = new WiflySerial(common::logfile_dir, _verbose, common::sensor_port);
 	if (wifly1->fd < 0) {
 		LOG_STATUS("[WIFLY] Error opening wifly connection");
 		return -1;
@@ -244,7 +244,7 @@ int WiflyHunter::main_loop() {
 			return -1;
 		}
 
-		wifly2 = new WiflySerial(_verbose, common::omni_wifly_port);
+		wifly2 = new WiflySerial(common::logfile_dir, _verbose, common::omni_wifly_port);
 		if (wifly2->fd < 0) {
 			LOG_STATUS("[WIFLY] Error opening wifly 2 connection");
 			fclose(rssi_logfile);

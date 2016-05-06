@@ -106,7 +106,7 @@ void *dirk_thread(void *param) {
 	const char *dirk_uart = (char *) "/dev/ttyACM0";
 
 	// connect to the arduino
-	SerialPort arduino(false);
+	SerialPort arduino(common::logfile_dir, false);
 	arduino.begin_serial(dirk_uart, baudrate);
 
 	/* Open a file to write bearing calcs to */

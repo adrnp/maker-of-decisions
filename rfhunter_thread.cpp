@@ -196,7 +196,7 @@ int RFHunter::main_loop() {
 	string bearing_logfile_name = common::logfile_dir + "bearing_calc_eor.csv";		// the logfile for the end of rotation bearing calculations
 	
 	/* open the connection to the arduino */
-	SerialPort arduino(false);
+	SerialPort arduino(common::logfile_dir, _verbose);
 	int baudrate = 115200;
 	arduino.begin_serial(common::sensor_port, baudrate);
 

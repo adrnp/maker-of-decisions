@@ -10,6 +10,11 @@
 #ifndef SERIAL_PORT_H_
 #define SERIAL_PORT_H_
 
+#include <cstdlib>
+#include <string>
+#include <stdio.h>
+#include <stdarg.h>
+
 
 class  SerialPort {
 
@@ -20,10 +25,10 @@ public:
 	//int num_conns;
 
 	/* constructor */
-	SerialPort();
-	SerialPort(bool verbose);
-	SerialPort(bool verbose, const char* &uart_name);
-	SerialPort(bool verbose, const char* &uart_name, const int &baudrate);
+	SerialPort(std::string logfile_dir);
+	SerialPort(std::string logfile_dir, bool verbose);
+	SerialPort(std::string logfile_dir, bool verbose, const char* &uart_name);
+	SerialPort(std::string logfile_dir, bool verbose, const char* &uart_name, const int &baudrate);
 	//SerialPort(bool verbose, int num_connections);
 
 	/* destructor */
@@ -42,6 +47,7 @@ public:
 protected:
 	/* state variables */
 	bool _verbose;
+	FILE *_output_logfile;
 
 	/* open com port */
 	void open_port(const char* port);
@@ -53,6 +59,59 @@ protected:
 	/* setup the com port */
 	bool setup_port(int baud, int data_bits, int stop_bits, bool parity, bool hardware_control);
 
+
+	inline void LOG_STATUS(std::string msg, ...) {
+		// add a newline
+		msg += "\n";
+
+		// get the rest of the arguments
+		va_list args;
+		va_start(args, msg);
+
+		// output
+		vprintf(msg.c_str(), args);						// to command line
+		msg.insert(0, "[STATUS]");
+		vfprintf(_output_logfile, msg.c_str(), args);	// to logfile
+
+		// close the end of the arguments
+		va_end(args);
+	}
+
+
+	inline void LOG_DEBUG(std::string msg, ...) {
+		// add a newline
+		msg += "\n";
+
+		// get the rest of the arguments
+		va_list args;
+		va_start(args, msg);
+
+		// output
+		if (_verbose) vprintf(msg.c_str(), args);		// to command line
+		msg.insert(0, "[DEBUG]");
+		vfprintf(_output_logfile, msg.c_str(), args);	// to logfile
+
+		// close the end of the arguments
+		va_end(args);
+	}
+
+
+	inline void LOG_ERROR(std::string msg, ...) {
+		// add a newline
+		msg += "\n";
+		msg.insert(0, "[ERROR]");
+
+		// get the rest of the arguments
+		va_list args;
+		va_start(args, msg);
+
+		// output
+		vprintf(msg.c_str(), args);						// to command line
+		vfprintf(_output_logfile, msg.c_str(), args);	// to logfile
+
+		// close the end of the arguments
+		va_end(args);
+	}
 
 };
 
