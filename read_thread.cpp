@@ -138,6 +138,7 @@ void parse_last_cmd_finished_id(const mavlink_message_t *message, MAVInfo *uavRe
 
 void handle_message(const mavlink_message_t *message, MAVInfo *uavRead) {
 
+	LOG_DEBUG("[READ] received message (%d)", message->msgid);
 
 	switch (message->msgid)
 	{
@@ -192,6 +193,8 @@ void handle_message(const mavlink_message_t *message, MAVInfo *uavRead) {
 		case MAVLINK_MSG_ID_TRACKING_STATUS:
 		{
 			mavlink_msg_tracking_status_decode(message, &(uavRead->tracking_status));
+
+			LOG_DEBUG("[READ] HUNT STATE is currently %d", (int) uavRead->tracking_status.hunt_mode_state);
 
 			if (uavRead->tracking_status.hunt_mode_state == prev_hs && !mode_change) {
 				break;
