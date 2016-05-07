@@ -36,8 +36,10 @@ public:
 	int send_broadcast(const char* buf, const size_t len);
 
 	/* specific message sets to send */
-	int send_bearing_message(const int &type, const double &bearing, const int32_t &lat, const int32_t &lon, const float &alt);
-	int send_rssi_message(const int &dir_rssi, const int &omni_rssi, const int16_t &heading, const int32_t &lat, const int32_t &lon, const float &alt);
+	int send_bearing_message(const double &bearing_cc, const double &bearing_max, const double &bearing_max3,
+								const int32_t &lat, const int32_t &lon, const float &alt);
+	int send_rssi_message(const int &dir_rssi, const int &omni_rssi, const int16_t &heading,
+								const int32_t &lat, const int32_t &lon, const float &alt);
 
 private:
 
