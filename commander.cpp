@@ -70,10 +70,23 @@ void send_next_command(uint8_t &prev_state, uint8_t &new_state) {
 
 			// get next command from the current planner
 			commands = common::planner->action();
-			LOG_STATUS("planner command received with length %d", commands.size());
-			d_north = commands[0];
-			d_east = commands[1];
-			d_yaw = commands[2];
+			LOG_STATUS("[COMMANDER] planner command received with length %d", commands.size());
+
+			// check to make sure the commands have enough arguments
+			if (commands.size() < 2) {
+				LOG_ERROR("[COMMANDER] invalid command received from planner");
+				common::pixhawk->send_finish_command();
+				return;
+			}
+
+			if (commands.size() >= 2) {
+				d_north = commands[0];
+				d_east = commands[1];
+			}
+
+			if (commands.size() >= 3) {
+				d_yaw = commands[2];
+			}
 
 			// get the altitude, but not always set
 			if (commands.size() > 3 && commands[3] > 0.0) {
