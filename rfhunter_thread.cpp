@@ -275,7 +275,7 @@ int RFHunter::main_loop() {
 			_dir_rssi = ((float) measurement.dir)/100.0f;
 			_omni_rssi = ((float) measurement.omni)/100.0f;
 
-			LOG_DEBUG("got timestamp = %d, dir = %f, omni = %f", measurement.timestamp, _dir_rssi, _omni_rssi);
+			LOG_DEBUG("[RFHUNTER] got timestamp = %d, dir = %f, omni = %f", measurement.timestamp, _dir_rssi, _omni_rssi);
 
 		} else {
 			// didn't get a measurement
