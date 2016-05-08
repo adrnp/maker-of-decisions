@@ -379,7 +379,11 @@ int main(int argc, char **argv) {
 			break;
 	}
 	LOG_STATUS("[MOD] initializing planner...");
-	common::planner->initialize();
+	if (!common::planner->initialize()) {
+		LOG_ERROR("[MOD] error initializing planner");
+		fclose(common::output_logfile);
+		return 0;
+	}
 
 	// connect to the pixhawk
 	LOG_STATUS("[MOD] connecting to pixhawk...");
