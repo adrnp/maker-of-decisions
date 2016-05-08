@@ -1,0 +1,5 @@
+# this directory is used to store all the cmake build files
+# Ignore everything in this directory
+*
+# except this file
+!.gitignore

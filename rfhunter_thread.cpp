@@ -1,9 +1,9 @@
 /**
- * @file wifly_thread.cpp
+ * @file rf_detector.cpp
  *
- * Implements the wifly thread and WiflyHunter class.
- * reads from the wifly modules and triggers commands to be sent accordingly.
- * 
+ * Implementation of the rf detector class.
+ *
+ * @author Adrien Perkins <adrienp@stanford.edu>
  */
 
 // Standard includes
@@ -17,6 +17,7 @@
 #include <sys/time.h>
 #include <limits.h>
 
+
 // Serial includes
 #include <stdio.h>   /* Standard input/output definitions */
 #include <string.h>  /* String function definitions */
@@ -29,21 +30,20 @@
 #include <sys/ioctl.h>
 #endif
 
-#include "libs/serial/wifly_serial.h" 	// include the new class for handling a wifly
-#include "libs/bearing/bearing.h"		// this should be all the functions required for bearing calculations
-#include "libs/udp/udp.h"				// udp communication
+#include <vector>
+
+#include "libs/udp/udp.h"
+#include "libs/bearing/bearing.h"
+#include "libs/serial/serial_port.h"
+#include "sensors/rf_detector.h"
+
 #include "common.h"
 #include "commander.h"
-#include "wifly_thread.h"
+#include "rfhunter_thread.h"
 
-
-using std::string;
 using std::vector;
-using namespace std;
 
-
-
-WiflyHunter::WiflyHunter(struct MAVInfo* uavData, bool verbose) :
+RFHunter::RFHunter(struct MAVInfo* uavData, bool verbose) :
 _jager(uavData),
 _verbose(verbose),
 _in_rotation(false),
@@ -54,9 +54,7 @@ _curr_hunt_state(0),
 _prev_hunt_state(0),
 _dir_rssi(INT_MAX),
 _omni_rssi(INT_MAX),
-_heading_dir_pre(0),
-_heading_dir_post(0),
-_heading_omni_post(0),
+_meas_heading(0),
 _bearing_cc(0),
 _bearing_max(0),
 _bearing_max3(0),
@@ -69,14 +67,14 @@ _max_rssi(-100)
 	_norm_gains.clear();
 }
 
-WiflyHunter::~WiflyHunter() {
 
+RFHunter::~RFHunter() {
 }
 
 
-void WiflyHunter::rotation_init() {
+void RFHunter::rotation_init() {
 
-	LOG_STATUS("[WIFLY][STATE][ROT] rotation started");
+	LOG_STATUS("[RFHUNTER][STATE][ROT] rotation started\n");
 
 	// set our logic to mark we are now running the rotation logic
 	_in_rotation = true;
@@ -89,39 +87,38 @@ void WiflyHunter::rotation_init() {
 }
 
 
-void WiflyHunter::rotation_completed() {
-	LOG_STATUS("[WIFLY][STATE][ROT] ended rotation");
+void RFHunter::rotation_completed() {
+	LOG_STATUS("[RFHUNTER][STATE][ROT] ended rotation");
 
 	// no longer in a rotation
 	_in_rotation = false;
 
-	LOG_DEBUG("[WIFLY] calculating end of rotation bearing...");
+	LOG_DEBUG("[RFHUNTER] calculating end of rotation bearing...");
 
 	/* get bearing and values */
 	_bearing_cc = get_bearing_cc(_angles, _gains);		// do bearing calculation at this point
 	_bearing_max = get_bearing_max(_angles, _gains);	// also do max bearing calculation
-	_bearing_max3 = get_bearing_max3(_angles, _gains);	// do meax3 bearing calculation
+	_bearing_max3 = get_bearing_max3(_angles, _gains);	// do max3 bearing calculation
 	_max_rssi = get_max_rssi(_gains);					// get what the max value was for the rssi
 
-	if (_verbose) {
-		LOG_STATUS("[WIFLY] calculated cc bearing: %f", _bearing_cc);
-		LOG_STATUS("[WIFLY] calculated max bearing: %f", _bearing_max);
-		LOG_STATUS("[WIFLY] max rssi value: %i", _max_rssi);
-	}
+	LOG_DEBUG("[RFHUNTER] calculated cc bearing: %f", _bearing_cc);
+	LOG_DEBUG("[RFHUNTER] calculated max bearing: %f", _bearing_max);
+	LOG_DEBUG("[RFHUNTER] max rssi value: %i", _max_rssi);
 }
 
 
-void WiflyHunter::check_hunt_state() {
+
+void RFHunter::check_hunt_state() {
 
 	// check to see if the hunt state has changed (and if a command is required)
 	if (_jager->tracking_status.hunt_mode_state != _curr_hunt_state) {
 
-		LOG_STATUS("[WIFLY][STATE] State changed from %u to %u", _curr_hunt_state, _jager->tracking_status.hunt_mode_state);
+		LOG_STATUS("[RFHUNTER][STATE] State changed from %u to %u", _curr_hunt_state, _jager->tracking_status.hunt_mode_state);
 
 		// update the prev hunt state to be the "current" state and update the current state to be the new current state
 		_prev_hunt_state = _curr_hunt_state;
 		_curr_hunt_state = _jager->tracking_status.hunt_mode_state;
-		LOG_STATUS("[WIFLY][STATE] Prev State changed to: %u", _prev_hunt_state);
+		LOG_STATUS("[RFHUNTER][STATE] Prev State changed to: %u", _prev_hunt_state);
 
 		// update state information
 		update_state(_curr_hunt_state);
@@ -129,14 +126,14 @@ void WiflyHunter::check_hunt_state() {
 		// check to see if need to flag the next command to be sent
 		// NOTE: want to send to the command at the end of this iteration to use the calculated data
 		if (_curr_hunt_state == TRACKING_HUNT_STATE_WAIT) {
-			LOG_STATUS("[WIFLY][CMD] flagging next command to be sent");
+			LOG_STATUS("[RFHUNTER][CMD] flagging next command to be sent");
 			_send_next = true;
 		}	
 	}
 }
 
 
-void WiflyHunter::update_state(const uint8_t &new_state) {
+void RFHunter::update_state(const uint8_t &new_state) {
 	
 	switch (new_state) {
 	case TRACKING_HUNT_STATE_WAIT:
@@ -167,7 +164,7 @@ void WiflyHunter::update_state(const uint8_t &new_state) {
 	}
 }
 
-int WiflyHunter::get_max_rssi(const vector<double> rssi_values) {
+int RFHunter::get_max_rssi(const vector<double> rssi_values) {
 
 	// set it to below what the RF detector can detect
 	double max_rssi = -100;
@@ -192,74 +189,46 @@ int WiflyHunter::get_max_rssi(const vector<double> rssi_values) {
 }
 
 
-int WiflyHunter::main_loop() {
+int RFHunter::main_loop() {
 
 	// some constants that all need to become parameters
-	char *ssid = (char *) "JAMMER01"; // "ADL"; // "JAMMER01";		// the SSID that the wifly is looking for
-
 	string rssi_logfile_name = common::logfile_dir + "rssi.csv";					// the logfile for the rssi values
 	string bearing_logfile_name = common::logfile_dir + "bearing_calc_eor.csv";		// the logfile for the end of rotation bearing calculations
-	string bearing_mle_logfile_name = common::logfile_dir + "bearing_calc_mle.csv";	// the logfile for the mle bearing estimates
+	
+	/* open the connection to the arduino */
+	SerialPort arduino(common::logfile_dir, _verbose);
+	int baudrate = 115200;
+	arduino.begin_serial(common::sensor_port, baudrate);
 
-	// connect to the first wifly
-	WiflySerial* wifly1 = new WiflySerial(common::logfile_dir, _verbose, common::sensor_port);
-	if (wifly1->fd < 0) {
-		LOG_STATUS("[WIFLY] Error opening wifly connection");
+	if (arduino.fd < 0) {
+		LOG_ERROR("[RFHUNTER] error opening arduino connection");
 		return -1;
 	}
 
-	LOG_STATUS("[WIFLY] wifly 1 fd is %d", wifly1->fd);
-
-	/* Go into command mode */
-	wifly1->enter_commandmode();
+	/* create the rf detector parser */
+	RFDetector *rf_detector = new RFDetector(arduino.fd);
 
 	/* Open a file to write values to */
-	/* Appending values */
 	FILE *rssi_logfile = fopen(rssi_logfile_name.c_str(), "a");
-	if (rssi_logfile == NULL)
-	{
+	if (rssi_logfile == NULL) {
 		// TODO: figure out what we do want to return when there is an error
-		LOG_STATUS("[WIFLY] Error opening wifly file");
+		LOG_ERROR("[RFHUNTER] Error opening wifly file");
 		return -1;
 	}
 
 	/* Open a file to write bearing calcs to */
 	FILE *bearing_logfile = fopen(bearing_logfile_name.c_str(), "a");
-	if (bearing_logfile == NULL)
-	{
+	if (bearing_logfile == NULL) {
 		// TODO: figure out what we do want to return when there is an error
-		LOG_STATUS("[WIFLY] Error opening bearing output file");
+		LOG_ERROR("[RFHUNTER] Error opening bearing output file");
 		fclose(rssi_logfile);
 		return -1;
 	}
 
-	FILE *bearing_logfile_mle = NULL;
-	WiflySerial* wifly2 = NULL;
-	if (common::dual_wifly) {
-		bearing_logfile_mle = fopen(bearing_mle_logfile_name.c_str(), "a");
-		if (bearing_logfile_mle == NULL) {
-			LOG_STATUS("[WIFLY] Error opening bearing mle output file");
-			fclose(rssi_logfile);
-			fclose(bearing_logfile);
-			return -1;
-		}
-
-		wifly2 = new WiflySerial(common::logfile_dir, _verbose, common::omni_wifly_port);
-		if (wifly2->fd < 0) {
-			LOG_STATUS("[WIFLY] Error opening wifly 2 connection");
-			fclose(rssi_logfile);
-			fclose(bearing_logfile);
-			fclose(bearing_logfile_mle);
-			return -1;
-		}
-		LOG_STATUS("[WIFLY] wifly 2 fd is %d", wifly2->fd);
-
-		/* enter command mode */
-		wifly2->enter_commandmode();
-	}
 
 	/* open a UDP connection to send data down to the ground station */
 	UDP* udp = new UDP();
+
 
 	struct timeval tv;
 	unsigned long prev_loop_timestamp;
@@ -279,8 +248,8 @@ int WiflyHunter::main_loop() {
 		}
 		prev_loop_timestamp = current_loop_time;
 
-		LOG_DEBUG("\n--------------------------------");
-		LOG_DEBUG("[WIFLY] Top of wifly loop");
+		LOG_STATUS("\n--------------------------------");
+		LOG_STATUS("[RFHUNTER] Top of wifly loop");
 
 		// check the hunt state from JAGER and adjust states accordingly
 		check_hunt_state();
@@ -293,21 +262,24 @@ int WiflyHunter::main_loop() {
 		// making the rssi measurement (i.e. lat, lon, alt)
 		// not sure what the variability is from here to later on
 
-		LOG_STATUS("[WIFLY] making measurement...");
+		LOG_STATUS("[RFHUNTER] getting most recent measurement...");
+
+		// defaults for all the values
 		_dir_rssi = INT_MAX;
 		_omni_rssi = INT_MAX;
+		_meas_heading = _jager->vfr_hud.heading;
+		strength_measurement_t measurement;
+		if (rf_detector->read_measurement(&measurement)) {
+			
+			// extract the measurements
+			_dir_rssi = ((float) measurement.dir)/100.0f;
+			_omni_rssi = ((float) measurement.omni)/100.0f;
 
-		LOG_DEBUG("[WIFLY] scanning wifly 1...");
-		_heading_dir_pre = _jager->vfr_hud.heading;
-		_dir_rssi = wifly1->scanrssi(ssid);
-		_heading_dir_post = _jager->vfr_hud.heading;
-		LOG_STATUS("[WIFLY] dir rssi recevied: %i", _dir_rssi);
-		
-		if (common::dual_wifly) {
-			LOG_DEBUG("[WIFLY] scanning wifly 2...");
-			_omni_rssi = wifly2->scanrssi(ssid);
-			_heading_omni_post = _jager->vfr_hud.heading;
-			LOG_STATUS("[WIFLY] omni rssi recevied: %i", _omni_rssi);
+			LOG_DEBUG("got timestamp = %d, dir = %f, omni = %f", measurement.timestamp, _dir_rssi, _omni_rssi);
+
+		} else {
+			// didn't get a measurement
+			LOG_ERROR("[RFHUNTER] no measurement received");
 		}
 
 		//-----------------------------------------------//
@@ -322,37 +294,15 @@ int WiflyHunter::main_loop() {
 				common::planner->reset_observations();
 			}
 
-			LOG_STATUS("[WIFLY][STATE][ROT] rotating");
+			LOG_STATUS("[RFHUNTER][STATE][ROT] rotating");
 
 			// add heading and rssi to the correct arrays (note will always get both dir and omni in this case)
-			_angles.push_back((double) _heading_dir_pre);
+			_angles.push_back((double) _meas_heading);
 			_gains.push_back(_dir_rssi);
-			
-			// if using both wiflies, need to see if there was an omni update
-			// may have a problem with omni value not matching the same location as the dir measurement
-			if (common::dual_wifly) {
-				
-				// add omni rssi to the correct array
-				_omni_gains.push_back(_omni_rssi);
-
-				// calculate the normalized gains
-				_norm_gains.push_back(gains2normgain(_dir_rssi, _omni_rssi));
-
-				// do constant calculation of bearing
-				LOG_DEBUG("[WIFLY] calculating bearing mle");
-				double curr_bearing_est = get_bearing_mle(_angles, _norm_gains);
-
-				// save the calculated mle bearing
-				fprintf(bearing_logfile_mle, "%llu,%i,%i,%f,%f\n", _jager->sys_time_us.time_unix_usec,
-					_jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt, curr_bearing_est);
-
-				/* send data */
-				common::pixhawk->send_bearing_mle_message(curr_bearing_est, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);		// send a mavlink message of the calculated mle bearing
-				//udp->send_bearing_message(TYPE_BEARING_MLE, curr_bearing_est, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);		// send the udp message (directly to ground)
-			}
+			_omni_gains.push_back(_omni_rssi);
 
 			// update the planner's most recent observations
-			common::planner->update_observation(_heading_dir_pre, _dir_rssi, _omni_rssi);
+			common::planner->update_observation(_meas_heading, _dir_rssi, _omni_rssi);
 		}
 
 
@@ -363,8 +313,9 @@ int WiflyHunter::main_loop() {
 			// update the planner's full observations
 			common::planner->update_observations(_angles, _gains, _omni_gains, _norm_gains, _bearing_cc, _bearing_max, _bearing_max3);
 
+
 			// save bearing cc to file (with important information)
-			fprintf(bearing_logfile, "%llu,%i,%i,%f,%f,%f,%i\n", _jager->sys_time_us.time_unix_usec,
+			fprintf(bearing_logfile, "%llu,%i,%i,%f,%f,%f,%f\n", _jager->sys_time_us.time_unix_usec,
 				_jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt, _bearing_cc, _bearing_max, _max_rssi);
 
 			/* send data */
@@ -379,13 +330,16 @@ int WiflyHunter::main_loop() {
 
 
 		/* write the directional antenna information */
-		fprintf(rssi_logfile, "%llu,%u,%i,%i,%i,%i,%i,%f,%i, %i\n",
-				_jager->sys_time_us.time_unix_usec, _jager->custom_mode, _rotating, _heading_dir_pre, _heading_dir_post,
+		fprintf(rssi_logfile, "%llu,%u,%i,%i,%i,%i,%i,%f,%f, %f\n",
+				_jager->sys_time_us.time_unix_usec, _jager->custom_mode, _rotating, _meas_heading, _meas_heading,
 				_jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt, _dir_rssi, _omni_rssi);
 
-		/* send data */
-		common::pixhawk->send_rssi_message(_dir_rssi, _omni_rssi, _heading_dir_pre, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);	// send a mavlink message with the current rssi
-		udp->send_rssi_message((int) _rotating, _dir_rssi, _omni_rssi, _heading_dir_pre, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);				// send the udp message (directly to ground)
+		// send a mavlink message with the current rssi
+		common::pixhawk->send_rssi_message((int) _dir_rssi, (int) _omni_rssi, _meas_heading, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);
+
+		// send the udp message (directly to ground)
+		// TODO: potentially only do this if we are in a rotation
+		udp->send_rssi_message((int) _rotating, (int) _dir_rssi, (int) _omni_rssi, _meas_heading, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);
 
 
 		//-----------------------------------------------//
@@ -394,7 +348,7 @@ int WiflyHunter::main_loop() {
 
 		// if sending the next command has been flagged, send the next command, using the calculated data
 		if (_send_next) {
-			LOG_STATUS("[WIFLY][CMD] calling to send the next command");
+			LOG_STATUS("[RFHUNTER][CMD] calling to send the next command...");
 			send_next_command(_prev_hunt_state, _jager->tracking_status.hunt_mode_state);
 			_send_next = false;
 		}
@@ -406,24 +360,17 @@ int WiflyHunter::main_loop() {
 	/* Be sure to close the output file and connection */
 	fclose(rssi_logfile);
 	fclose(bearing_logfile);
-	wifly1->end_serial();
 
 	delete &udp;
-
-
-	if (common::dual_wifly) {
-		fclose(bearing_logfile_mle);
-		wifly2->end_serial();
-	}
 
 	return 0;
 }
 
 
 
+void *rfhunter_thread(void *param) {
 
-void *wifly_thread(void *param) {
-	// just launch the wifly loop
-	WiflyHunter* wifly_hunter = new WiflyHunter((struct MAVInfo *)param, common::verbose);
-	return (void *) wifly_hunter->main_loop();
+	// just launch the hunter loop
+	RFHunter* rfhunter_hunter = new RFHunter((struct MAVInfo *)param, common::verbose);
+	return (void *) rfhunter_hunter->main_loop();
 }

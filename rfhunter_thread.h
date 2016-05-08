@@ -1,38 +1,37 @@
 /**
- * @file wifly_thread.h
+ * @file rfdetector_thread.h
  *
- * Thread to handle reading from one or two wifly modules.
+ * Thread handling reading from the rf detector.
  * 
  * @author Adrien Perkins <adrienp@stanford.edu>
  */
 
-#ifndef WIFLY_THREAD_H_
-#define WIFLY_THREAD_H_
-
+#ifndef RFHUNTER_THREAD_H_
+#define RFHUNTER_THREAD_H_
 
 #include <vector>
 
 using std::vector;
 
-
 /**
- * WiflyHunter class.
+ * RFHunter Class
  *
- * Class that contains a main loop to read from the wifly modules.
+ * Contains the main loop for the sensor reading thread.
+ * 
  */
-class WiflyHunter {
+class RFHunter {
 
 public:
 
 	/**
-	 * constructor.
+	 * constructor
 	 */
-	WiflyHunter(struct MAVInfo* uavData, bool verbose);
+	RFHunter(struct MAVInfo* uavData, bool verbose);
 
 	/**
-	 * desctructor.
+	 * destructor
 	 */
-	~WiflyHunter();
+	~RFHunter();
 
 	/**
 	 * the main loop running for the thread
@@ -63,15 +62,13 @@ private:
 	vector<double> _gains;
 	vector<double> _omni_gains;
 	vector<int> _norm_gains;
-	int _dir_rssi;
-	int _omni_rssi;
-	int16_t _heading_dir_pre;
-	int16_t _heading_dir_post;
-	int16_t _heading_omni_post;
+	float _dir_rssi;
+	float _omni_rssi;
+	int16_t _meas_heading;
 	double _bearing_cc;
 	double _bearing_max;
 	double _bearing_max3;
-	int _max_rssi;
+	float _max_rssi;
 
 
 	// helper functions
@@ -86,6 +83,11 @@ private:
 	 */
 	void rotation_completed();
 
+	/**
+	 * read from the sensor.
+	 */
+	void get_measurement();
+	
 	/**
 	 * check and update current state if needed.
 	 */
@@ -106,12 +108,14 @@ private:
 
 };
 
+
+
 /**
- * springboard to starting the main loop of the WiflyHunter class.
+ * springboard to starting the main loop of the RFHunter class.
  * @param  param  mavstruct containing uav information
  * @return        standard return
  */
-void *wifly_thread(void *param);
+void *rfhunter_thread(void *param);
 
 
-#endif /* WIFLY_THREAD_H_ */
+#endif /* RFHUNTER_THREAD_H_ */

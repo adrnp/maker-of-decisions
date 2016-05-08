@@ -1,156 +1,231 @@
-/*
- * mod.cpp
+/**
+ * @file mod.cpp
  *
- *  Created on: August, 2014
- *      Author: Adrien Perkins
+ * Contains the core running functions.
+ * Reads a config file to populate all the necessary parameters and settings.
+ * Based on configuration, it starts the necessary thread.
+ *
+ * @author Adrien Perkins <adrienp@stanford.edu>
  */
+
+
+// system inclusions
+#include <cstdlib>
+#include <unistd.h>
+#include <cmath>
+#include <string.h>
+#include <inttypes.h>
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <map>
+#include <signal.h>
+#include <time.h>	// to determine the time of day and day of week
+#include <sys/stat.h>	// to create the logfile directory as needed
+
 #include "common.h"
 
 #include "read_thread.h"
 #include "wifly_thread.h"
-#include "wifly2_thread.h"
-#include "mod.h"
+#include "rfhunter_thread.h"
 #include "dirk_thread.h"
+
+#include "libs/planners/fixed_planner.h"
+#include "libs/planners/circle_planner.h"
+#include "libs/planners/greedy_planner.h"
+#include "libs/planners/naive_planner.h"
+
+#include "mod.h"
 
 using std::string;
 using namespace std;
 
 
-// variable declarations
+// common variable declarations
+namespace common {
+	bool verbose = false;	// default verbose to false
+	bool debug = false;		// default debug to false
 
-bool verbose = false;	// default verbose to false
-bool debug = false;		// default debug to false
-bool nowifly = false;	// default to wanting wifly
-bool get_commands = false;	// default for whether or not we want to read the command file
-bool dual_wifly = false;	// default to only have one wifly active
+	MAVInfo uav;			// object to hold all the state information on the UAV
+	int RUNNING_FLAG = 1;	// default the read and write threads to be running
+
+	MavlinkSerial* pixhawk = nullptr;	// serial connection to the pixhawk
+	SerialPort* df_arduino = nullptr;	// serial connection to the df arduino
+
+	const char* sensor_port = (char*)"/dev/ttyUSB0";
+	const char* omni_wifly_port = (char*)"/dev/ttyUSB2";
+
+	bool dual_wifly = false;	// default to only have one wifly active
+
+	float flight_alt = 380;			// default flight is AMSL
+	int tracker_type = TRACK_NAIVE;	// the type of tracker to use
+
+	bool emily = false;			// default to not running the emily antenna configuration
+	
+	string logfile_dir;		// the logfile directory that will be used
+
+	Planner *planner = nullptr;
+	FILE *output_logfile = nullptr;
+}
+
+
+// "local" globals
 bool phased_array = false;	// default to not using a phased array antenna
-bool emily = false;			// default to not running the emily antenna configuration
-
-bool execute_tracking = false;	// default to not executing a tracking mission
-int tracking_method = TRACK_NAIVE;	// default to using the naive tracker
-
-float flight_alt = 355;			// default flight is AMSL
-
-MAVInfo uav;			// object to hold all the state information on the UAV
-
-MavlinkSerial* pixhawk = nullptr;	// serial connection to the pixhawk
-SerialPort* df_arduino = nullptr;	// serial connection to the df arduino
-
-int RUNNING_FLAG = 1;	// default the read and write threads to be running
-
-char* wifly_port1;
-char* wifly_port2;
 char* pa_port;
 
-char* command_file = (char*) "commands";
+bool nowifly = false;	// default to wanting wifly
 
-/**
- * read in the passed arguments to the function on start
- *
- * TODO: figure out what to return and how to handle uart and baud values
- */
-void read_arguments(int argc, char **argv, char **uart_name, int *baudrate, char **wifly1, char **wifly2) {
+int mission_type = 0;
+int sensor_type = 0;
+
+const char *pixhawk_port = (char*)"/dev/ttyUSB1";
+int baudrate = 115200;
+
+
+const char *command_file = (char*) "commands/commands.csv";
+string planner_config_file;
+
+
+int get_configuration(int argc, char **argv) {
+
+	char *config_filename = (char*)"config.cfg";
 
 	// string to be displayed on incorrect inputs to show correct function usage
-	const char *commandline_usage = "\tusage: %s -d <devicename> -b <baudrate> [options]\n\n"
-			"\t-v/--verbose\t\t detailed output of current state\n"
-			"\n\t\tdefault: -d %s -b %i\n";
+	const char *commandline_usage = "\tusage: -c/--config <config_filename>\n\n"
+									"\tthe config filename is optional and will default to config.cfg\n"
+									"\t(see config.cfg to see what is required in the config file)\n\n"
+									"\texample: ./mod -d config.cfg\n";
 
 	// loop through all the program arguments
 	for (int i = 1; i < argc; i++) { /* argv[0] is "mavlink" */
 
 		// help text requested
 		if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
-			printf(commandline_usage, argv[0], *uart_name, *baudrate);
-			throw EXIT_FAILURE;
+			cout << commandline_usage;
+			return -1;
 		}
 
 		/* UART device ID */
-		if (strcmp(argv[i], "-d") == 0 || strcmp(argv[i], "--device") == 0) {
+		if (strcmp(argv[i], "-c") == 0 || strcmp(argv[i], "--config") == 0) {
 			if (argc > i + 1) {
-				*uart_name = argv[i + 1];
-
-			} else {
-				cout << "nope\n";
-				//printf(commandline_usage, argv[0], *uart_name, *baudrate);
-				//throw EXIT_FAILURE;
+				config_filename = argv[i + 1];
 			}
-		}
-
-		/* baud rate */
-		if (strcmp(argv[i], "-b") == 0 || strcmp(argv[i], "--baud") == 0) {
-			if (argc > i + 1) {
-				*baudrate = atoi(argv[i + 1]);
-
-			} else {
-				cout << "more nope\n";
-				//printf(commandline_usage, argv[0], *uart_name, *baudrate);
-				//throw EXIT_FAILURE;
-			}
-		}
-
-		/* verbosity */
-		if (strcmp(argv[i], "-v") == 0 || strcmp(argv[i], "--verbose") == 0) {
-			verbose = true;
-		}
-
-		/* debug */
-		if (strcmp(argv[i], "-v") == 0 || strcmp(argv[i], "--debug") == 0) {
-			debug = true;
-		}
-
-		/* wifly state */
-		if (strcmp(argv[i], "-nw") == 0 || strcmp(argv[i], "--nowifly") == 0) {
-			nowifly = true;
-		}
-
-		/* command file state */
-		if (strcmp(argv[i], "-c") == 0 || strcmp(argv[i], "--commands") == 0) {
-			get_commands = true;
-			
-			// get the name of the desired command file
-			if (argc > i + 1) {
-				command_file = argv[i + 1];
-			}
-		}
-
-		/* wifly 1 port */
-		if (strcmp(argv[i], "-w1") == 0 || strcmp(argv[i], "--wifly1") == 0) {
-			*wifly1 = argv[i + 1];
-		}
-
-		/* wifly 2 port */
-		if (strcmp(argv[i], "-w2") == 0 || strcmp(argv[i], "--wifly2") == 0) {
-			*wifly2 = argv[i + 1];
-			dual_wifly = true;
-		}
-
-		/* phased array port */
-		if (strcmp(argv[i], "-pa") == 0 || strcmp(argv[i], "--phased") == 0) {
-			phased_array = true;
-		}
-
-		/* whether or not executing a tracking mission */
-		if (strcmp(argv[i], "-t") == 0 || strcmp(argv[i], "--track") == 0) {
-			// mark that we will want to execute a tracking mission
-			execute_tracking = true;
-
-			// check to see if a specific tracking algorithm was selected
-			if (argc > i + 1) {
-			   if (strcmp(argv[i+1], "pomdp") == 0) {
-					tracking_method = TRACK_POMDP;
-			   } else if (strcmp(argv[i+1], "variable") == 0) {
-				   tracking_method = TRACK_VARIABLE;
-			   }
-			}
-		}
-
-		/* whether or not using the emily configuration */
-		if (strcmp(argv[i], "-e") == 0 || strcmp(argv[i], "--emily") == 0) {
-			emily = true;
 		}
 	}
+
+	// the map containing all the params
+	map<string, string> config_map;
+
+	// the logfile that will get all the config params
+	// doing this so we know what configs were used for each flight
+	string config_logfile_path = common::logfile_dir + "config.cfg";
+	ofstream config_logfile(config_logfile_path);
+	bool log_open = config_logfile.is_open();
+
+	/* parse through the config file */
+	ifstream infile(config_filename);
+	
+	string line, key, value;  // some initialization
+	while (getline(infile, line)) { // loop while we can get a new line from the file
+
+		// skip comment lines
+		size_t found = line.find_first_not_of(" \t");
+		if (found != string::npos) {
+			if (line[found] == '#') continue;
+		}
+
+		// get an input string stream of the current line
+		istringstream curr_line(line);
+		if (getline(curr_line, key, '=')) {  // read up to the = sign and set that to key
+			if (getline(curr_line, value)) {  // read rest set that to value
+				config_map[key] = value;
+				cout << "key: " << key << "\tvalue: " << value << "\n";
+				
+				// log the configuration
+				if (log_open) {
+					config_logfile << key << "=" << value << "\n";
+				}
+			}
+		}
+	}
+
+	// close the configuration log
+	if (log_open) {
+		config_logfile.close();
+	}
+
+	/* general */
+	if (config_map.find("verbose") != config_map.end()) {
+		common::verbose = (stoi(config_map["verbose"]) == 1);
+	}
+
+	if (config_map.find("planner_type") != config_map.end()) {
+		common::tracker_type = stoi(config_map["planner_type"]);
+	}
+
+	if (config_map.find("sensor_type") != config_map.end()) {
+		sensor_type = stoi(config_map["sensor_type"]);
+	}
+
+	if (config_map.find("flight_alt") != config_map.end()) {
+		common::flight_alt = stof(config_map["flight_alt"]);
+	}
+
+	/* command file */
+	if (config_map.find("command_file") != config_map.end()) {
+		command_file = config_map["command_file"].c_str();
+	}
+
+	/* planner config gile file */
+	if (config_map.find("planner_config_file") != config_map.end()) {
+		planner_config_file = config_map["planner_config_file"];
+	}
+
+	/* pixhawk */
+	if (config_map.find("pixhawk_port") != config_map.end()) {
+		pixhawk_port = config_map["pixhawk_port"].c_str();
+	} else {
+		cout << "Pixhawk port is a required config.\nPlease check your config file (" << config_filename << ")\n";
+		return -1;
+	}
+
+	if (config_map.find("pixhawk_baudrate") != config_map.end()) {
+		baudrate = stoi(config_map["pixhawk_baudrate"]);
+	} else {
+		cout << "Pixhawk baudrate is a required config.\nPlease check your config file (" << config_filename << ")\n";
+		return -1;
+	}
+
+	/* wifly */
+	if (config_map.find("sensor_port") != config_map.end()) {
+		common::sensor_port = config_map["sensor_port"].c_str();
+	} else {
+		cout << "Sensor port is a required config.\nPlease check your config file (" << config_filename << ")\n";
+		return -1;
+	}
+
+	if (config_map.find("dual_wifly") != config_map.end()) {
+		common::dual_wifly = (stoi(config_map["dual_wifly"]) == 1);
+	}
+
+	if (common::dual_wifly) {
+		if (config_map.find("omni_wifly_port") != config_map.end()) {
+			common::omni_wifly_port = config_map["omni_wifly_port"].c_str();
+		} else {
+			cout << "Running 2 wiflys but failed to provide port for second wifly.\nPlease check your config file (" << config_filename << ")\n";
+			return -1;
+		}
+		
+	}
+
+	/* emily */
+	if (config_map.find("emily_antenna") != config_map.end()) {
+		common::emily = (stoi(config_map["emily_antenna"]) == 1);
+	}
+
+	return 1;
 }
+
 
 
 void quit_handler(int sig) {
@@ -159,94 +234,218 @@ void quit_handler(int sig) {
 	printf("Terminating script\n");
 
 	// set the running flag to 0 to kill all loops
-	RUNNING_FLAG = 0;
+	common::RUNNING_FLAG = 0;
 
-	pixhawk->end_serial();
+	common::pixhawk->end_serial();
 
 }
 
+// 0 = success, -1 = error
+int create_directory(const char *path, mode_t mode) {
+	struct stat st;
+	int status = 0;
+	
+	if (stat(path, &st) != 0) {
+		if (mkdir(path, mode) != 0) {
+			status = -1;
+		}
+	} else {
+		cout << "directory already exists\n";
+	}
+
+	// return the status
+	return status;
+}
+
+string to_zeropad_string(const int &val, const int &len) {
+	string input = to_string(val);
+	return string(len - input.length(), '0') + input;
+}
+
+
+int setup_logfiles() {
+
+	// the return variable
+	int status = 0;
+	
+	// get the current day of the week for the logging file
+	//const string day[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+	
+	time_t rawtime;
+	struct tm *timeinfo;
+	time(&rawtime);
+	timeinfo = localtime(&rawtime);
+	//int wday = timeinfo->tm_wday;
+	
+	// get the current time while we are at it for actually naming the files....
+	int hour = timeinfo->tm_hour;
+	int min = timeinfo->tm_min;
+
+	// check to see if the logs directory exists, and if it doesn't create it
+	string log_path = "logs/";
+	status = create_directory(log_path.c_str(), 0777);
+	if (status < 0) {
+		return -1;
+	}
+	
+	// now check to make sure if this specific day of the week directory has been created
+	//string day_path = log_path + day[wday] + "/";
+	string day_path = log_path + to_zeropad_string(timeinfo->tm_mon + 1, 2) + "_" + to_zeropad_string(timeinfo->tm_mday, 2) + "/";
+	status = create_directory(day_path.c_str(), 0777);
+	if (status < 0) {
+		return -1;
+	}	
+
+	// finally create yet another directory that is timestamped that will contain all the log files
+	string time_path = day_path + to_zeropad_string(hour, 2) + "_" + to_zeropad_string(min, 2) + "/";
+	status = create_directory(time_path.c_str(), 0777);
+	if (status < 0) {
+		return -1;
+	}
+
+	// at this point means that all the directories are now present so the logfile dir can be populared
+	common::logfile_dir = time_path;
+
+	return 0;
+}
 
 
 int main(int argc, char **argv) {
 
 	cout << "[MOD] starting...\n";
-	printf("[MOD] printf starting...\n");
-
-	// ids of the threads
-	pthread_t readId;
-	pthread_t wiflyId;
-	pthread_t phasedId;
-	pthread_t wifly2Id;
-
-	/* default values for arguments */
-	char *uart_name = (char*)"/dev/ttyUSB1";
-
-	wifly_port1 = (char*) "/dev/ttyUSB0";
-	wifly_port2 = (char*) "/dev/ttyUSB2";
-
-
-	char* df_uart_name = (char*) "/dev/ttyACM0";
-
-	int baudrate = 115200;
-
-	cout << "[MOD] reading arguments\n";
-	// read the input arguments
-	read_arguments(argc, argv, &uart_name, &baudrate, &wifly_port1, &wifly_port2);
-
-	// open and configure the com port being used for communication
-	// begin_serial(uart_name, baudrate);
-	cout << "[MOD] creating new mavlink serial object\n";
-	pixhawk = new MavlinkSerial(verbose, uart_name, baudrate);
-
-	cout << "[MOD] pixhawk fd " << pixhawk->fd << "\n";
-	cout << "[MOD] pixhawk get fd " << pixhawk->get_fd() << "\n";
-
-	// also create connection to df arduino if needed here
-	if (emily) {
-		df_arduino = new SerialPort(verbose, df_uart_name, baudrate);
-	}
 
 	// setup termination using CRT-C
 	signal(SIGINT, quit_handler);
 
-
-	// need to create read and write threads
-	cout<< "[MOD] handling threads\n";
-	pthread_create(&readId, NULL, read_thread, (void *)&uav);
+	// ---------------------------------- //
+	// get and set all the configurations
+	// ---------------------------------- //
 	
+	// setup all the log file stuff for this run
+	setup_logfiles();
+	
+	// open the main output logfile
+	string output_logfile_name = common::logfile_dir + "log.out";
+	common::output_logfile = fopen(output_logfile_name.c_str(), "a");
+	if (common::output_logfile == NULL) {
+		cout << "[MOD] error opening main logfile\n";
+		return 0;
+	}
+
+	//cout << "[MOD] reading arguments\n";
+	LOG_STATUS("[MOD] reading arguments");
+	
+	
+	// get all the confguration parameters
+	if (get_configuration(argc, argv) < 0) {
+		fclose(common::output_logfile);
+		return 0;
+	}
+
+	// ---------------------------------- //
+	// initialize things
+	// ---------------------------------- //
+
+	// initialize the planner
+	common::planner = new FixedPlanner(common::logfile_dir, command_file);	// default to running command files, this ensures this isn't null
+	switch (common::tracker_type) {
+		/* the naive tracker */
+		case TRACK_NAIVE:
+			LOG_STATUS("[MOD] running naive planner");
+			common::planner = new NaivePlanner(common::logfile_dir);
+			break;
+
+		/* variable step naive tracker */
+		case TRACK_VARIABLE:
+			LOG_STATUS("[MOD] running naive planner variable");
+			common::planner = new NaivePlanner(common::logfile_dir);
+			break;
+
+		/* the pomdp tracker */
+		case TRACK_POMDP:
+			LOG_STATUS("[MOD] running pomdp planner");
+			break;
+
+		/* the circle planner */
+		case TRACK_CIRCLE:
+			LOG_STATUS("[MOD] running circle planner");
+			common::planner = new CirclePlanner(planner_config_file);
+			break;
+
+		/* the greedy planner */
+		case TRACK_GREEDY:
+			LOG_STATUS("[MOD] running circle planner");
+			common::planner = new GreedyPlanner(planner_config_file);
+			break;
+	}
+	LOG_STATUS("[MOD] initializing planner...");
+	if (!common::planner->initialize()) {
+		LOG_ERROR("[MOD] error initializing planner");
+		fclose(common::output_logfile);
+		return 0;
+	}
+
+	// connect to the pixhawk
+	LOG_STATUS("[MOD] connecting to pixhawk...");
+	common::pixhawk = new MavlinkSerial(common::logfile_dir, common::verbose, pixhawk_port, baudrate);
+	LOG_STATUS("[MOD] pixhawk fd is %d", common::pixhawk->get_fd());
+	
+	// ---------------------------------- //
+	// create threads
+	// ---------------------------------- //
+	
+	// ids of the threads
+	pthread_t readId;
+	pthread_t huntingId;
+
+	// read thread
+	LOG_STATUS("[MOD] handling threads");
+	pthread_create(&readId, NULL, read_thread, (void *)&common::uav);
+
+
 	// create a thread for the wifly stuff (only if want wifly running)
-	if (!nowifly && !phased_array) {
-		printf("[MOD] starting wifly thread...\n");
-		pthread_create(&wiflyId, NULL, wifly_thread, (void *)&uav);
+	bool hunt_running = false;
+	switch (sensor_type) {
+	case 1:
+		LOG_STATUS("[MOD] starting wifly thread...");
+		pthread_create(&huntingId, NULL, wifly_thread, (void *)&common::uav);
+		hunt_running = true;
+		break;
+	case 2:
+		LOG_STATUS("[MOD] starting rfdetector thread...");
+		pthread_create(&huntingId, NULL, rfhunter_thread, (void *)&common::uav);
+		hunt_running = true;
+		break;
+	case 3:
+		LOG_STATUS("[MOD] starting dirk antenna thread...");
+		pthread_create(&huntingId, NULL, dirk_thread, (void *)&common::uav);
+		hunt_running = true;
+		break;
 	}
 
-	if (dual_wifly) {
-		printf("[MOD] starting wifly2 thread...\n");
-		pthread_create(&wifly2Id, NULL, wifly2_thread, (void *) &uav);
-	}
-
-	if (phased_array) {
-		printf("[MOD] starting dirk antenna thread...\n");
-		pthread_create(&phasedId, NULL, dirk_thread, (void *)&uav);
-	}
+	// ---------------------------------- //
+	// wrap things up
+	// ---------------------------------- //
 
 	pthread_join(readId, NULL);
 	
-	if (!nowifly && !phased_array) {
-		pthread_join(wiflyId, NULL);
+	if (hunt_running == true) {
+		pthread_join(huntingId, NULL);
 	}
 
-	if (dual_wifly) {
-		pthread_join(wifly2Id, NULL);
-	}
-
-	if (phased_array) {
-		pthread_join(phasedId, NULL);
-	}
-	
 	// close the pixhawk connection
-	pixhawk->end_serial();
+	common::pixhawk->end_serial();
 
+
+	/*
+	// also create connection to df arduino if needed here
+	if (common::emily) {
+		df_arduino = new SerialPort(verbose, df_uart_name, baudrate);
+	}
+	*/
+
+	// close the logfile
+	fclose(common::output_logfile);
 	return 0;
 }
 

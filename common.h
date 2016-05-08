@@ -1,73 +1,131 @@
-/*
- * common.h
+/**
+ * @file common.h
  *
- * this file contains variables that will be common throughout all of the files.
- * 
- * Note: the actual declaration of these variables can be found in the mod.cpp file
+ * The definition of a set of common variables used among the files.
+ * Note the namespace (common) to designate these as common variables.
  *
- *  Created on: Jan 23, 2015
- *      Author: adrienp
+ * @Author Adrien Perkins <adrienp@stanford.edu>
  */
 
 #ifndef COMMON_H_
 #define COMMON_H_
 
- #include "mav_struct.h"
- #include "serial_lib/mavlink_serial.h"
+#include <cstdlib>
+#include <stdio.h>
+#include <stdarg.h>
+#include <string.h>
+
+
+#include "mav_struct.h"
+#include "libs/serial/mavlink_serial.h"
+#include "libs/planners/planner.h"
 
 // some constants to determine tracking method
-#define TRACK_NAIVE 1
-#define TRACK_POMDP 2
-#define TRACK_VARIABLE 3
+#define TRACK_PATH		0
+#define TRACK_NAIVE 	1
+#define TRACK_VARIABLE 	2
+#define TRACK_POMDP 	3
+#define TRACK_CIRCLE	4
+#define TRACK_GREEDY	5
 
-/** boolean to determine whether or not to show all outputs */
-extern bool verbose;
 
-/** boolean to determine whether or not to show debug outputs */
-extern bool debug;
+namespace common {
 
-/** use command file */
-extern bool get_commands;
-extern char* command_file;
+	/** boolean to determine whether or not to show all outputs */
+	extern bool verbose;
 
-/** MAVInfo object containing the current state information of the uav */
-extern MAVInfo uav;
+	/** boolean to determine whether or not to show debug outputs */
+	extern bool debug;
 
-/** flag to determine whether or not the read and write should be running */
-extern int RUNNING_FLAG;
+	/** MAVInfo object containing the current state information of the uav */
+	extern MAVInfo uav;
 
-/** the connection to the pixhawk */
-extern MavlinkSerial* pixhawk;
+	/** flag to determine whether or not the read and write should be running */
+	extern int RUNNING_FLAG;
 
-/** the connection to the DF arduino */
-extern SerialPort* df_arduino;
+	/** the connection to the pixhawk */
+	extern MavlinkSerial* pixhawk;
 
-/** boolean stating whether or not we are currently in a rotating mode */
-extern bool rotating;
+	/** the connection to the DF arduino */
+	extern SerialPort* df_arduino;
 
-/** boolean stating whether or not we are currently in a moving mode */
-extern bool moving;
+	/** wifly device locations */
+	extern const char *sensor_port;
+	extern const char *omni_wifly_port;
 
-/** wifly device locations */
-extern char * wifly_port1;
-extern char * wifly_port2;
+	extern bool dual_wifly;
 
-extern bool dual_wifly;
+	/** stuff needed for the tracking command */
+	extern float flight_alt;
+	extern int tracker_type;
 
-/* stuff needed for the tracking command */
-extern bool execute_tracking;
-extern int tracking_method;
+	/** stuff needed for emily antenna */
+	extern bool emily;
 
-extern float flight_alt;
+	/** the directory for all the log files for this run */
+	extern std::string logfile_dir;
 
-/* stuff needed for emily antenna */
-extern bool emily;
+	/** the planner being used */
+	extern Planner *planner;
 
-/* variables for dual wifly */
-extern unsigned long omni_update_timestamp;
-extern int omni_rssi;
-extern int16_t heading_omni_pre;
-extern int16_t heading_omni_post;
+	/** the logfile for all the main outputs */
+	extern FILE *output_logfile;
+}
+
+
+inline void LOG_STATUS(std::string msg, ...) {
+	// add a newline
+	msg += "\n";
+
+	// get the rest of the arguments
+	va_list args;
+	va_start(args, msg);
+
+	// output
+	vprintf(msg.c_str(), args);								// to command line
+	msg.insert(0, "[STATUS]");
+	vfprintf(common::output_logfile, msg.c_str(), args);	// to logfile
+
+	// close the end of the arguments
+	va_end(args);
+}
+
+
+inline void LOG_DEBUG(std::string msg, ...) {
+	// add a newline
+	msg += "\n";
+
+	// get the rest of the arguments
+	va_list args;
+	va_start(args, msg);
+
+	// output
+	if (common::verbose) vprintf(msg.c_str(), args);		// to command line
+	msg.insert(0, "[DEBUG]");
+	vfprintf(common::output_logfile, msg.c_str(), args);	// to logfile
+
+	// close the end of the arguments
+	va_end(args);
+}
+
+
+inline void LOG_ERROR(std::string msg, ...) {
+	// add a newline
+	msg += "\n";
+	msg.insert(0, "[ERROR]");
+
+	// get the rest of the arguments
+	va_list args;
+	va_start(args, msg);
+
+	// output
+	vprintf(msg.c_str(), args);								// to command line
+	vfprintf(common::output_logfile, msg.c_str(), args);	// to logfile
+
+	// close the end of the arguments
+	va_end(args);
+}
+
 
 
 #endif /* COMMON_H_ */

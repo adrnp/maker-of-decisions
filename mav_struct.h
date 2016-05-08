@@ -5,13 +5,16 @@
 * information about the UAV.  Basically just a copy of the 
 * information known by the Pixhawk.
 *
+* @author Adrien Perkins <adrienp@stanford.edu>
 */
 
 // include the mavlink message definitions, since using structures from mavlink definitions
 #include <jager/mavlink.h>
 
 
-/** struct containing information on the MAV we are currently connected to **/
+/**
+ * struct containing information on the MAV we are currently connected to
+ */
 struct MAVInfo {
 
 	// this is general heartbeat information
@@ -57,6 +60,4 @@ struct MAVInfo {
 	// useful battery info
 	float battery_voltage;
 	float battery_current;
-
-	//TODO: add all the data interested in (all the custom jager mavlink messages)
 };

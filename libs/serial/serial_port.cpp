@@ -6,45 +6,54 @@
 
 #include "serial_port.h"
 
-SerialPort::SerialPort() :
+SerialPort::SerialPort(std::string logfile_dir) :
 fd(-1),
 _verbose(false)
 {
 	printf("calling base constructor\n");
+	std::string output_logfile_name = logfile_dir + "serial.out";
+	_output_logfile = fopen(output_logfile_name.c_str(), "a");
 }
 
-SerialPort::SerialPort(bool verbose) :
+SerialPort::SerialPort(std::string logfile_dir, bool verbose) :
 fd(-1),
 _verbose(verbose)
 {
 	printf("setting fd to -1, serial port constructor\n");
+	std::string output_logfile_name = logfile_dir + "serial.out";
+	_output_logfile = fopen(output_logfile_name.c_str(), "a");
 }
 
-SerialPort::SerialPort(bool verbose, char* &uart_name) :
+SerialPort::SerialPort(std::string logfile_dir, bool verbose, const char* &uart_name) :
 fd(-1),
 _verbose(verbose)
 {
 	printf("calling open serial base constructor\n");
+	std::string output_logfile_name = logfile_dir + "serial.out";
+	_output_logfile = fopen(output_logfile_name.c_str(), "a");
 	open_serial(uart_name);
 }
 
-SerialPort::SerialPort(bool verbose, char* &uart_name, const int &baudrate) :
+SerialPort::SerialPort(std::string logfile_dir, bool verbose, const char* &uart_name, const int &baudrate) :
 fd(-1),
 _verbose(verbose)
 {
 	printf("calling more complex base constructor\n");
+	std::string output_logfile_name = logfile_dir + "serial.out";
+	_output_logfile = fopen(output_logfile_name.c_str(), "a");
 	begin_serial(uart_name, baudrate);
 }
 
 
 SerialPort::~SerialPort() {
+	fclose(_output_logfile);
 	end_serial();
 }
 
 
-void SerialPort::begin_serial(char* &uart_name, const int &baudrate) {
+void SerialPort::begin_serial(const char* &uart_name, const int &baudrate) {
 	// display status as needed
-	if (_verbose) printf("Trying to connect to %s.. ", uart_name);
+	LOG_DEBUG("Trying to connect to %s.. ", uart_name);
 	fflush(stdout);
 
 	// attempt to open the com port
@@ -52,45 +61,45 @@ void SerialPort::begin_serial(char* &uart_name, const int &baudrate) {
 
 	// check for success, display comments as needed
 	if (fd == -1) {
-		if (_verbose) printf("failure, could not open port.\n");
+		LOG_DEBUG("failure, could not open port.");
 		throw EXIT_FAILURE;
 	} else {
-		if (_verbose) printf("success.\n");
+		LOG_DEBUG("success.\n");
 	}
 
 	// display status as needed
-	if (_verbose) printf("Trying to configure %s.. ", uart_name);
+	LOG_DEBUG("Trying to configure %s.. ", uart_name);
 
 	// attempt to setup the com port
 	bool setup = setup_port(baudrate, 8, 1, false, false);
 
 	// check success, display comments as needed
 	if (!setup) {
-		if (_verbose) printf("failure, could not configure port.\n");
+		LOG_DEBUG("failure, could not configure port.");
 		throw EXIT_FAILURE;
 	} else {
-		if (_verbose) printf("success.\n");
+		LOG_DEBUG("success.\n");
 	}
 
 	// error checking, display comments as needed
 	if (fd <= 0) {
-		if (_verbose) fprintf(stderr, "Connection attempt to port %s with %d baud, 8N1 failed, exiting.\n", uart_name, baudrate);
+		LOG_ERROR("Connection attempt to port %s with %d baud, 8N1 failed, exiting.", uart_name, baudrate);
 		throw EXIT_FAILURE;
 	} else {
-		if (_verbose) fprintf(stderr, "\nConnected to %s with %d baud, 8 data bits, no parity, 1 stop bit (8N1)\n", uart_name, baudrate);
+		LOG_STATUS("\nConnected to %s with %d baud, 8 data bits, no parity, 1 stop bit (8N1)", uart_name, baudrate);
 	}
 
 	// final status update to display as needed
-	if (_verbose) printf("\nREADY, waiting for heartbeat.\n");
+	LOG_DEBUG("\nREADY, waiting for heartbeat.\n");
 }
 
-void SerialPort::open_serial(char* &uart_name) {
+void SerialPort::open_serial(const char* &uart_name) {
 	open_port(uart_name);
 	if (fd == -1) {
-		if (_verbose) printf("failure, could not open port.\n");
+		LOG_DEBUG("failure, could not open port.");
 		throw EXIT_FAILURE;
 	} else {
-		if (_verbose) printf("success.\n");
+		LOG_DEBUG("success.");
 	}
 }
 
@@ -135,7 +144,7 @@ bool SerialPort::setup_port(int baud, int data_bits, int stop_bits, bool parity,
 	// check the file descriptor
 	if(!isatty(fd))
 	{
-		fprintf(stderr, "\nERROR: file descriptor %d is NOT a serial port\n", fd);
+		LOG_ERROR("\nERROR: file descriptor %d is NOT a serial port\n", fd);
 		return false;
 	}
 
@@ -143,7 +152,7 @@ bool SerialPort::setup_port(int baud, int data_bits, int stop_bits, bool parity,
 	struct termios  config;
 	if(tcgetattr(fd, &config) < 0)
 	{
-		fprintf(stderr, "\nERROR: could not read configuration of fd %d\n", fd);
+		LOG_ERROR("\nERROR: could not read configuration of fd %d\n", fd);
 		return false;
 	}
 
@@ -206,7 +215,7 @@ bool SerialPort::setup_port(int baud, int data_bits, int stop_bits, bool parity,
 	case 1200:
 		if (cfsetispeed(&config, B1200) < 0 || cfsetospeed(&config, B1200) < 0)
 		{
-			fprintf(stderr, "\nERROR: Could not set desired baud rate of %d Baud\n", baud);
+			LOG_ERROR("\nERROR: Could not set desired baud rate of %d Baud\n", baud);
 			return false;
 		}
 		break;
@@ -225,21 +234,21 @@ bool SerialPort::setup_port(int baud, int data_bits, int stop_bits, bool parity,
 	case 38400:
 		if (cfsetispeed(&config, B38400) < 0 || cfsetospeed(&config, B38400) < 0)
 		{
-			fprintf(stderr, "\nERROR: Could not set desired baud rate of %d Baud\n", baud);
+			LOG_ERROR("\nERROR: Could not set desired baud rate of %d Baud\n", baud);
 			return false;
 		}
 		break;
 	case 57600:
 		if (cfsetispeed(&config, B57600) < 0 || cfsetospeed(&config, B57600) < 0)
 		{
-			fprintf(stderr, "\nERROR: Could not set desired baud rate of %d Baud\n", baud);
+			LOG_ERROR("\nERROR: Could not set desired baud rate of %d Baud\n", baud);
 			return false;
 		}
 		break;
 	case 115200:
 		if (cfsetispeed(&config, B115200) < 0 || cfsetospeed(&config, B115200) < 0)
 		{
-			fprintf(stderr, "\nERROR: Could not set desired baud rate of %d Baud\n", baud);
+			LOG_ERROR("\nERROR: Could not set desired baud rate of %d Baud\n", baud);
 			return false;
 		}
 		break;
@@ -249,19 +258,19 @@ bool SerialPort::setup_port(int baud, int data_bits, int stop_bits, bool parity,
 	case 460800:
 		if (cfsetispeed(&config, 460800) < 0 || cfsetospeed(&config, 460800) < 0)
 		{
-			fprintf(stderr, "\nERROR: Could not set desired baud rate of %d Baud\n", baud);
+			LOG_ERROR("\nERROR: Could not set desired baud rate of %d Baud\n", baud);
 			return false;
 		}
 		break;
 	case 921600:
 		if (cfsetispeed(&config, 921600) < 0 || cfsetospeed(&config, 921600) < 0)
 		{
-			fprintf(stderr, "\nERROR: Could not set desired baud rate of %d Baud\n", baud);
+			LOG_ERROR("\nERROR: Could not set desired baud rate of %d Baud\n", baud);
 			return false;
 		}
 		break;
 	default:
-		fprintf(stderr, "ERROR: Desired baud rate %d could not be set, aborting.\n", baud);
+		LOG_ERROR("ERROR: Desired baud rate %d could not be set, aborting.\n", baud);
 		return false;
 
 		break;
@@ -272,7 +281,7 @@ bool SerialPort::setup_port(int baud, int data_bits, int stop_bits, bool parity,
 	//
 	if(tcsetattr(fd, TCSAFLUSH, &config) < 0)
 	{
-		fprintf(stderr, "\nERROR: could not set configuration of fd %d\n", fd);
+		LOG_ERROR("\nERROR: could not set configuration of fd %d\n", fd);
 		return false;
 	}
 
