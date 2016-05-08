@@ -25,6 +25,7 @@
 
 // TODO: Investigate this parameter... what exactly does it do?
 #define WD 1000
+#define TIMEOUT 2	// wifly read loop timeout in [s]
 
 using std::string;
 using namespace std;
@@ -72,16 +73,42 @@ void WiflySerial::enter_commandmode() {
  * Scans the channels and returns the rssi of the specified SSID
  */
 int WiflySerial::scanrssi(char *ssid) {
+	
+	// the return value is the RSSI value of interest
+	int rssi_value = INT_MAX;
+
 	LOG_DEBUG("scanning...");
-	char buf[2048];
+	
 	write(fd, "scan 20\r", 8);
 	usleep(500000);
 	LOG_DEBUG("reading from wifly...");
-	  
-	read(fd, buf, sizeof(buf));
-	LOG_DEBUG("%s", buf);
+
+	/* set a check on the connection to make sure can read */
+	fd_set set;
+	FD_ZERO(&set);
+	FD_SET(fd, &set);
+
+	// the timeout for the checking
+	struct timeval timeout;
+	timeout.tv_sec = TIMEOUT;
+	timeout.tv_usec = 0;
+
+	// do the actual checking
+	int rv = select(fd + 1, &set, NULL, NULL, &timeout);
+	if(rv == -1) {	// error
+		LOG_ERROR("[WIFLY] unable to read from wifly");
+	} else if(rv == 0) {	// timeout
+		LOG_ERROR("[WIFLY] wifly read timeout");
+	} else {	// read available
+		
+		char buf[2048];
+		read( fd, buf, sizeof(buf) );
+		LOG_DEBUG("%s", buf);
+
+		rssi_value = parserssi(buf, ssid);
+	}
 	
-	return parserssi(buf, ssid);
+	return rssi_value;
 }
 
 
