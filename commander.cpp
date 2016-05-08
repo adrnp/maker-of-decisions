@@ -70,6 +70,7 @@ void send_next_command(uint8_t &prev_state, uint8_t &new_state) {
 
 			// get next command from the current planner
 			commands = common::planner->action();
+			LOG_STATUS("planner command received with length %d", commands.size());
 			d_north = commands[0];
 			d_east = commands[1];
 			d_yaw = commands[2];
