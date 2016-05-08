@@ -169,10 +169,10 @@ The model required to make some of these methods work is stored in `obs\_model.c
 The get\_bearing functions currently implemented are:
 
 ```c++
-get_bearing_mle(vector<double> angles, vector<int> norm_gains)
-get_bearing_cc(vector<double>angles, vector<double> dir_gains)
-get_bearing_max(vector<double>angles, vector<double> dir_gains)
-get_bearing_max3(vector<double>angles, vector<double> dir_gains)
+get_bearing_mle(vector<double> angles, vector<int> norm_gains);
+get_bearing_cc(vector<double>angles, vector<double> dir_gains);
+get_bearing_max(vector<double>angles, vector<double> dir_gains);
+get_bearing_max3(vector<double>angles, vector<double> dir_gains);
 ```
 
 The MLE method can be called before a full rotation is made.
