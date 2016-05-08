@@ -390,7 +390,7 @@ int main(int argc, char **argv) {
 
 	}
 	
-	if (!common::planner->initialize()) {
+	if (common::planner->initialize() < 0) {
 		LOG_ERROR("[MOD] error initializing planner");
 		fclose(common::output_logfile);
 		return 0;
