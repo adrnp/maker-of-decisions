@@ -1,3 +1,15 @@
+/**
+ * @file read_thread.cpp
+ * 
+ * Reads data from the pixhawk over mavlink, parsing the incoming messages
+ * and updating the shared MAVInfo object about JAGER.
+ *
+ * Currently only handles a small subset of the messages from JAGER.
+ * (only the ones needed)
+ *
+ * @author Adrien Perkins <adrienp@stanford.edu>
+ */
+
 
 // Standard includes
 #include <iostream>
@@ -32,19 +44,19 @@
 using std::string;
 using namespace std;
 
-/* whether or not we have received a heartbeat from the pixhawk */
+/** whether or not we have received a heartbeat from the pixhawk */
 bool heartbeatReceived = false;
 
-/* whether or not we are currently in hunt mode */
+/** whether or not we are currently in hunt mode */
 bool hunting = false;
 
 /* whether or not we are currently rotating */
 // bool rotating = false;
 
-/* keep track of the previous hunt state, as hunt state is sent periodically, not just on updates */
+/** keep track of the previous hunt state, as hunt state is sent periodically, not just on updates */
 int prev_hs = -1;
 
-/* keep track of whether or not the mode has changed */
+/** keep track of whether or not the mode has changed */
 bool mode_change = false;
 
 
@@ -65,9 +77,9 @@ void parse_heartbeat(const mavlink_message_t *message, MAVInfo *uavRead) {
 	}
 
 	if (!heartbeatReceived) {
-		printf("Received vehicle heartbeat\n");
-		printf("The system id: %u\n", message->sysid);
-		printf("The component id: %u\n", message->compid);
+		LOG_STATUS("[READ] Received vehicle heartbeat");
+		LOG_STATUS("[READ] The system id: %u", message->sysid);
+		LOG_STATUS("[READ] The component id: %u", message->compid);
 	}
 
 	// so we don't keep rewriting known values that stay constant
@@ -126,6 +138,7 @@ void parse_last_cmd_finished_id(const mavlink_message_t *message, MAVInfo *uavRe
 
 void handle_message(const mavlink_message_t *message, MAVInfo *uavRead) {
 
+	//LOG_DEBUG("[READ] received message (%d)", message->msgid);
 
 	switch (message->msgid)
 	{
@@ -181,6 +194,8 @@ void handle_message(const mavlink_message_t *message, MAVInfo *uavRead) {
 		{
 			mavlink_msg_tracking_status_decode(message, &(uavRead->tracking_status));
 
+			LOG_DEBUG("[READ] HUNT STATE is currently %d", (int) uavRead->tracking_status.hunt_mode_state);
+
 			if (uavRead->tracking_status.hunt_mode_state == prev_hs && !mode_change) {
 				break;
 			}
@@ -188,44 +203,14 @@ void handle_message(const mavlink_message_t *message, MAVInfo *uavRead) {
 			// set this hunt state as the previous hunt state
 			prev_hs = uavRead->tracking_status.hunt_mode_state;
 
-			cout << "HUNT STATE changed to: " << (int) uavRead->tracking_status.hunt_mode_state << "\n";
+			LOG_STATUS("[READ] HUNT STATE changed to: %d", (int) uavRead->tracking_status.hunt_mode_state);
 
 			// need to check to see if we have changed into waiting for the first time
 			if (!hunting && uavRead->tracking_status.hunt_mode_state > TRACKING_HUNT_STATE_OFF) {
 				hunting = true;
-
-				// this is the first time we have triggered into hunting
-				uavRead->last_cmd_finished_id = -1; // set the last cmd id to -1, so that when we run get next cmd it sends the correct one
-
-				// command the vehicle to rotate
-				// cout << "Sending Rotate Command\n";
-				// sendRotateCommand(-1.0);
-				// sendNextCommand();
-
-				// mark that we are now rotating
-				// rotating = true;
-			}
-
-			/* if the pixhawk is in wait mode, send a rotate command */
-			if (!rotating && uavRead->tracking_status.hunt_mode_state == TRACKING_HUNT_STATE_WAIT) {
-				// cout << "Sending Rotate Command\n";
-				// sendRotateCommand(-1.0);
-				// sendNextCommand();
-
-				// mark that we are now rotating
-				// rotating = true;
-			} else {
-				// finishing the rotation
-				// rotating = false;
-
-				// TODO: this is where we will want to calculate the bearing....
-				// NOTE: wifly thread is currently doing bearing calculations
 			}
 
 			mode_change = false;
-
-
-
 			break;
 		}
 		case MAVLINK_MSG_ID_TRACKING_CMD:
@@ -282,13 +267,13 @@ void *read_thread(void *param) {
 	lastStatus.packet_rx_drop_count = 0;	// initialize to 0 just for the first pass
 
 	// run this infinite loop (as long as RUNNING_FLAG == 1) which reads messages as they come in
-	while (RUNNING_FLAG) {
+	while (common::RUNNING_FLAG) {
 
 		// variables needed for the message reading
 		mavlink_message_t message;	// the message itself
 		
 		// read from serial, if message received, will be written to message variable
-		uint8_t msgReceived = pixhawk->read_serial(&lastStatus, &message);
+		uint8_t msgReceived = common::pixhawk->read_serial(&lastStatus, &message);
 
 		// If a message could be decoded, handle it
 		// TODO: only need to do this once
@@ -304,6 +289,6 @@ void *read_thread(void *param) {
 		}
 	}
 
-	cout << "read ending\n";
+	LOG_STATUS("[READ] read ending");
 	return NULL;
 }

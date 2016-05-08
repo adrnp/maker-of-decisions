@@ -1,3 +1,11 @@
+/**
+ * @file dirk_thread.cpp
+ *
+ * The implimentation of the thread handling the beam steering antenna.
+ * 
+ * @author Adrien Perkins <adrienp@stanford.edu>
+ */
+
 // Standard includes
 #include <iostream>
 #include <cstdlib>
@@ -25,7 +33,7 @@
 #include "dirk_thread.h"
 #include "commander.h"
 //#include "serial_port.h"	// this is the library needed to connect with the arduino
-#include "serial_lib/serial_port.h"
+#include "libs/serial/serial_port.h"
 
 using std::string;
 using namespace std;
@@ -95,10 +103,10 @@ void *dirk_thread(void *param) {
 	char *bearing_file_name = (char *) "bearing_pa.csv";
 	
 	const int baudrate = 115200;
-	char *dirk_uart = (char *) "/dev/ttyACM0";
+	const char *dirk_uart = (char *) "/dev/ttyACM0";
 
 	// connect to the arduino
-	SerialPort arduino(false);
+	SerialPort arduino(common::logfile_dir, false);
 	arduino.begin_serial(dirk_uart, baudrate);
 
 	/* Open a file to write bearing calcs to */
@@ -108,14 +116,6 @@ void *dirk_thread(void *param) {
 		// TODO: figure out what we do want to return when there is an error
 		printf("Error opening bearing output file\n");
 		return NULL;
-	}
-
-	if (get_commands) {
-		bool loaded = load_move_commands();
-		if (!loaded) {
-			printf("Error loading move commands\n");
-			return NULL;
-		}
 	}
 
 	bool move_pending = false;
@@ -129,7 +129,7 @@ void *dirk_thread(void *param) {
 
 	// main loop that is constantly waiting for information from the arduino
 	// this is all the measured bearing information coming in
-	while (RUNNING_FLAG) {
+	while (common::RUNNING_FLAG) {
 
 		// handle hunt state changes required (sending of commands)
 		if (uavData->tracking_status.hunt_mode_state != d_prev_hunt_state) {
