@@ -373,19 +373,19 @@ int main(int argc, char **argv) {
 		/* the circle planner */
 		case TRACK_CIRCLE:
 			LOG_STATUS("[MOD] running circle planner");
-			common::planner = new CirclePlanner(planner_config_file);
+			common::planner = new CirclePlanner(planner_config_file, common::logfile_dir);
 			break;
 
 		/* the greedy planner */
 		case TRACK_GREEDY:
 			LOG_STATUS("[MOD] running circle planner");
-			common::planner = new GreedyPlanner(planner_config_file);
+			common::planner = new GreedyPlanner(planner_config_file, common::logfile_dir);
 			break;
 
 		/* the momdp planner */
 		case TRACK_MOMDP:
 			LOG_STATUS("[MOD] running momdp planner");
-			common::planner = new MOMDPPlanner(planner_config_file);
+			common::planner = new MOMDPPlanner(planner_config_file, common::logfile_dir);
 			break;
 
 	}
