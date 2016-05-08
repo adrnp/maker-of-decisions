@@ -58,20 +58,20 @@ int UDP::send_bearing_message(const double &bearing_cc, const double &bearing_ma
 	// build the message
 	// TODO: add structure (limit number of characters displayed for each of the values(?))!
 	char buf[1024];
-	sprintf(buf, "%f,%f,%f,%d,%d,%f", bearing_cc, bearing_max, bearing_max3, lat, lon, alt);
+	sprintf(buf, "BEAR:%f,%f,%f,%d,%d,%f", bearing_cc, bearing_max, bearing_max3, lat, lon, alt);
 
 	// actually send the message
 	return send_broadcast(buf, strlen(buf));
 }
 
 
-int UDP::send_rssi_message(const int &dir_rssi, const int &omni_rssi, const int16_t &heading,
+int UDP::send_rssi_message(const int &in_rot, const int &dir_rssi, const int &omni_rssi, const int16_t &heading,
 							const int32_t &lat, const int32_t &lon, const float &alt) {
 
 	// build the message
 	// TODO: add structure (limit number of characters displayed for each of the values(?))!
 	char buf[1024];
-	sprintf(buf, "dir:%d,omni:%d,head:%d,lat:%d,lon:%d,alt:%f\n", dir_rssi, omni_rssi, heading, lat, lon, alt);
+	sprintf(buf, "RSSI:%d,%d,%d,%d,%d,%d,%f\n", in_rot, dir_rssi, omni_rssi, heading, lat, lon, alt);
 
 	// actually send the message
 	return send_broadcast(buf, strlen(buf));

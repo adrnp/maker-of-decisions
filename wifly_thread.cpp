@@ -385,7 +385,7 @@ int WiflyHunter::main_loop() {
 
 		/* send data */
 		common::pixhawk->send_rssi_message(_dir_rssi, _omni_rssi, _heading_dir_pre, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);	// send a mavlink message with the current rssi
-		udp->send_rssi_message(_dir_rssi, _omni_rssi, _heading_dir_pre, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);				// send the udp message (directly to ground)
+		udp->send_rssi_message((int) _rotating, _dir_rssi, _omni_rssi, _heading_dir_pre, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);				// send the udp message (directly to ground)
 
 
 		//-----------------------------------------------//

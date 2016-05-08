@@ -339,7 +339,7 @@ int RFHunter::main_loop() {
 
 		// send the udp message (directly to ground)
 		// TODO: potentially only do this if we are in a rotation
-		udp->send_rssi_message((int) _dir_rssi, (int) _omni_rssi, _meas_heading, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);
+		udp->send_rssi_message((int) _rotating, (int) _dir_rssi, (int) _omni_rssi, _meas_heading, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);
 
 
 		//-----------------------------------------------//
