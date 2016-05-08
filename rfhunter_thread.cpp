@@ -248,8 +248,8 @@ int RFHunter::main_loop() {
 		}
 		prev_loop_timestamp = current_loop_time;
 
-		LOG_STATUS("\n--------------------------------");
-		LOG_STATUS("[RFHUNTER] Top of wifly loop");
+		LOG_DEBUG("\n--------------------------------");
+		LOG_DEBUG("[RFHUNTER] Top of wifly loop");
 
 		// check the hunt state from JAGER and adjust states accordingly
 		check_hunt_state();

@@ -30,10 +30,13 @@
 #include "rfhunter_thread.h"
 #include "dirk_thread.h"
 
+// include all the possible planners
 #include "libs/planners/fixed_planner.h"
+#include "libs/planners/naive_planner.h"
 #include "libs/planners/circle_planner.h"
 #include "libs/planners/greedy_planner.h"
-#include "libs/planners/naive_planner.h"
+#include "libs/planners/momdp_planner.h"
+
 
 #include "mod.h"
 
@@ -347,6 +350,7 @@ int main(int argc, char **argv) {
 	// ---------------------------------- //
 
 	// initialize the planner
+	LOG_STATUS("[MOD] initializing planner...");
 	common::planner = new FixedPlanner(common::logfile_dir, command_file);	// default to running command files, this ensures this isn't null
 	switch (common::tracker_type) {
 		/* the naive tracker */
@@ -377,8 +381,15 @@ int main(int argc, char **argv) {
 			LOG_STATUS("[MOD] running circle planner");
 			common::planner = new GreedyPlanner(planner_config_file);
 			break;
+
+		/* the momdp planner */
+		case TRACK_MOMDP:
+			LOG_STATUS("[MOD] running momdp planner");
+			common::planner = new MOMDPPlanner(planner_config_file);
+			break;
+
 	}
-	LOG_STATUS("[MOD] initializing planner...");
+	
 	if (!common::planner->initialize()) {
 		LOG_ERROR("[MOD] error initializing planner");
 		fclose(common::output_logfile);
