@@ -94,9 +94,16 @@ void send_next_command(uint8_t &prev_state, uint8_t &new_state) {
 			}
 
 			LOG_DEBUG("[COMMANDER] following tracking command (%f, %f)", d_north, d_east);
-			common::pixhawk->send_tracking_command(d_north, d_east, alt);
 
-			if (d_north == 1000.0) {
+			// check to see if rotating again or moving
+			if (d_north == 0 && d_east == 0) {
+				common::pixhawk->send_rotate_command(-1.0);
+			} else {
+				common::pixhawk->send_tracking_command(d_north, d_east, alt);
+			}
+
+			
+			if (d_north == 1000.0 || d_north == -1000.0) {
 				LOG_STATUS("[COMMANDER] sending finish command\n");
 				common::pixhawk->send_finish_command();
 				return;
