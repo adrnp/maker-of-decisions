@@ -52,7 +52,7 @@ void send_next_command(uint8_t &prev_state, uint8_t &new_state) {
 	vector<float> commands;
 	float d_north = 0.0;
 	float d_east = 0.0;
-	float d_yaw = 0.0;
+	float yaw_angle = 270.0;
 	float alt = common::flight_alt;
 	switch (prev_state) {
 		case TRACKING_HUNT_STATE_OFF:
@@ -85,7 +85,7 @@ void send_next_command(uint8_t &prev_state, uint8_t &new_state) {
 			}
 
 			if (commands.size() >= 3) {
-				d_yaw = commands[2];
+				yaw_angle = commands[2];
 			}
 
 			// get the altitude, but not always set
@@ -99,7 +99,7 @@ void send_next_command(uint8_t &prev_state, uint8_t &new_state) {
 			if (d_north == 0 && d_east == 0) {
 				common::pixhawk->send_rotate_command(-1.0);
 			} else {
-				common::pixhawk->send_tracking_command(d_north, d_east, alt);
+				common::pixhawk->send_tracking_command(d_north, d_east, yaw_angle, alt);
 			}
 
 			
