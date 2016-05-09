@@ -71,6 +71,9 @@ namespace common {
 
 	/** the logfile for all the main outputs */
 	extern FILE *output_logfile;
+
+	/** the groundstation ip address */
+	extern const char *ground_ip;
 }
 
 

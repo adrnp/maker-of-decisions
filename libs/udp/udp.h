@@ -28,6 +28,7 @@ public:
 
 	/* constructor */
 	UDP();
+	UDP(const char *server);
 
 	/* destructor */
 	~UDP();
@@ -44,7 +45,7 @@ public:
 private:
 
 	/* the address of the server (?) */
-	char* _server;
+	const char* _server;
 
 	/* the socket file descriptor */
 	int _socket_fd;

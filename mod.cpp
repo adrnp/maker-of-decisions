@@ -69,6 +69,8 @@ namespace common {
 
 	Planner *planner = nullptr;
 	FILE *output_logfile = nullptr;
+
+	const char *ground_ip = (char *) "127.0.0.1";
 }
 
 
@@ -224,6 +226,11 @@ int get_configuration(int argc, char **argv) {
 	/* emily */
 	if (config_map.find("emily_antenna") != config_map.end()) {
 		common::emily = (stoi(config_map["emily_antenna"]) == 1);
+	}
+
+	/* udp */
+	if (config_map.find("ground_ip") != config_map.end()) {
+		common::ground_ip = config_map["ground_ip"].c_str();
 	}
 
 	return 1;

@@ -227,7 +227,7 @@ int RFHunter::main_loop() {
 
 
 	/* open a UDP connection to send data down to the ground station */
-	UDP* udp = new UDP();
+	UDP* udp = new UDP(common::ground_ip);
 
 
 	struct timeval tv;
