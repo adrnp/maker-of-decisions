@@ -227,7 +227,7 @@ int RFHunter::main_loop() {
 
 
 	/* open a UDP connection to send data down to the ground station */
-	UDP* udp = new UDP();
+	UDP* udp = new UDP(common::ground_ip);
 
 
 	struct timeval tv;
@@ -248,8 +248,8 @@ int RFHunter::main_loop() {
 		}
 		prev_loop_timestamp = current_loop_time;
 
-		LOG_STATUS("\n--------------------------------");
-		LOG_STATUS("[RFHUNTER] Top of wifly loop");
+		LOG_DEBUG("\n--------------------------------");
+		LOG_DEBUG("[RFHUNTER] Top of wifly loop");
 
 		// check the hunt state from JAGER and adjust states accordingly
 		check_hunt_state();
@@ -275,7 +275,7 @@ int RFHunter::main_loop() {
 			_dir_rssi = ((float) measurement.dir)/100.0f;
 			_omni_rssi = ((float) measurement.omni)/100.0f;
 
-			LOG_DEBUG("got timestamp = %d, dir = %f, omni = %f", measurement.timestamp, _dir_rssi, _omni_rssi);
+			LOG_DEBUG("[RFHUNTER] got timestamp = %d, dir = %f, omni = %f", measurement.timestamp, _dir_rssi, _omni_rssi);
 
 		} else {
 			// didn't get a measurement
@@ -319,7 +319,7 @@ int RFHunter::main_loop() {
 				_jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt, _bearing_cc, _bearing_max, _max_rssi);
 
 			/* send data */
-			common::pixhawk->send_bearing_cc_message(_bearing_cc, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);		// send a mavlink message of the calculated bearing
+			//common::pixhawk->send_bearing_cc_message(_bearing_cc, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);		// send a mavlink message of the calculated bearing
 			udp->send_bearing_message(_bearing_cc, _bearing_max, _bearing_max3, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);	// send the udp message (directly to ground)
 		}
 
@@ -335,7 +335,7 @@ int RFHunter::main_loop() {
 				_jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt, _dir_rssi, _omni_rssi);
 
 		// send a mavlink message with the current rssi
-		common::pixhawk->send_rssi_message((int) _dir_rssi, (int) _omni_rssi, _meas_heading, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);
+		//common::pixhawk->send_rssi_message((int) _dir_rssi, (int) _omni_rssi, _meas_heading, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);
 
 		// send the udp message (directly to ground)
 		// TODO: potentially only do this if we are in a rotation

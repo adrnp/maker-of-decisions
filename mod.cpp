@@ -30,10 +30,13 @@
 #include "rfhunter_thread.h"
 #include "dirk_thread.h"
 
+// include all the possible planners
 #include "libs/planners/fixed_planner.h"
+#include "libs/planners/naive_planner.h"
 #include "libs/planners/circle_planner.h"
 #include "libs/planners/greedy_planner.h"
-#include "libs/planners/naive_planner.h"
+#include "libs/planners/momdp_planner.h"
+
 
 #include "mod.h"
 
@@ -66,6 +69,8 @@ namespace common {
 
 	Planner *planner = nullptr;
 	FILE *output_logfile = nullptr;
+
+	const char *ground_ip = (char *) "127.0.0.1";
 }
 
 
@@ -223,6 +228,11 @@ int get_configuration(int argc, char **argv) {
 		common::emily = (stoi(config_map["emily_antenna"]) == 1);
 	}
 
+	/* udp */
+	if (config_map.find("ground_ip") != config_map.end()) {
+		common::ground_ip = config_map["ground_ip"].c_str();
+	}
+
 	return 1;
 }
 
@@ -347,6 +357,7 @@ int main(int argc, char **argv) {
 	// ---------------------------------- //
 
 	// initialize the planner
+	LOG_STATUS("[MOD] initializing planner...");
 	common::planner = new FixedPlanner(common::logfile_dir, command_file);	// default to running command files, this ensures this isn't null
 	switch (common::tracker_type) {
 		/* the naive tracker */
@@ -369,17 +380,24 @@ int main(int argc, char **argv) {
 		/* the circle planner */
 		case TRACK_CIRCLE:
 			LOG_STATUS("[MOD] running circle planner");
-			common::planner = new CirclePlanner(planner_config_file);
+			common::planner = new CirclePlanner(planner_config_file, common::logfile_dir);
 			break;
 
 		/* the greedy planner */
 		case TRACK_GREEDY:
 			LOG_STATUS("[MOD] running circle planner");
-			common::planner = new GreedyPlanner(planner_config_file);
+			common::planner = new GreedyPlanner(planner_config_file, common::logfile_dir);
 			break;
+
+		/* the momdp planner */
+		case TRACK_MOMDP:
+			LOG_STATUS("[MOD] running momdp planner");
+			common::planner = new MOMDPPlanner(planner_config_file, common::logfile_dir);
+			break;
+
 	}
-	LOG_STATUS("[MOD] initializing planner...");
-	if (!common::planner->initialize()) {
+	
+	if (common::planner->initialize() < 0) {
 		LOG_ERROR("[MOD] error initializing planner");
 		fclose(common::output_logfile);
 		return 0;

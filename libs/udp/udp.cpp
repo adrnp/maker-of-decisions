@@ -19,11 +19,12 @@
 #include "udp.h"
 
 
-UDP::UDP() :
+
+
+UDP::UDP(const char *server) :
+_server(server),
 _socket_fd(-1)
 {
-	// default server address
-	_server = (char *) "127.0.0.1";
 
 	// initialize the structs
 	memset((char *) &_myaddr, 0, sizeof(_myaddr));
@@ -34,6 +35,8 @@ _socket_fd(-1)
 		throw EXIT_FAILURE;
 	}
 }
+
+UDP::UDP() : UDP::UDP((char *) "127.0.0.1") {};
 
 
 UDP::~UDP() {

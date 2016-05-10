@@ -38,7 +38,7 @@ public:
 	// specific message functions (wrappers to the mavlink)
 	
 	/* send the next tracking command */
-	void send_tracking_command(const float &north, const float &east, const float &alt);
+	void send_tracking_command(const float &north, const float &east, const float &yaw_angle, const float &alt);
 
 	/* send a command to rotate the vehicle
 	 * direction: -1 is CCW and 1 is CW

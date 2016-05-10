@@ -128,7 +128,7 @@ int MavlinkSerial::write_serial(mavlink_message_t &message) {
 
 
 
-void MavlinkSerial::send_tracking_command(const float &north, const float &east, const float &alt) {
+void MavlinkSerial::send_tracking_command(const float &north, const float &east, const float &yaw_angle, const float &alt) {
 
 	// TODO: add altitude as a tracking command input!!! (this is horrible to have it as a default here)
 	
@@ -136,19 +136,15 @@ void MavlinkSerial::send_tracking_command(const float &north, const float &east,
 	int nextCmd = _command_id;
 	_command_id++;	// increase the id for the next command
 
-	// extract the next north and east commands
-	float nextNorth = north;
-	float nextEast = east;
-	float nextAlt = alt;
-	LOG_STATUS("sending command %d: N %f\tE %f\tA %f", nextCmd, nextNorth, nextEast, nextAlt);
+	LOG_STATUS("sending command %d: N %f\tE %f\tY %f\tA %f", nextCmd, north, east, yaw_angle, alt);
 
 	// build the mavlink message
 	mavlink_tracking_cmd_t tracking_cmd;
 	tracking_cmd.timestamp_usec = 0;
-	tracking_cmd.north = nextNorth;
-	tracking_cmd.east = nextEast;
-	tracking_cmd.yaw_angle = 270.0;
-	tracking_cmd.altitude = nextAlt;
+	tracking_cmd.north = north;
+	tracking_cmd.east = east;
+	tracking_cmd.yaw_angle = yaw_angle;
+	tracking_cmd.altitude = alt;
 	tracking_cmd.cmd_id = nextCmd;
 	tracking_cmd.cmd_type = TRACKING_CMD_TRAVEL;
 
