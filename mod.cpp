@@ -36,7 +36,7 @@
 #include "libs/planners/circle_planner.h"
 #include "libs/planners/greedy_planner.h"
 #include "libs/planners/momdp_planner.h"
-
+#include "libs/planners/greedy_planner2.h"
 
 #include "mod.h"
 
@@ -395,6 +395,11 @@ int main(int argc, char **argv) {
 			common::planner = new MOMDPPlanner(planner_config_file, common::logfile_dir);
 			break;
 
+		/* the greedy planner 2 */
+		case TRACK_GREEDY2:
+			LOG_STATUS("[MOD] running greedy planner 2");
+			common::planner = new GreedyPlanner2(planner_config_file, common::logfile_dir);
+			break;
 	}
 	
 	if (common::planner->initialize() < 0) {

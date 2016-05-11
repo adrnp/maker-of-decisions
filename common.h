@@ -28,6 +28,7 @@
 #define TRACK_CIRCLE	4
 #define TRACK_GREEDY	5
 #define TRACK_MOMDP		6
+#define TRACK_GREEDY2	7
 
 
 namespace common {
