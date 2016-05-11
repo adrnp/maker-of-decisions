@@ -25,7 +25,7 @@
 #include <fcntl.h>   /* File control definitions */
 #include <errno.h>   /* Error number definitions */
 #include <termios.h> /* POSIX terminal control definitions */
-#
+
 #ifdef __linux
 #include <sys/ioctl.h>
 #endif
@@ -93,7 +93,7 @@ void RFHunter::rotation_completed() {
 	// no longer in a rotation
 	_in_rotation = false;
 
-	LOG_DEBUG("[RFHUNTER] calculating end of rotation bearing...");
+	LOG_STATUS("[RFHUNTER] calculating end of rotation bearing...");
 
 	/* get bearing and values */
 	_bearing_cc = get_bearing_cc(_angles, _gains);		// do bearing calculation at this point
@@ -101,9 +101,9 @@ void RFHunter::rotation_completed() {
 	_bearing_max3 = get_bearing_max3(_angles, _gains);	// do max3 bearing calculation
 	_max_rssi = get_max_rssi(_gains);					// get what the max value was for the rssi
 
-	LOG_DEBUG("[RFHUNTER] calculated cc bearing: %f", _bearing_cc);
-	LOG_DEBUG("[RFHUNTER] calculated max bearing: %f", _bearing_max);
-	LOG_DEBUG("[RFHUNTER] max rssi value: %i", _max_rssi);
+	LOG_STATUS("[RFHUNTER] calculated cc bearing: %f", _bearing_cc);
+	LOG_STATUS("[RFHUNTER] calculated max bearing: %f", _bearing_max);
+	LOG_STATUS("[RFHUNTER] max rssi value: %i", _max_rssi);
 }
 
 
@@ -339,7 +339,9 @@ int RFHunter::main_loop() {
 
 		// send the udp message (directly to ground)
 		// TODO: potentially only do this if we are in a rotation
-		udp->send_rssi_message((int) _rotating, (int) _dir_rssi, (int) _omni_rssi, _meas_heading, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);
+		if (_dir_rssi > -40) {
+			udp->send_rssi_message((int) _rotating, (int) _dir_rssi, (int) _omni_rssi, _meas_heading, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);
+		}
 
 
 		//-----------------------------------------------//
