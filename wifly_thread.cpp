@@ -310,6 +310,10 @@ int WiflyHunter::main_loop() {
 			LOG_STATUS("[WIFLY] omni rssi recevied: %i", _omni_rssi);
 		}
 
+
+		// update the planner's most recent observations
+		common::planner->update_observation(_heading_dir_pre, _dir_rssi, _omni_rssi);
+
 		//-----------------------------------------------//
 		// Rotation specific calculations
 		//-----------------------------------------------//
@@ -350,11 +354,7 @@ int WiflyHunter::main_loop() {
 				//common::pixhawk->send_bearing_mle_message(curr_bearing_est, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);		// send a mavlink message of the calculated mle bearing
 				//udp->send_bearing_message(TYPE_BEARING_MLE, curr_bearing_est, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);		// send the udp message (directly to ground)
 			}
-
-			// update the planner's most recent observations
-			common::planner->update_observation(_heading_dir_pre, _dir_rssi, _omni_rssi);
 		}
-
 
 		/* catch the end of a rotation in order to do the cc gain measurement */
 		if (!_rotating && _in_rotation) {

@@ -44,10 +44,82 @@ using namespace std;
 /** rotation handling for DF antenna */
 bool second_rotation_required = true;
 
+/** allow non-rotations at end of move */
+bool rotate_after_move = true;
+
+void execute_action(const Action &action) {
+
+	// first need to parse the action that was received
+	// for now only parse a small subset of these actions...
+	
+	float d_north = 0.0;
+	float d_east = 0.0;
+	float yaw = 0.0;
+	float alt = common::flight_alt;
+
+	// get the validity flags and behavioral flags
+	int valid = action.valid;
+	int flags = action.flags;
+
+	if ((valid & Action::VALID_NORTH) > 0) {
+		d_north = action.north;
+	}
+
+	if ((valid & Action::VALID_EAST) > 0) {
+		d_east = action.east;
+	}
+
+	if ((valid & Action::VALID_ALTITUDE) > 0) {
+		alt = action.altitude;
+	}
+
+	if ((valid & Action::VALID_YAW) > 0) {
+		// now need to determine if yaw is relative or absolute
+		if ((flags & Action::FLAG_YAW_ABSOLUTE) > 0) {
+			yaw = action.yaw;
+		} else {
+			yaw = common::uav->vrf_hud.heading + action.yaw;
+			if (yaw >= 360) {
+				yaw -= 360;
+			} else if (yaw < 0) {
+				yaw += 360;
+			}
+		}
+	}
+
+	if ((valid & Action::VALID_ROTATION_ANGLE) > 0) {
+		if (action.rotation_angle == 0.0) {
+
+			// tell the vehicle not to rotate after moving, move again instead
+			rotate_after_move = false;
+		}
+	}
+
+	// TODO: implement the rest of the different possibilities
+	
+
+	// send the commands to the pixhawk
+	// check to see if rotating again or moving
+	if (d_north == 0 && d_east == 0) {
+		common::pixhawk->send_rotate_command(-1.0);
+	} else if (d_north >= 999.0 || d_north <= -999.0) {
+		LOG_STATUS("[COMMANDER] sending finish command\n");
+		common::pixhawk->send_finish_command();
+	} else {
+		common::pixhawk->send_tracking_command(d_north, d_east, yaw, alt);
+	}
+
+}
+
+
+
 
 void send_next_command(uint8_t &prev_state, uint8_t &new_state) {
 
 	LOG_STATUS("[COMMANDER] the previous state was: %i\n", prev_state);
+
+
+	Action action;
 
 	vector<float> commands;
 	float d_north = 0.0;
@@ -68,42 +140,8 @@ void send_next_command(uint8_t &prev_state, uint8_t &new_state) {
 				break;
 			}
 
-			// get next command from the current planner
-			commands = common::planner->action();
-			LOG_STATUS("[COMMANDER] planner command received with length %d", commands.size());
-
-			// check to make sure the commands have enough arguments
-			if (commands.size() < 2) {
-				LOG_ERROR("[COMMANDER] invalid command received from planner");
-				common::pixhawk->send_finish_command();
-				return;
-			}
-
-			if (commands.size() >= 2) {
-				d_north = commands[0];
-				d_east = commands[1];
-			}
-
-			if (commands.size() >= 3) {
-				yaw_angle = commands[2];
-			}
-
-			// get the altitude, but not always set
-			if (commands.size() > 3 && commands[3] > 0.0) {
-				alt = commands[3];	
-			}
-
-			LOG_DEBUG("[COMMANDER] following tracking command (%f, %f)", d_north, d_east);
-
-			// check to see if rotating again or moving
-			if (d_north == 0 && d_east == 0) {
-				common::pixhawk->send_rotate_command(-1.0);
-			} else if (d_north >= 999.0 || d_north <= -999.0) {
-				LOG_STATUS("[COMMANDER] sending finish command\n");
-				common::pixhawk->send_finish_command();
-			} else {
-				common::pixhawk->send_tracking_command(d_north, d_east, yaw_angle, alt);
-			}
+			// get the next action and execute it
+			execute_action(common::planner->action());
 
 			break;
 
@@ -114,9 +152,14 @@ void send_next_command(uint8_t &prev_state, uint8_t &new_state) {
 				// make sure in "normal" mode of operation
 				send_df_mode(0);
 			}
-		
-			// send a rotate command
-			common::pixhawk->send_rotate_command(-1.0);
+
+			if (rotate_after_move) {
+				// send a rotate command
+				common::pixhawk->send_rotate_command(-1.0);
+			} else {
+				rotate_after_move = true;
+				execute_action(common::planner->action());
+			}
 
 			// management for emily config
 			second_rotation_required = true;
