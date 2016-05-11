@@ -78,7 +78,7 @@ void execute_action(const Action &action) {
 		if ((flags & Action::FLAG_YAW_ABSOLUTE) > 0) {
 			yaw = action.yaw;
 		} else {
-			yaw = common::uav->vrf_hud.heading + action.yaw;
+			yaw = common::uav.vfr_hud.heading + action.yaw;
 			if (yaw >= 360) {
 				yaw -= 360;
 			} else if (yaw < 0) {

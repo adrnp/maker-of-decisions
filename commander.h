@@ -15,7 +15,7 @@
  * parse the incoming action and handle it accordingly.
  * @param action the incoming action
  */
-void execute_action(Action action);
+void execute_action(const Action &action);
 
 /**
  * handles the overall decision of which command to actually send
