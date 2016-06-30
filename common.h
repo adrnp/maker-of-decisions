@@ -21,13 +21,14 @@
 #include "libs/planners/planner.h"
 
 // some constants to determine tracking method
-#define TRACK_PATH		0
+#define TRACK_PATH	0
 #define TRACK_NAIVE 	1
 #define TRACK_VARIABLE 	2
 #define TRACK_POMDP 	3
 #define TRACK_CIRCLE	4
 #define TRACK_GREEDY	5
-#define TRACK_MOMDP		6
+#define TRACK_MOMDP	6
+#define TRACK_GREEDY2	7
 
 
 namespace common {

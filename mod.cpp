@@ -36,6 +36,7 @@
 #include "libs/planners/circle_planner.h"
 #include "libs/planners/greedy_planner.h"
 #include "libs/planners/momdp_planner.h"
+#include "libs/planners/greedy_planner2.h"
 
 
 #include "mod.h"
@@ -89,6 +90,10 @@ int baudrate = 115200;
 
 const char *command_file = (char*) "commands/commands.csv";
 string planner_config_file;
+
+// added by Louis Dressel to avoid calling c_str on temporary variables
+string pixhawk_port_string;
+string sensor_port_string;
 
 
 int get_configuration(int argc, char **argv) {
@@ -188,7 +193,11 @@ int get_configuration(int argc, char **argv) {
 
 	/* pixhawk */
 	if (config_map.find("pixhawk_port") != config_map.end()) {
-		pixhawk_port = config_map["pixhawk_port"].c_str();
+		// Louis Dressel: avoid calling c_str on temporary variables
+		//std::cout << "HERE WE GO: " << config_map["pixhawk_port"] << std::endl;
+		//pixhawk_port = config_map["pixhawk_port"].c_str();
+		pixhawk_port_string = config_map["pixhawk_port"];
+		pixhawk_port = pixhawk_port_string.c_str();
 	} else {
 		cout << "Pixhawk port is a required config.\nPlease check your config file (" << config_filename << ")\n";
 		return -1;
@@ -203,7 +212,10 @@ int get_configuration(int argc, char **argv) {
 
 	/* wifly */
 	if (config_map.find("sensor_port") != config_map.end()) {
-		common::sensor_port = config_map["sensor_port"].c_str();
+		// Louis Dressel: avoid calling c_str on temporary variables
+		//common::sensor_port = config_map["sensor_port"].c_str();
+		sensor_port_string = config_map["sensor_port"].c_str();
+		common::sensor_port = sensor_port_string.c_str();
 	} else {
 		cout << "Sensor port is a required config.\nPlease check your config file (" << config_filename << ")\n";
 		return -1;
@@ -230,7 +242,7 @@ int get_configuration(int argc, char **argv) {
 
 	/* udp */
 	if (config_map.find("ground_ip") != config_map.end()) {
-		common::ground_ip = config_map["ground_ip"].c_str();
+		//common::ground_ip = config_map["ground_ip"].c_str();
 	}
 
 	return 1;
@@ -385,7 +397,7 @@ int main(int argc, char **argv) {
 
 		/* the greedy planner */
 		case TRACK_GREEDY:
-			LOG_STATUS("[MOD] running circle planner");
+			LOG_STATUS("[MOD] running greedy planner");
 			common::planner = new GreedyPlanner(planner_config_file, common::logfile_dir);
 			break;
 
@@ -393,6 +405,11 @@ int main(int argc, char **argv) {
 		case TRACK_MOMDP:
 			LOG_STATUS("[MOD] running momdp planner");
 			common::planner = new MOMDPPlanner(planner_config_file, common::logfile_dir);
+			break;
+
+		case TRACK_GREEDY2:
+			LOG_STATUS("[MOD] running greedy2 planner");
+			common::planner = new GreedyPlanner2(planner_config_file, common::logfile_dir);
 			break;
 
 	}
