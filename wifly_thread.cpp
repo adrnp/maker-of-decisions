@@ -262,7 +262,7 @@ int WiflyHunter::main_loop() {
 	UDP* udp = new UDP(common::ground_ip);
 
 	struct timeval tv;
-	unsigned long prev_loop_timestamp;
+	unsigned long prev_loop_timestamp = 0;	// LD: should initialize
 
 	// main loop that should be constantly taking measurements
 	// until the main program is stopped
