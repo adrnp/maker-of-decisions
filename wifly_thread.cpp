@@ -205,6 +205,7 @@ int WiflyHunter::main_loop() {
 	WiflySerial* wifly1 = new WiflySerial(common::logfile_dir, _verbose, common::sensor_port);
 	if (wifly1->fd < 0) {
 		LOG_STATUS("[WIFLY] Error opening wifly connection");
+		delete wifly1;
 		return -1;
 	}
 
@@ -220,6 +221,7 @@ int WiflyHunter::main_loop() {
 	{
 		// TODO: figure out what we do want to return when there is an error
 		LOG_STATUS("[WIFLY] Error opening wifly file");
+		delete wifly1;
 		return -1;
 	}
 
@@ -230,6 +232,7 @@ int WiflyHunter::main_loop() {
 		// TODO: figure out what we do want to return when there is an error
 		LOG_STATUS("[WIFLY] Error opening bearing output file");
 		fclose(rssi_logfile);
+		delete wifly1;
 		return -1;
 	}
 
@@ -241,6 +244,7 @@ int WiflyHunter::main_loop() {
 			LOG_STATUS("[WIFLY] Error opening bearing mle output file");
 			fclose(rssi_logfile);
 			fclose(bearing_logfile);
+			delete wifly1;
 			return -1;
 		}
 
@@ -250,6 +254,7 @@ int WiflyHunter::main_loop() {
 			fclose(rssi_logfile);
 			fclose(bearing_logfile);
 			fclose(bearing_logfile_mle);
+			delete wifly1;
 			return -1;
 		}
 		LOG_STATUS("[WIFLY] wifly 2 fd is %d", wifly2->fd);
@@ -408,7 +413,10 @@ int WiflyHunter::main_loop() {
 	fclose(bearing_logfile);
 	wifly1->end_serial();
 
-	delete &udp;
+	// LD: I could be wrong here but this clears up a valgrind error
+	// LD: this also looks correct
+	//delete &udp;
+	delete udp;
 
 
 	if (common::dual_wifly) {
@@ -416,6 +424,7 @@ int WiflyHunter::main_loop() {
 		wifly2->end_serial();
 	}
 
+	delete wifly1;
 	return 0;
 }
 
@@ -425,5 +434,10 @@ int WiflyHunter::main_loop() {
 void *wifly_thread(void *param) {
 	// just launch the wifly loop
 	WiflyHunter* wifly_hunter = new WiflyHunter((struct MAVInfo *)param, common::verbose);
-	return (void *) wifly_hunter->main_loop();
+	//return (void *) wifly_hunter->main_loop();
+	
+	// Code below by LD. This avoids a memory leak. I believe it is correct.
+	int rar = wifly_hunter->main_loop();
+	delete wifly_hunter;
+	return (void *) rar;
 }

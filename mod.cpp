@@ -370,8 +370,19 @@ int main(int argc, char **argv) {
 
 	// initialize the planner
 	LOG_STATUS("[MOD] initializing planner...");
-	common::planner = new FixedPlanner(common::logfile_dir, command_file);	// default to running command files, this ensures this isn't null
+
+	// Change by LD to avoid memory leak
+	// I check for nullptr at the end to ensure
+	common::planner = nullptr;
+	//common::planner = new FixedPlanner(common::logfile_dir, command_file);	// default to running command files, this ensures this isn't null
+	
 	switch (common::tracker_type) {
+		/* fixed planner */
+		case TRACK_PATH:
+			LOG_STATUS("[MOD] running fixed planner");
+			common::planner = new FixedPlanner(common::logfile_dir, command_file);
+			break;
+
 		/* the naive tracker */
 		case TRACK_NAIVE:
 			LOG_STATUS("[MOD] running naive planner");
@@ -412,6 +423,13 @@ int main(int argc, char **argv) {
 			common::planner = new GreedyPlanner2(planner_config_file, common::logfile_dir);
 			break;
 
+	}
+
+	// ensure it isn't null
+	if (common::planner == nullptr) {
+		LOG_ERROR("[MOD] requested planner doesn't exist");
+		fclose(common::output_logfile);
+		return 0;
 	}
 	
 	if (common::planner->initialize() < 0) {
