@@ -101,7 +101,9 @@ int WiflySerial::scanrssi(char *ssid) {
 		LOG_ERROR("[WIFLY] wifly read timeout");
 	} else {	// read available
 		
-		char buf[2048];
+		// LD: valgrind complained of uninitialized values here
+		//char buf[2048];
+		char buf[2048] = "";
 		read( fd, buf, sizeof(buf) );
 		LOG_DEBUG("%s", buf);
 
