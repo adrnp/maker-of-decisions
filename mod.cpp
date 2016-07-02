@@ -94,6 +94,9 @@ string planner_config_file;
 // added by Louis Dressel to avoid calling c_str on temporary variables
 string pixhawk_port_string;
 string sensor_port_string;
+string command_file_string;
+string ground_ip_string;
+string omni_wifly_port_string;
 
 
 int get_configuration(int argc, char **argv) {
@@ -183,7 +186,10 @@ int get_configuration(int argc, char **argv) {
 
 	/* command file */
 	if (config_map.find("command_file") != config_map.end()) {
-		command_file = config_map["command_file"].c_str();
+		// Louis Dressel: avoid calling c_str on temporary variables
+		//command_file = config_map["command_file"].c_str();
+		command_file_string = config_map["command_file"];
+		command_file = command_file_string.c_str();
 	}
 
 	/* planner config gile file */
@@ -194,7 +200,6 @@ int get_configuration(int argc, char **argv) {
 	/* pixhawk */
 	if (config_map.find("pixhawk_port") != config_map.end()) {
 		// Louis Dressel: avoid calling c_str on temporary variables
-		//std::cout << "HERE WE GO: " << config_map["pixhawk_port"] << std::endl;
 		//pixhawk_port = config_map["pixhawk_port"].c_str();
 		pixhawk_port_string = config_map["pixhawk_port"];
 		pixhawk_port = pixhawk_port_string.c_str();
@@ -212,7 +217,6 @@ int get_configuration(int argc, char **argv) {
 
 	/* wifly */
 	if (config_map.find("sensor_port") != config_map.end()) {
-		// Louis Dressel: avoid calling c_str on temporary variables
 		//common::sensor_port = config_map["sensor_port"].c_str();
 		sensor_port_string = config_map["sensor_port"].c_str();
 		common::sensor_port = sensor_port_string.c_str();
@@ -227,7 +231,9 @@ int get_configuration(int argc, char **argv) {
 
 	if (common::dual_wifly) {
 		if (config_map.find("omni_wifly_port") != config_map.end()) {
-			common::omni_wifly_port = config_map["omni_wifly_port"].c_str();
+			//common::omni_wifly_port = config_map["omni_wifly_port"].c_str();
+			omni_wifly_port_string = config_map["omni_wifly_port"];
+			common::omni_wifly_port = omni_wifly_port_string.c_str();
 		} else {
 			cout << "Running 2 wiflys but failed to provide port for second wifly.\nPlease check your config file (" << config_filename << ")\n";
 			return -1;
@@ -243,6 +249,8 @@ int get_configuration(int argc, char **argv) {
 	/* udp */
 	if (config_map.find("ground_ip") != config_map.end()) {
 		//common::ground_ip = config_map["ground_ip"].c_str();
+		ground_ip_string = config_map["ground_ip"];
+		common::ground_ip = ground_ip_string.c_str();
 	}
 
 	return 1;
