@@ -249,7 +249,7 @@ int RFHunter::main_loop() {
 		prev_loop_timestamp = current_loop_time;
 
 		LOG_DEBUG("\n--------------------------------");
-		LOG_DEBUG("[RFHUNTER] Top of wifly loop");
+		LOG_DEBUG("[RFHUNTER] Top of hunter loop");
 
 		// check the hunt state from JAGER and adjust states accordingly
 		check_hunt_state();
@@ -315,7 +315,7 @@ int RFHunter::main_loop() {
 
 
 			// save bearing cc to file (with important information)
-			fprintf(bearing_logfile, "%llu,%i,%i,%f,%f,%f,%f\n", _jager->sys_time_us.time_unix_usec,
+			fprintf(bearing_logfile, "%lu,%i,%i,%f,%f,%f,%f\n", _jager->sys_time_us.time_unix_usec,
 				_jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt, _bearing_cc, _bearing_max, _max_rssi);
 
 			/* send data */
@@ -330,7 +330,7 @@ int RFHunter::main_loop() {
 
 
 		/* write the directional antenna information */
-		fprintf(rssi_logfile, "%llu,%u,%i,%i,%i,%i,%i,%f,%f, %f\n",
+		fprintf(rssi_logfile, "%lu,%u,%i,%i,%i,%i,%i,%f,%f, %f\n",
 				_jager->sys_time_us.time_unix_usec, _jager->custom_mode, _rotating, _meas_heading, _meas_heading,
 				_jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt, _dir_rssi, _omni_rssi);
 
@@ -361,7 +361,8 @@ int RFHunter::main_loop() {
 	fclose(rssi_logfile);
 	fclose(bearing_logfile);
 
-	delete &udp;
+	delete udp;
+	delete rf_detector;
 
 	return 0;
 }
@@ -372,5 +373,9 @@ void *rfhunter_thread(void *param) {
 
 	// just launch the hunter loop
 	RFHunter* rfhunter_hunter = new RFHunter((struct MAVInfo *)param, common::verbose);
-	return (void *) rfhunter_hunter->main_loop();
+
+	// Code below by LD. This avoids a memory leak. I believe it is correct.
+	int rar = rfhunter_hunter->main_loop();
+	delete rfhunter_hunter;
+	return (void *) rar;
 }
