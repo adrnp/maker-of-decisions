@@ -86,7 +86,7 @@ void SerialPort::begin_serial(const char* &uart_name, const int &baudrate) {
 		LOG_ERROR("Connection attempt to port %s with %d baud, 8N1 failed, exiting.", uart_name, baudrate);
 		throw EXIT_FAILURE;
 	} else {
-		LOG_STATUS("\nConnected to %s with %d baud, 8 data bits, no parity, 1 stop bit (8N1)", uart_name, baudrate);
+		//LOG_STATUS("\nConnected to %s with %d baud, 8 data bits, no parity, 1 stop bit (8N1)", uart_name, baudrate);
 	}
 
 	// final status update to display as needed
