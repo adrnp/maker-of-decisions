@@ -80,6 +80,28 @@ int UDP::send_rssi_message(const int &in_rot, const int &dir_rssi, const int &om
 	return send_broadcast(buf, strlen(buf));
 }
 
+int UDP::send_mean_message(const double &mu_x, const double &mu_y){
+
+	// build the message
+	// TODO: add structure (limit number of characters displayed for each of the values(?))!
+	char buf[1024];
+	sprintf(buf, "MEAN:%.1f,%.1f\n", mu_x, mu_y);
+
+	// actually send the message
+	return send_broadcast(buf, strlen(buf));
+}
+
+int UDP::send_cov_message(const double &a, const double &b, const double &c, const double &d){
+
+	// build the message
+	// TODO: add structure (limit number of characters displayed for each of the values(?))!
+	char buf[1024];
+	sprintf(buf, "SGMA:%.1f,%.1f,%1f,%.1f\n", a, b, c, d);
+
+	// actually send the message
+	return send_broadcast(buf, strlen(buf));
+}
+
 
 /* return values: -1 error, 0 success */
 int UDP::setup_server() {
