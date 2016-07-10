@@ -1,5 +1,6 @@
 #include "bearing.h"
-#include <limits.h>
+#include <limits>
+#include <climits>
 
 
 // helper function
@@ -19,17 +20,23 @@ double get_bearing_max3(vector<double> &angles, vector<double> &gains) {
 
 	// find the max gain for this pattern
 	int len = gains.size();
+	bool valid_measurement = false;
 	for (int i = 0; i < len; i++) {
 		
 		// ignore uncollected samples
-		if (gains[i] == INT_MAX) {
+		if (gains[i] == INT_MAX || gains[i] <= -65.5) {
 			continue;
 		}
+		valid_measurement = true;
 
 		// check conditions in which we want to save information
 		if (gains[i] > max_gain) {		// found a new max location
 			max_gain = gains[i];
 		}
+	}
+
+	if (!valid_measurement) {
+		return std::numeric_limits<double>::quiet_NaN();
 	}
 
 	// get the 3db down point
