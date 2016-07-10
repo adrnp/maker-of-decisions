@@ -42,6 +42,9 @@ public:
 	int send_rssi_message(const int &in_rot, const int &dir_rssi, const int &omni_rssi, const int16_t &heading,
 								const int32_t &lat, const int32_t &lon, const float &alt);
 
+	int send_mean_message(const double &mu_x, const double &mu_y);
+	int send_cov_message(const double &a, const double &b, const double &c, const double &d);
+
 private:
 
 	/* the address of the server (?) */

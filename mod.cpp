@@ -37,6 +37,7 @@
 #include "libs/planners/greedy_planner.h"
 #include "libs/planners/momdp_planner.h"
 #include "libs/planners/greedy_planner2.h"
+#include "libs/planners/fixed_planner2.h"
 
 
 #include "mod.h"
@@ -429,6 +430,11 @@ int main(int argc, char **argv) {
 		case TRACK_GREEDY2:
 			LOG_STATUS("[MOD] running greedy2 planner");
 			common::planner = new GreedyPlanner2(planner_config_file, common::logfile_dir);
+			break;
+
+		case TRACK_FIXED2:
+			LOG_STATUS("[MOD] running fixed2 planner");
+			common::planner = new FixedPlanner2(planner_config_file, common::logfile_dir);
 			break;
 
 	}

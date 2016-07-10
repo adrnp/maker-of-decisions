@@ -321,6 +321,8 @@ int RFHunter::main_loop() {
 			/* send data */
 			//common::pixhawk->send_bearing_cc_message(_bearing_cc, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);		// send a mavlink message of the calculated bearing
 			udp->send_bearing_message(_bearing_cc, _bearing_max, _bearing_max3, _jager->gps_position.lat, _jager->gps_position.lon, _jager->vfr_hud.alt);	// send the udp message (directly to ground)
+			udp->send_mean_message(common::planner->_mu_Sigma[0], common::planner->_mu_Sigma[1]);
+			udp->send_cov_message(common::planner->_mu_Sigma[2], common::planner->_mu_Sigma[3], common::planner->_mu_Sigma[4], common::planner->_mu_Sigma[5]);
 		}
 
 
